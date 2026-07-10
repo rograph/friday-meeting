@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FRIDAY MEETING</title>
+<style>
+  :root {
+    --bg: #04121d;
+    --panel: #072433;
+    --panel-2: #0a2c3d;
+    --ink: #a8dcd6;
+    --ink-dim: #4f7f85;
+    --accent: #52e0d2;
+    --danger: #e0796a;
+    --warn: #d9b96a;
+    --lock: #6ee7b7;
+    --line: #14454f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Courier New', Courier, monospace;
+    min-height: 100vh;
+  }
+  /* ---- CRT overlay ---- */
+  #crt::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 3px);
+    pointer-events: none; z-index: 50;
+  }
+  #crt::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none; z-index: 51;
+  }
+  #flicker {
+    position: fixed; inset: 0; pointer-events: none; z-index: 52;
+    background: rgba(120, 220, 210, 0.02);
+    animation: flicker 4s infinite;
+  }
+  @keyframes flicker {
+    0%, 100% { opacity: 0.4; } 92% { opacity: 0.4; }
+    93% { opacity: 0.9; } 94% { opacity: 0.2; } 95% { opacity: 0.4; }
+  }
+  #app {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 18px 20px 60px;
+    position: relative;
+  }
+  /* ---- Header / stats ---- */
+  header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 8px; margin-bottom: 14px;
+  }
+  header h1 { font-size: 0.95em; letter-spacing: 4px; margin: 0; color: var(--accent); text-shadow: 0 0 8px rgba(82,224,210,0.4); }
+  #daylabel { font-size: 0.8em; color: var(--ink-dim); letter-spacing: 2px; }
+  #stats {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 16px; font-size: 0.78em;
+  }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 6px 10px;
+    position: relative;
+    min-width: 86px;
+    transition: border-color .3s;
+  }
+  .stat b { display: block; font-size: 1.25em; color: var(--accent); }
+  .stat.flash-down { animation: flashDown .6s; }
+  .stat.flash-up { animation: flashUp .6s; }
+  @keyframes flashDown { 0% { border-color: var(--danger); background: #2c1516; } 100% {} }
+  @keyframes flashUp   { 0% { border-color: var(--lock); background: #10312a; } 100% {} }
+  #sanitybarwrap { width: 100%; height: 4px; background: #123; margin-top: 4px; }
+  #sanitybar { height: 100%; background: var(--accent); width: 100%; transition: width .6s ease, background .6s; }
+  .float-delta {
+    position: absolute; left: 8px; top: -6px;
+    font-size: 0.95em; font-weight: bold;
+    animation: floatUp 1.1s ease-out forwards;
+    pointer-events: none; white-space: nowrap; z-index: 10;
+  }
+  @keyframes floatUp {
+    0% { opacity: 0; transform: translateY(6px); }
+    15% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-26px); }
+  }
+  #crunchtag {
+    display: none;
+    color: var(--danger); border: 1px solid var(--danger);
+    padding: 6px 10px; font-size: 1em; letter-spacing: 2px;
+    animation: pulse 1.2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+  body.crunch #app { animation: crunchshake .35s; }
+  @keyframes crunchshake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); } 75% { transform: translateX(4px); }
+  }
+  /* ---- Cards ---- */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 20px;
+    box-shadow: 0 0 24px rgba(0,0,0,0.5);
+    animation: cardIn .45s ease-out;
+  }
+  @keyframes cardIn {
+    0% { opacity: 0; transform: translateY(18px) scale(0.985); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .card h2 {
+    margin: 0 0 4px; font-size: 0.95em;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+  }
+  .card .tag { font-size: 0.7em; color: var(--ink-dim); letter-spacing: 2px; margin-bottom: 12px; }
+  .flavor { color: var(--ink); line-height: 1.6; margin-bottom: 18px; font-size: 0.92em; }
+  button.choice {
+    display: block; width: 100%; text-align: left;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 11px 13px; margin-bottom: 8px;
+    font-family: inherit; font-size: 0.88em;
+    cursor: pointer;
+    transition: border-color .15s, background .15s, transform .1s;
+  }
+  button.choice:hover { border-color: var(--accent); background: #0d3547; transform: translateX(3px); }
+  button.choice:active { transform: translateX(3px) scale(0.99); }
+  button.choice .cost { color: var(--ink-dim); font-size: 0.85em; display: block; margin-top: 4px; }
+  button.choice.pto { border-style: dashed; color: var(--warn); }
+  button.choice.pto:hover { border-color: var(--warn); }
+  button.choice:disabled { opacity: .35; cursor: default; transform: none; }
+  .event {
+    background: #0b2030;
+    border-left: 3px solid var(--warn);
+    padding: 10px 12px; margin: 12px 0;
+    font-size: 0.85em;
+    animation: cardIn .4s;
+  }
+  .result {
+    border-left: 3px solid var(--accent);
+    padding: 8px 12px; margin: 12px 0;
+    font-size: 0.85em; color: var(--ink);
+    animation: cardIn .35s;
+  }
+  /* ---- At Risk ---- */
+  .riskitem {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    padding: 9px 12px; margin-bottom: 6px; font-size: 0.85em;
+    animation: cardIn .4s;
+    position: relative;
+  }
+  .riskitem.target { border-color: var(--danger); }
+  .riskitem.target::before {
+    content: '▸ AT RISK'; position: absolute; right: 10px; top: -9px;
+    background: var(--bg); color: var(--danger);
+    font-size: 0.72em; padding: 0 6px; letter-spacing: 2px;
+    animation: pulse 1.4s infinite;
+  }
+  .riskitem.locked { border-color: var(--lock); }
+  .riskitem.locked .lockmark { color: var(--lock); }
+  .riskitem .val { color: var(--accent); margin-left: 12px; white-space: nowrap; }
+  .lockmark { letter-spacing: 1px; font-size: 0.85em; }
+  .stampin { animation: stampIn .4s ease-out; display: inline-block; }
+  @keyframes stampIn {
+    0% { transform: scale(2.4) rotate(-14deg); opacity: 0; }
+    70% { transform: scale(0.95) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); }
+  }
+  /* ---- Day title interstitial ---- */
+  #interstitial {
+    position: fixed; inset: 0; z-index: 60;
+    background: var(--bg);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+  }
+  #interstitial .big {
+    font-size: 2.2em; letter-spacing: 12px; color: var(--accent);
+    text-shadow: 0 0 18px rgba(82,224,210,0.5);
+    animation: titleIn 1.1s ease-out;
+  }
+  #interstitial .sub { color: var(--ink-dim); margin-top: 14px; letter-spacing: 3px; font-size: 0.85em; animation: titleIn 1.6s; }
+  @keyframes titleIn {
+    0% { opacity: 0; letter-spacing: 26px; }
+    100% { opacity: 1; }
+  }
+  /* ---- Boot ---- */
+  #boot { padding-top: 12vh; text-align: center; }
+  #bootlines { min-height: 180px; font-size: 0.95em; line-height: 2.1; letter-spacing: 2px; color: var(--ink); white-space: pre-wrap; }
+  .cursor::after { content: '▌'; animation: blink 1s steps(1) infinite; color: var(--accent); }
+  @keyframes blink { 50% { opacity: 0; } }
+  #bootbtn {
+    display: none;
+    margin: 30px auto 0;
+    background: none; border: 1px solid var(--accent); color: var(--accent);
+    font-family: inherit; font-size: 1em; letter-spacing: 4px;
+    padding: 12px 34px; cursor: pointer;
+    animation: cardIn .8s;
+    text-shadow: 0 0 8px rgba(82,224,210,0.5);
+  }
+  #bootbtn:hover { background: rgba(82,224,210,0.1); }
+  /* ---- Meeting / endings ---- */
+  .reassigned {
+    color: var(--danger); border: 2px solid var(--danger);
+    padding: 1px 7px; font-size: 0.8em; letter-spacing: 2px;
+    transform: rotate(-3deg); display: inline-block;
+  }
+  .secure { color: var(--lock); }
+  body.burnout-fx #app { animation: burnoutGlitch .8s; }
+  @keyframes burnoutGlitch {
+    0%,100% { transform: none; filter: none; }
+    20% { transform: translateX(-8px) skewX(3deg); filter: hue-rotate(90deg); }
+    40% { transform: translateX(6px); filter: invert(0.8); }
+    60% { transform: translateX(-3px) skewX(-2deg); filter: none; }
+  }
+  .scoregrid { font-size: 0.9em; line-height: 2; margin: 14px 0; }
+  .scoregrid b { color: var(--accent); }
+  .endingtitle {
+    font-size: 1.3em; letter-spacing: 5px; color: var(--accent);
+    text-shadow: 0 0 14px rgba(82,224,210,0.5);
+    margin: 10px 0; animation: titleIn 1.2s;
+  }
+  #log { font-size: 0.72em; color: var(--ink-dim); margin-top: 18px; line-height: 1.7; border-top: 1px dashed var(--line); padding-top: 8px; max-height: 130px; overflow-y: auto; }
+  .footer-note { margin-top: 26px; font-size: 0.7em; color: var(--ink-dim); letter-spacing: 1px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div id="crt"></div>
+<div id="flicker"></div>
+
+<div id="interstitial"><div class="big" id="int-big"></div><div class="sub" id="int-sub"></div></div>
+
+<div id="app">
+  <div id="boot">
+    <div id="bootlines" class="cursor"></div>
+    <button id="bootbtn">BEGIN WEEK</button>
+  </div>
+
+  <div id="game" style="display:none;">
+    <header>
+      <h1>FRIDAY MEETING</h1>
+      <div id="daylabel">MONDAY</div>
+    </header>
+    <div id="stats">
+      <div class="stat" id="stat-sanity">Sanity <b id="s-sanity">100</b><div id="sanitybarwrap"><div id="sanitybar"></div></div></div>
+      <div class="stat" id="stat-time">Time <b id="s-time">10</b></div>
+      <div class="stat" id="stat-credit">Credit <b id="s-credit">0</b></div>
+      <div class="stat" id="stat-rep">Reputation <b id="s-rep">50</b></div>
+      <div class="stat" id="stat-pto">PTO <b id="s-pto">2</b></div>
+      <div id="crunchtag">CRUNCH</div>
+    </div>
+    <div class="card" id="card"></div>
+    <div id="log"></div>
+    <div class="footer-note">CORESTONE DYNAMICS · OPERATIONS WING · THIS TERMINAL IS MONITORED FOR YOUR SAFETY</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// =============================================================
+// FRIDAY MEETING — full-week vertical slice (v0.2)
+// Balance v0.1 per docs/Friday_Meeting_Design_Doc.md
+// All names fictional. Boss name is a placeholder pending lore thread.
+// =============================================================
+
+const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
+const BOSS = 'Director Miller';
+
+// ---------- meta-progression (persists across weeks via localStorage) ----------
+const META_KEY = 'fm_meta_v1';
+function loadMeta() {
+  try { return Object.assign({ week: 1, leverage: 0, up: {} }, JSON.parse(localStorage.getItem(META_KEY)) || {}); }
+  catch (e) { return { week: 1, leverage: 0, up: {} }; }
+}
+const META = loadMeta();
+function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
+
+// The store is the OUTSIDE world. The company caps what it gives; this doesn't.
+const STORE = [
+  { id: 'coffee',   name: 'A Real Coffee Setup (Home)',        cost: 15, desc: '+1 max Time every day. The office machine remains "upgraded."' },
+  { id: 'therapy',  name: 'Therapy, Out of Pocket',            cost: 20, desc: 'All Sanity costs reduced by 1. Insurance covers none of it. Worth it anyway.' },
+  { id: 'boundary', name: 'Boundaries (a book, read twice)',   cost: 12, desc: 'Declining a voluntold evening no longer costs Reputation.' },
+  { id: 'templates',name: 'The Templates Folder',              cost: 10, desc: 'Paper trails cost 1 less Time. You\'ve done this before. You\'ll do it again.' },
+  { id: 'lunch',    name: 'Standing Lunch with Chris',         cost: 10, desc: 'Start every week with Chris as an ally (one free lock per week).' },
+  { id: 'pto',      name: 'Unused PTO, Actually Used',         cost: 8,  desc: '+1 PTO per week.' },
+  { id: 'portfolio',name: 'Portfolio Site, Built at Midnight', cost: 25, desc: 'ESCAPE PLAN 1/3 — your work, with your name on it, on a domain they don\'t own.', escape: true },
+  { id: 'network',  name: 'The Network',                       cost: 25, desc: 'ESCAPE PLAN 2/3 — old colleagues. The people you walked to parking lots.', escape: true },
+  { id: 'savings',  name: 'Six Months of Runway',              cost: 30, desc: 'ESCAPE PLAN 3/3 — the number that changes the sound of your voice in meetings.', escape: true }
+];
+function escapeReady() { return META.up.portfolio && META.up.network && META.up.savings; }
+
+const S = {
+  sanity: 100, time: 10, maxTime: 10, credit: 0, rep: 50, pto: 2,
+  day: 0, items: [], ally: false, allyUsed: false,
+  queue: [], log: [], over: false
+};
+
+const $ = id => document.getElementById(id);
+
+// ---------- stat rendering & animation ----------
+function floatDelta(statEl, text, good) {
+  const f = document.createElement('div');
+  f.className = 'float-delta';
+  f.style.color = good ? 'var(--lock)' : 'var(--danger)';
+  f.textContent = text;
+  statEl.appendChild(f);
+  statEl.classList.remove('flash-up', 'flash-down');
+  void statEl.offsetWidth;
+  statEl.classList.add(good ? 'flash-up' : 'flash-down');
+  setTimeout(() => f.remove(), 1100);
+}
+
+function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+function inCrunch() { return S.time <= 0; }
+
+function apply(d, opts) {
+  opts = opts || {};
+  // sanity cost pipeline: base → week-4+ "the building has settled" (+1) → therapy (-1) → crunch (×1.5)
+  let sanityCost = d.sanity || 0;
+  if (sanityCost > 0 && META.week >= 4) sanityCost += 1;
+  if (sanityCost > 0 && META.up.therapy) sanityCost = Math.max(1, sanityCost - 1);
+  if (sanityCost > 0 && inCrunch()) sanityCost = Math.ceil(sanityCost * 1.5);
+
+  if (d.time) {
+    S.time = clamp(S.time - d.time, 0, 99);
+    floatDelta($('stat-time'), '-' + d.time + ' TIME', false);
+  }
+  if (sanityCost) {
+    S.sanity = clamp(S.sanity - sanityCost, 0, 100);
+    floatDelta($('stat-sanity'), '-' + sanityCost + ' SANITY' + (sanityCost !== (d.sanity||0) ? ' (CRUNCH)' : ''), false);
+  }
+  if (d.heal) {
+    S.sanity = clamp(S.sanity + d.heal, 0, 100);
+    floatDelta($('stat-sanity'), '+' + d.heal + ' SANITY', true);
+  }
+  if (d.credit) {
+    S.credit += d.credit;
+    floatDelta($('stat-credit'), '+' + d.credit + ' CREDIT', true);
+    if (d.creditItem) S.items.push({ name: d.creditItem, value: d.credit, locked: !!d.lockItem, noticed: !!d.noticeItem, day: S.day });
+  }
+  if (d.rep) {
+    S.rep = clamp(S.rep + d.rep, 0, 100);
+    floatDelta($('stat-rep'), (d.rep > 0 ? '+' : '') + d.rep + ' REP', d.rep > 0);
+  }
+  if (d.pto) {
+    S.pto = clamp(S.pto - d.pto, 0, 9);
+    floatDelta($('stat-pto'), '-' + d.pto + ' PTO', false);
+  }
+  render();
+  if (S.sanity <= 0 && !S.over) { burnout(); return false; }
+  return true;
+}
+
+function render() {
+  $('s-sanity').textContent = S.sanity;
+  $('s-time').textContent = S.time;
+  $('s-credit').textContent = S.credit;
+  $('s-rep').textContent = S.rep;
+  $('s-pto').textContent = S.pto;
+  $('daylabel').textContent = (DAYS[S.day] || '—') + ' · WEEK ' + META.week;
+  const bar = $('sanitybar');
+  bar.style.width = S.sanity + '%';
+  bar.style.background = S.sanity > 60 ? 'var(--accent)' : S.sanity > 30 ? 'var(--warn)' : 'var(--danger)';
+  const crunch = inCrunch();
+  $('crunchtag').style.display = crunch ? 'block' : 'none';
+  document.body.classList.toggle('crunch', crunch);
+  $('log').innerHTML = S.log.slice(-8).map(l => '&raquo; ' + l).join('<br>');
+  $('log').scrollTop = $('log').scrollHeight;
+}
+
+function log(t) { S.log.push(t); }
+
+// ---------- generic card UI ----------
+function costLabel(d) {
+  const p = [];
+  if (d.time) p.push('-' + d.time + ' Time');
+  if (d.sanity) p.push('-' + d.sanity + ' Sanity');
+  if (d.heal) p.push('+' + d.heal + ' Sanity');
+  if (d.credit) p.push('+' + d.credit + ' Credit');
+  if (d.rep) p.push((d.rep > 0 ? '+' : '') + d.rep + ' Rep');
+  return p.join(' · ') || 'no cost';
+}
+
+function showCard(c, onDone) {
+  const el = $('card');
+  el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  let html = '<h2>' + c.title + '</h2><div class="tag">' + (c.tag || 'ENCOUNTER') + '</div><div class="flavor">' + c.flavor + '</div>';
+  html += c.choices.map((ch, i) =>
+    '<button class="choice" data-i="' + i + '">' + ch.label + '<span class="cost">' + costLabel(ch.delta) + '</span></button>'
+  ).join('');
+  if (c.ptoAllowed && S.pto > 0) {
+    html += '<button class="choice pto" data-i="pto">Use PTO — skip this entirely<span class="cost">-1 PTO · -3 Rep (its use is noted)</span></button>';
+  }
+  el.innerHTML = html;
+  el.querySelectorAll('button.choice').forEach(btn => {
+    btn.onclick = () => {
+      el.querySelectorAll('button.choice').forEach(b => b.disabled = true);
+      if (btn.dataset.i === 'pto') {
+        apply({ pto: 1, rep: -3 });
+        log('PTO used on "' + c.title + '." A form appears in your inbox: "We support your rest."');
+        showResult('You take the afternoon. Your badge logs the exact minute you leave.', onDone);
+        return;
+      }
+      const ch = c.choices[btn.dataset.i];
+      const alive = apply(ch.delta);
+      if (!alive) return;
+      log(ch.log || ch.label);
+      if (ch.after) { ch.after(onDone); } else { showResult(ch.result, onDone); }
+    };
+  });
+}
+
+function showResult(text, onDone) {
+  const el = $('card');
+  el.insertAdjacentHTML('beforeend', '<div class="result">' + text + '</div>');
+  el.insertAdjacentHTML('beforeend', '<button class="choice" id="cont" style="margin-top:8px;">Continue</button>');
+  $('cont').onclick = onDone;
+}
+
+// ---------- interstitial ----------
+function interstitial(big, sub, then) {
+  const el = $('interstitial');
+  $('int-big').textContent = big;
+  $('int-sub').textContent = sub;
+  el.style.display = 'flex';
+  setTimeout(() => { el.style.display = 'none'; then(); }, 1900);
+}
+
+// ---------- card pool ----------
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+const CARDS = {
+  standup: () => ({
+    title: 'Daily Standup', tag: 'MEETING · 9:15 AM', ptoAllowed: false,
+    flavor: 'Chairs in a perfect circle, like someone measured it. Nobody remembers whose idea the circle was. It\'s your turn.',
+    choices: [
+      { label: 'Give the 30-second version', delta: { time: 2 },
+        result: 'You kept it tight. The room nods in unison, half a second too late.',
+        after: (done) => {
+          if (Math.random() < 0.4) {
+            $('card').insertAdjacentHTML('beforeend', '<div class="event">Terry from Facilities has a "quick follow-up." Nobody has ever seen Terry\'s actual office.</div>');
+            apply({ time: 2 });
+            log('Terry\'s follow-up ate another 2 Time.');
+          }
+          showResult('Standup adjourns. The circle of chairs remains, waiting.', done);
+        } },
+      { label: 'Actually explain the shared-drive outage properly', delta: { time: 3, credit: 3, creditItem: 'Shared-drive outage, explained' },
+        result: 'Thorough. No ambush questions later. A small, appreciative silence — the kind that feels almost like being watched.' }
+    ]
+  }),
+  quickSync: () => ({
+    title: 'The "Quick Sync"', tag: 'MEETING · DURATION UNLISTED', ptoAllowed: true,
+    flavor: 'The invite has no subject line, just a room number and a smiley face. Nobody who\'s been before can say how long it actually runs. Somehow it\'s about the numbers in Friday\'s report not matching yours.',
+    choices: [
+      { label: 'Attend in person', delta: { time: 4, credit: 8, creditItem: 'Report numbers reconciled' },
+        result: 'The room had no clock. However long it took, the numbers are reconciled now.' },
+      { label: 'Reply-all with a two-line fix, skip the room', delta: { time: 2, credit: 4, rep: -3, creditItem: 'Report fix, over email' },
+        result: 'Efficient. Someone notes that your attendance is "noted, not required, but noted."' }
+    ]
+  }),
+  fireDrill: () => ({
+    title: 'Emergency Meeting', tag: 'MEETING · UNSCHEDULED', ptoAllowed: true,
+    flavor: 'A calendar invite arrives for a meeting that started four minutes ago. Subject: "URGENT — Alignment." No agenda. Attendance is visible to everyone.',
+    choices: [
+      { label: 'Drop everything and go', delta: { time: 3, sanity: 10, credit: 9, creditItem: 'Urgent alignment, achieved' },
+        result: 'Forty minutes to establish that everyone was already aligned. You are thanked for your flexibility, which is now expected.' },
+      { label: 'Finish what you\'re doing first, arrive late', delta: { time: 2, sanity: 5, rep: -5, credit: 5, creditItem: 'Alignment, partial' },
+        result: 'You walk in mid-sentence. The sentence pauses. It resumes only after you sit.' }
+    ]
+  }),
+  oneOnOne: () => ({
+    title: '1:1 with ' + BOSS, tag: 'MEETING · RECURRING · CAMERA ON', ptoAllowed: false,
+    flavor: BOSS + ' smiles the way the building smiles: at scheduled intervals. "So. What are we excited about this week? Don\'t be modest. Modesty is a form of withholding."',
+    choices: [
+      { label: 'Tell him about your best work — in detail', delta: { time: 2, rep: 5 },
+        result: 'He listens with total attention, writing nothing down. He never writes anything down. He never has to.',
+        after: (done) => {
+          const top = topUnlocked();
+          if (top) {
+            top.noticed = true;
+            $('card').insertAdjacentHTML('beforeend', '<div class="event">"' + top.name + '" is now <b>NOTICED</b>. Locking it will cost extra — it is being looked at.</div>');
+            log('"' + top.name + '" was noticed by ' + BOSS + '.');
+          }
+          showResult('"Wonderful," he says. "Wonderful." The second one lands differently.', done);
+        } },
+      { label: 'Deflect — describe your week in fog', delta: { time: 2, rep: -4 },
+        result: '"Processes," you say. "Throughput." He nods slowly. Somewhere, a note is made about your enthusiasm.' },
+      { label: 'Redirect: praise your intern\'s growth instead', delta: { time: 2, rep: 2 },
+        result: '"Mentorship," he says, tasting the word. "That\'s a leadership quality. Mine, historically."' }
+    ]
+  }),
+  portal: () => ({
+    title: 'The Portal Is Down', tag: 'TASK · SEVERITY: UNDEFINED', ptoAllowed: true,
+    flavor: 'The Portal is down. Nobody can tell you precisely what the Portal does, only that it must be up. Three departments you\'ve never heard of are affected. One of them may not exist.',
+    choices: [
+      { label: 'Restore it quietly', delta: { time: 3, sanity: 5, credit: 8, creditItem: 'Portal restored' },
+        result: 'The Portal returns. The departments fall silent, satisfied. You still don\'t know what it does.' },
+      { label: 'Restore it AND write up the root cause', delta: { time: 4, sanity: 8, credit: 12, creditItem: 'Portal outage, root-caused' },
+        result: 'Your write-up is thorough, correct, and instantly absorbed into a shared drive where documents go to be "leveraged later."' }
+    ]
+  }),
+  complaint: () => ({
+    title: 'The Escalation', tag: 'TASK · CC: EVERYONE', ptoAllowed: true,
+    flavor: 'A complaint arrives with four Vice Presidents cc\'d. The original issue is two sentences long. The thread is forty-one messages. Your name was added at message thirty-nine, with the word "thoughts?"',
+    choices: [
+      { label: 'Solve the two-sentence problem, ignore the thread', delta: { time: 2, sanity: 5, credit: 8, creditItem: 'Escalation resolved' },
+        result: 'Solved in eleven minutes. The thread continues for two more days on its own, like a haunted machine.' },
+      { label: 'Solve it AND reply-all a calm summary', delta: { time: 3, sanity: 8, credit: 11, creditItem: 'Escalation resolved, publicly' },
+        result: 'Your summary is so clear the thread dies instantly. A VP replies only: "👍". It is the most recognition anyone has received this quarter.' }
+    ]
+  }),
+  coverShift: () => ({
+    title: 'Chris Is Drowning', tag: 'COWORKER · OPERATIONS', ptoAllowed: true,
+    flavor: 'Chris has said yes to eleven things this month. Chris says yes the way other people breathe. Chris is now under a deadline that was never physically possible, and is looking at you.',
+    choices: [
+      { label: 'Take two of Chris\'s tasks', delta: { time: 3, sanity: 5, credit: 5, creditItem: 'Covered for Chris' },
+        result: 'Chris exhales for the first time in days. You have gained something the org chart has no field for: an ally.',
+        after: (done) => {
+          S.ally = true;
+          $('card').insertAdjacentHTML('beforeend', '<div class="event"><b>ALLY GAINED: Chris.</b> Once this week, Chris will file a Paper Trail for you — free of charge, off the record.</div>');
+          log('Ally gained: Chris.');
+          showResult('"I owe you," Chris says. Chris is one of the few people here who keeps ledgers accurately.', done);
+        } },
+      { label: 'Sympathize, but protect your own week', delta: { time: 1, rep: -3 },
+        result: 'Chris nods, understanding completely. That\'s the worst part. Chris understands completely.' }
+    ]
+  }),
+  partnership: () => ({
+    title: 'The Partnership', tag: 'TASK · HIGH VISIBILITY', ptoAllowed: false,
+    flavor: 'An external partner wants to sign — the deal Operations has circled for two quarters. The contact asks for you by name, because you\'re the only one who ever answered their emails. This is the biggest thing that will happen here this week.',
+    choices: [
+      { label: 'Close it. Full push.', delta: { time: 4, sanity: 10, credit: 20, creditItem: 'Partnership closed' },
+        result: 'Signed. For one full minute, the work feels like the thing the mission statement claims it is. The minute passes. The tracker updates.' },
+      { label: 'Close it carefully — loop in witnesses from day one', delta: { time: 5, sanity: 12, credit: 17, creditItem: 'Partnership closed, witnessed' },
+        result: 'Signed, slower, in front of people. Three colleagues can now say the words "I watched them do it." Cheap insurance. Expensive week.' }
+    ]
+  }),
+  replyAll: () => ({
+    title: 'Reply-All Storm', tag: 'EVENT · SEVERITY RISING', ptoAllowed: true,
+    flavor: 'Someone has replied-all to the entire wing asking to be removed from the list. Twelve people reply-all to agree. Two reply-all to ask what the list is. The building\'s mail server begins to warm the third floor.',
+    choices: [
+      { label: 'Kill the thread with a BCC and a firm line', delta: { time: 2, credit: 4, creditItem: 'Reply-all storm, contained' },
+        result: 'Silence. Beautiful, institutional silence. No one will ever know you did this, which is exactly the problem this game is about.' },
+      { label: 'Mute it and let nature take its course', delta: { sanity: 5 },
+        result: 'The storm rages for six more hours. You watch it the way one watches weather: from indoors, with mild dread.' }
+    ]
+  }),
+  dataRequest: () => ({
+    title: 'The Numbers, By EOD', tag: 'TASK · REQUESTED FROM ABOVE', ptoAllowed: true,
+    flavor: 'Leadership requests "the numbers" by end of day. Which numbers is not specified. What they are for is not specified. The request is marked high priority, which is the only thing about it that is specified.',
+    choices: [
+      { label: 'Build the report they probably mean', delta: { time: 3, sanity: 6, credit: 9, creditItem: 'The Numbers, delivered' },
+        result: 'You guess correctly. You always guess correctly. This has quietly become your actual job description.' },
+      { label: 'Ask which numbers, exactly', delta: { time: 1, sanity: 3, rep: -2 },
+        result: '"The usual ones," comes the reply, four hours later, from someone\'s phone. You build nothing. Somehow this is also fine.' }
+    ]
+  }),
+  training: () => ({
+    title: 'Mandatory Wellness Module', tag: 'TRAINING · COMPLETION MONITORED', ptoAllowed: true,
+    flavor: 'A 45-minute interactive module titled "Owning Your Balance." The narrator\'s voice is warm in a way that has been focus-grouped. You cannot fast-forward. It knows when your window loses focus.',
+    choices: [
+      { label: 'Watch it fully, click every button sincerely', delta: { time: 3, heal: 3, credit: 2, creditItem: 'Wellness module, completed' },
+        result: 'You are awarded a certificate. It has your name spelled correctly, which moves you more than the module did.' },
+      { label: 'Let it run while you do real work', delta: { time: 2, sanity: 4 },
+        result: 'You pass the quiz on vibes. Question 4: "Balance is: (a) a gift you give yourself (b) a gift Corestone gives you." Both are marked correct.' }
+    ]
+  }),
+  presidentDeck: () => ({
+    title: 'A Dashboard for Upstairs', tag: 'TASK · AUDIENCE: UNKNOWN', ptoAllowed: false,
+    flavor: BOSS + ' needs "something visual" for a presentation Upstairs. Upstairs is where The President is. You have never met The President. Nobody on this floor has met The President — but the elevator has a button that requires a key, so the evidence is strong.',
+    choices: [
+      { label: 'Build it beautiful. Make the numbers sing.', delta: { time: 3, sanity: 6, credit: 14, creditItem: 'The Dashboard', noticeItem: true },
+        result: 'It is the best thing you\'ve made all quarter. It is also, as of this moment, cargo.',
+        after: (done) => {
+          $('card').insertAdjacentHTML('beforeend', '<div class="event">"The Dashboard" is <b>NOTICED</b> from birth — it was built to travel. Locking it will cost extra.</div>');
+          log('"The Dashboard" was built for Upstairs. Noticed on arrival.');
+          showResult(BOSS + ' looks at it the way a courier looks at a package. "The President is going to love this," he says. The pronoun situation goes unexamined.', done);
+        } },
+      { label: 'Build it plain — your name embedded in the data footer of every page', delta: { time: 4, sanity: 6, credit: 10, creditItem: 'The Dashboard (watermarked)', lockItem: true },
+        result: 'Less impressive. But your name runs through it like rebar — strip it out and the whole thing collapses into a slide about nothing. <span class="secure">It arrives on the tracker already 🔒 SECURED.</span>' }
+    ]
+  }),
+  realignment: () => ({
+    title: 'The Realignment', tag: 'ANNOUNCEMENT · EFFECTIVE IMMEDIATELY', ptoAllowed: false,
+    flavor: 'An org chart arrives, cc: everyone. In this version, the entire Finance function now flows "through" your box, which has not changed size. Compensation is not mentioned. The email ends with "excited for this next chapter." The chapter is yours to write. The royalties are not.',
+    choices: [
+      { label: 'Absorb it. Keep the machine running.', delta: { rep: 5 },
+        result: 'You are now Operations and, in every way but title and pay, Finance.',
+        after: (done) => {
+          S.maxTime -= 1;
+          $('card').insertAdjacentHTML('beforeend', '<div class="event"><b>SCOPE ABSORBED.</b> Your Time is now <b>' + S.maxTime + '/day</b> for the rest of the week. Your salary is now exactly what it was.</div>');
+          log('Finance absorbed. Max Time reduced to 9/day. Compensation unchanged, permanently.');
+          showResult('Leadership calls you "a utility player." You look up whether utility players get paid more. They do. Elsewhere.', done);
+        } },
+      { label: 'Ask, in writing, about a compensation adjustment', delta: { rep: -4, sanity: 4 },
+        result: '"Great question. The comp review cycle opens in Q3." It is currently Q3. "The next Q3." Your written question creates just enough friction that the transition is paused, pending alignment — your week, at least, stays yours.' }
+    ]
+  }),
+  offboarding: () => ({
+    title: 'The Offboarding', tag: 'MEETING · ROOM BOOKED FOR 15 MINUTES', ptoAllowed: false,
+    flavor: 'You\'re asked to sit in on a termination, "as a witness." Dave from Records is let go. ' + BOSS + ' does not look at Dave once — not during the preamble, not during the word "restructuring," not during the question Dave asks twice. He looks at his laptop the entire meeting, scrolling gently, as though the meeting were happening somewhere on his screen and Dave were the interruption.',
+    choices: [
+      { label: 'Walk Dave to the parking lot. Carry the box.', delta: { time: 2, sanity: 3 },
+        result: '"Fourteen years," Dave says at the curb, "and he never looked up." You carry the box. It is very light. Fourteen years, and the box is light.',
+        after: (done) => {
+          META.leverage += 3; saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+3 LEVERAGE.</b> The company has no field for this. Dave will land somewhere — people always do — and people remember who walked them out.</div>');
+          log('Walked Dave out. +3 Leverage. The building did not record it, which is how you know it was real.');
+          showResult('The vacancy is posted before you\'re back at your desk. It asks for a "self-starter."', done);
+        } },
+      { label: 'Head down. It wasn\'t your meeting.', delta: { sanity: 6 },
+        result: 'You hear the elevator take him down. Somewhere on the fourth floor, a laptop is still being scrolled, gently, like a wheel that has learned to turn itself.' }
+    ]
+  }),
+  rumor: () => ({
+    title: 'The Rumor', tag: 'AMBIENT · SOURCE: UPSTREAM', ptoAllowed: false,
+    flavor: 'By 10 AM, everyone knows Sarah and Tom are dating. Sarah and Tom are not dating. You know the rumor\'s point of origin precisely, because he told it to you first this morning, door open, delighted: ' + BOSS + '. "They\'d be cute," he said, in the tone of a man moving pieces on a board only he can see.',
+    choices: [
+      { label: 'Kill it everywhere you find it', delta: { time: 2, rep: 3 },
+        result: 'It takes all day. Rumors die of exposure to specifics, and you administer specifics at every kitchenette. By 4 PM it\'s dead. Sarah nods at you in the hallway — the office equivalent of a medal ceremony.' },
+      { label: 'Not your circus', delta: { sanity: 5 },
+        result: 'By Thursday the rumor has a timeline, a backstory, and a betting pool. Sarah moves desks. Tom eats lunch in his car. The office is 4% worse forever, which was, as far as you can tell, the entire point.' }
+    ]
+  }),
+  clarification: () => ({
+    title: 'The Clarification', tag: 'UNPROMPTED · DOOR OPEN', ptoAllowed: false,
+    flavor: BOSS + ' appears at your desk to clarify something you did not ask about. "Whatever you may have heard about me and someone in Marketing," he says, "nothing happened. And what did happen was entirely from her side." He waits, generously, for your relief. You had, until this exact moment, heard nothing. This is the same man who invents romances for other people, as a hobby.',
+    choices: [
+      { label: 'Nod slowly until he leaves', delta: { time: 1, sanity: 3 },
+        result: 'He leaves satisfied, having successfully informed the one person in the building who didn\'t know. The story now has a witness: you. That was the errand. You were the errand.' },
+      { label: '"Noted." Then silence. Hold the silence.', delta: { time: 1, heal: 3 },
+        result: 'The silence stretches. He explains it again, with more detail, each version incriminating him slightly more. You say "noted" a second time. It is the most powerful word in the building, and it is free.' }
+    ]
+  }),
+  lineItem: () => ({
+    title: 'The Line Item', tag: 'TASK · YOU HAVE READ ACCESS', ptoAllowed: false,
+    flavor: 'You administer the program budget, which means you can see every salary in it, which means you watched ' + BOSS + '\'s increase land the same week yours "wasn\'t in the cards this cycle." He is explaining why, right now, at your desk, gesturing at the very dashboard you built and he presented. The dashboard is open. The Personnel tab is one click away. He does not know this. Or — worse — he does.',
+    choices: [
+      { label: 'Say nothing. Screenshot the moment into memory.', delta: { sanity: 5 },
+        result: '"Anyway," he finishes, "we value you enormously." The word enormously is doing exactly none of the work.',
+        after: (done) => {
+          META.leverage += 2; saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+2 LEVERAGE.</b> The spreadsheet has radicalized you. Quietly, professionally, in eleven-point font.</div>');
+          log('The Line Item: +2 Leverage. You can see the budget. You will never unsee the budget.');
+          showResult('You save the file. You save it again. Some documents you keep the way other people keep receipts.', done);
+        } },
+      { label: 'Ask him to walk you through the program budget — cell by cell', delta: { time: 2, rep: -3, heal: 4 },
+        result: 'You scroll. He watches his own line item approach like weather. "This is more of an offline conversation," he says, in the middle of one. Worth every Rep point. You both know what row 34 says.' }
+    ]
+  }),
+  theNumbers: () => ({
+    title: 'Quarterly Metrics Refresh', tag: 'TASK · RITUAL', ptoAllowed: true,
+    flavor: 'The dashboard must be refreshed, as it is every quarter. Nobody has opened the dashboard since the last refresh. The refresh is not optional. The dashboard is very beautiful and completely unread, like a church.',
+    choices: [
+      { label: 'Refresh it properly', delta: { time: 2, credit: 5, creditItem: 'Dashboard, ritually refreshed' },
+        result: 'The numbers are current now. They gleam in the dark of the unvisited tab, and perhaps that is enough.' },
+      { label: 'Refresh it AND send leadership one insight from it', delta: { time: 3, sanity: 4, credit: 8, creditItem: 'Dashboard insight, surfaced' },
+        result: '"Interesting," replies leadership, within minutes — the fastest response you have ever received. The insight is never mentioned again.' }
+    ]
+  })
+};
+
+// ---------- evening events ----------
+const EVENINGS = [
+  { title: 'The Empty Train', flavor: 'The 6:40 is nearly empty. The city slides by, lit and indifferent, and belongs to no one\'s employer. For thirty-one minutes, neither do you.',
+    choices: [ { label: 'Ride home. Just ride.', delta: { heal: 13 }, result: 'You arrive home a person.' } ] },
+  { title: 'Old Friend, Late Call', flavor: 'A friend from before — from the era when you had hobbies — calls. They\'re in town. They know a place. It has no Wi-Fi, allegedly on purpose.',
+    choices: [ { label: 'Go. Order the weird thing.', delta: { heal: 15 }, result: 'You laugh at something unrelated to work for the first time in nine days. Your cheeks hurt. Good.' },
+      { label: 'Rain check — you\'re wiped', delta: { heal: 6 }, result: 'You watch forty minutes of a show you cannot describe. It helps, technically.' } ] },
+  { title: 'VOLUNTOLD: The Culture Cascade', flavor: 'An email at 5:58 PM: "Exciting! We need 3 energy champions for Saturday\'s Culture Cascade™. Attendance is voluntary." The word voluntary is in a font slightly smaller than the rest.',
+    choices: [ { label: 'Volunteer (you were going to be voluntold anyway)', delta: { sanity: 10, rep: 5 }, result: 'Saturday dissolves. You hold a sign that says "SYNERGY IS A CHOICE." A photographer captures your joy for the newsletter.' },
+      { label: 'Decline, citing "a commitment"', delta: { rep: META.up.boundary ? 0 : -5, heal: 8 }, result: META.up.boundary ? 'The commitment is sleep. You decline cleanly, without apology, the way the book taught you. Nothing happens. Nothing was ever going to happen. That was the book\'s whole point.' : 'The commitment is sleep. Your absence is noticed, catalogued, and filed under Enthusiasm, Lack Of.' } ] },
+  { title: 'VOLUNTOLD: Evening "Focus Sprint"', flavor: 'Leadership announces an optional evening focus sprint to "get ahead of next week." A calendar hold appears before the email finishes sending. It has already assumed your yes.',
+    choices: [ { label: 'Log on. Sprint.', delta: { sanity: 12, rep: 5, credit: 4, creditItem: 'Evening sprint output' }, result: 'By 9 PM you\'ve produced real work. It will be presented at a meeting you are not invited to.' },
+      { label: 'Decline the hold', delta: { rep: META.up.boundary ? 0 : -5, heal: 10 }, result: 'You decline with no note. The empty reason field radiates power.' } ] },
+  { title: 'Wellness Check-In', flavor: 'An automated survey: "How are you REALLY feeling?" The emoji options range from ecstatic to slightly less ecstatic. There is a free-text box. It has a character limit of 40.',
+    choices: [ { label: 'Select the approved emotion', delta: { heal: 9 }, result: 'Thank you for your honesty. Your wellness score has been updated. Your wellness score is not visible to you.' } ] }
+];
+
+// ---------- items / at-risk helpers ----------
+function topUnlocked() {
+  const u = S.items.filter(i => !i.locked);
+  return u.length ? u.reduce((a, b) => (b.value > a.value ? b : a)) : null;
+}
+function lockCost(item) {
+  let c = 2 + (item.noticed ? 1 : 0) + (META.week >= 5 ? 1 : 0) - (META.up.templates ? 1 : 0);
+  return Math.max(1, c);
+}
+
+function atRiskScreen(onDone) {
+  const el = $('card');
+  const isThu = S.day === 3;
+  if (S.items.length === 0) {
+    el.innerHTML = '<h2>At Risk</h2><div class="flavor">Nothing on the board yet. The tracker hums, patient.</div>';
+    return showResult('You produced nothing claimable today. In this one narrow sense, you are safe.', onDone);
+  }
+  const target = topUnlocked();
+  let html = '<h2>At Risk</h2><div class="tag">CREDIT TRACKER · ' + (isThu ? '<span style="color:var(--danger)">FINAL NIGHT — TARGETS LOCK AT MIDNIGHT</span>' : 'WHAT THE FRIDAY MEETING ALREADY KNOWS ABOUT') + '</div>';
+  html += '<div class="flavor">Anything unlocked can be claimed at the Friday Meeting. Highest unlocked item is the target.</div>';
+  S.items.forEach((it, idx) => {
+    const cls = it.locked ? 'riskitem locked' : (it === target ? 'riskitem target' : 'riskitem');
+    html += '<div class="' + cls + '"><span>' + it.name + (it.noticed && !it.locked ? ' <span style="color:var(--warn)">[NOTICED]</span>' : '') +
+      (it.locked ? ' <span class="lockmark stampin">🔒 SECURED</span>' : '') + '</span><span class="val">+' + it.value + '</span></div>';
+  });
+  el.innerHTML = html;
+
+  const t = topUnlocked();
+  if (t) {
+    const cost = lockCost(t);
+    if (S.time >= cost) {
+      el.insertAdjacentHTML('beforeend',
+        '<button class="choice" id="lockbtn" style="margin-top:10px;">File a Paper Trail on "' + t.name + '"<span class="cost">-' + cost + ' Time' + (t.noticed ? ' (it is being looked at)' : '') + '</span></button>');
+      $('lockbtn').onclick = () => {
+        apply({ time: cost });
+        t.locked = true;
+        log('Paper Trail filed: "' + t.name + '" 🔒');
+        atRiskScreen(onDone);
+      };
+    } else {
+      el.insertAdjacentHTML('beforeend', '<div class="event">Out of Time. "' + t.name + '" stays exactly where it is. Someone is already looking at it.</div>');
+    }
+    if (S.ally && !S.allyUsed) {
+      el.insertAdjacentHTML('beforeend',
+        '<button class="choice" id="allybtn">Ask Chris to file it for you<span class="cost">free · once per week · Chris keeps accurate ledgers</span></button>');
+      $('allybtn').onclick = () => {
+        S.allyUsed = true;
+        t.locked = true;
+        log('Chris filed the Paper Trail on "' + t.name + '." 🔒 No charge.');
+        atRiskScreen(onDone);
+      };
+    }
+  }
+  el.insertAdjacentHTML('beforeend', '<button class="choice" id="endday" style="margin-top:10px;">' + (t ? 'Leave the rest exposed — end the day' : 'Everything is secured. End the day.') + '</button>');
+  $('endday').onclick = onDone;
+}
+
+// ---------- day flow ----------
+let weekDeck = [];
+
+function buildWeek() {
+  weekDeck = shuffle(['quickSync', 'fireDrill', 'portal', 'complaint', 'coverShift', 'partnership', 'replyAll', 'dataRequest', 'training', 'theNumbers', 'presidentDeck', 'realignment', 'offboarding', 'rumor', 'clarification', 'lineItem']);
+}
+
+function dayPlan(day) {
+  // Mon: standup + 2 · Tue: 3 · Wed: 1:1 + 2 · Thu: 3 · Fri: 1 + meeting
+  if (day === 0) return ['standup', weekDeck[0], weekDeck[1]];
+  if (day === 1) return [weekDeck[2], weekDeck[3], weekDeck[4]];
+  if (day === 2) return ['oneOnOne', weekDeck[5], weekDeck[6]];
+  if (day === 3) return [weekDeck[7], weekDeck[8], weekDeck[9]];
+  return ['fridayMorning'];
+}
+
+function startDay() {
+  S.time = S.maxTime;
+  S.queue = dayPlan(S.day);
+  const subs = [
+    'A NEW WEEK. THE BUILDING REMEMBERS YOU.',
+    'THE COFFEE MACHINE HAS BEEN "UPGRADED." NOBODY ASKED.',
+    'HALFWAY. THE PLANTS ARE PLASTIC. THEY ARE WATERED ANYWAY.',
+    'TOMORROW IS FRIDAY. THE TRACKER LOCKS TONIGHT.',
+    'THE MEETING IS AT 4:00 PM. IT HAS ALWAYS BEEN AT 4:00 PM.'
+  ];
+  interstitial(DAYS[S.day], subs[S.day], () => { render(); nextEncounter(); });
+}
+
+function nextEncounter() {
+  if (S.over) return;
+  if (S.queue.length === 0) {
+    if (S.day === 4) return fridayMeeting();
+    return atRiskScreen(() => eveningEvent());
+  }
+  const key = S.queue.shift();
+  if (key === 'fridayMorning') return fridayMorning();
+  showCard(CARDS[key](), nextEncounter);
+}
+
+const APPRECIATION = {
+  title: 'The Annual Appreciation Event', tag: 'MANDATORY GRATITUDE · FISCAL YEAR TOTAL',
+  flavor: 'The year\'s appreciation arrives all at once, tonight: the team is bused to a driving-range entertainment complex for a few hours. There is a fajita bar. This is the appreciation. All of it. The entire year of it, served with tortillas, in lieu of — well. In lieu.',
+  choices: [
+    { label: 'Swing at things. Eat the fajitas. Let it work.', delta: { heal: 10, rep: 3 },
+      result: 'And here is the cruelest part: it\'s fun. For two hours you have actual fun, and the company will spend the next twelve months pointing at those two hours. "This concludes Appreciation for the fiscal year," no one says out loud, because no one has to.' },
+    { label: 'Attend the minimum viable amount', delta: { heal: 5, rep: -3 },
+      result: 'You hold a skewer for the group photo and drift toward the exit. The newsletter finds you anyway, mid-chew, captioned "TEAM SPIRIT."' }
+  ]
+};
+
+function eveningEvent() {
+  if (S.over) return;
+  // Week 2+: evening availability is now a core value — voluntolds crowd out free time.
+  let ev;
+  if (S.day === 3) ev = APPRECIATION;
+  else if (META.week >= 2 && Math.random() < 0.6) ev = EVENINGS[2 + Math.floor(Math.random() * 2)];
+  else ev = EVENINGS[Math.floor(Math.random() * EVENINGS.length)];
+  showCard({ title: 'EVENING · ' + ev.title, tag: ev.tag || 'AFTER HOURS', flavor: ev.flavor, choices: ev.choices, ptoAllowed: false },
+    () => { S.day++; startDay(); });
+}
+
+function fridayMorning() {
+  showCard({
+    title: 'The Quiet Morning', tag: 'FRIDAY · 9:00 AM', ptoAllowed: false,
+    flavor: 'Friday mornings are gentle here, the way a waiting room is gentle. Everyone works softly. Everyone is listening for 4 PM. The tracker locked at midnight — what\'s secured is secured; what isn\'t, isn\'t.',
+    choices: [
+      { label: 'Clear small tasks, keep your head down (new credit — unlockable, claimable at 4 PM)', delta: { time: 3, credit: 3, creditItem: 'Friday odds and ends' },
+        result: 'A tidy morning. The clock does not care. The clock is the most senior employee in the building.' },
+      { label: 'Take a long lunch. You\'ve earned nothing less.', delta: { heal: 8 },
+        result: 'You eat somewhere with real plants. When you return, the office smells like toner and anticipation.' }
+    ]
+  }, fridayMeeting);
+}
+
+// ---------- Friday Meeting (boss encounter) ----------
+function fridayMeeting() {
+  if (S.over) return;
+
+  // Escape plan complete: you can end this on your terms, mid-meeting.
+  if (escapeReady()) {
+    return showCard({
+      title: 'The Letter in Your Bag', tag: 'FRIDAY · 3:58 PM · YOUR MOVE', ptoAllowed: false,
+      flavor: 'Portfolio live. Network warm. Six months of runway. The letter has been in your bag since Monday, folded once, patient. Conference Room C is filling up. You could sit through it one more time. You don\'t have to.',
+      choices: [
+        { label: 'Hand ' + BOSS + ' the letter at 4:01 PM', delta: {},
+          result: 'You wait until he finishes the word "wins."', after: () => ending('quit') },
+        { label: 'Sit through it one more time — you\'ve earned the spectacle', delta: {},
+          result: 'One more episode. For research.', after: (done) => meetingProper() }
+      ]
+    }, meetingProper);
+  }
+  meetingProper();
+}
+
+function meetingProper() {
+  const el = $('card');
+  el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  const claims = META.week >= 3 ? 2 : 1;
+  el.innerHTML = '<h2>The Friday Meeting</h2><div class="tag">CONFERENCE ROOM C · 4:00 PM · MANDATORY' + (claims > 1 ? ' · <span style="color:var(--danger)">HE HAS A REPUTATION TO MAINTAIN NOW</span>' : '') + '</div>' +
+    '<div class="flavor" id="meetflavor">4:00 PM. Conference Room C. ' + BOSS + ' stands beside a slide titled <b>"OUR WINS."</b> The possessive pronoun is doing a lot of work.<br><br>He begins to read the week aloud.</div>' +
+    '<div id="meetitems"></div><div id="meetverdict"></div>';
+
+  // Targets locked at Thursday midnight; locked = safe. Week 3+: he takes the top TWO unlocked.
+  const targets = S.items.filter(i => !i.locked).sort((a, b) => b.value - a.value).slice(0, claims);
+  const items = S.items.slice();
+  let i = 0;
+  function revealNext() {
+    if (i < items.length) {
+      const it = items[i++];
+      const isTarget = targets.includes(it);
+      $('meetitems').insertAdjacentHTML('beforeend',
+        '<div class="riskitem ' + (it.locked ? 'locked' : '') + '" style="animation-duration:.5s">' +
+        '<span>' + it.name + (it.locked ? ' <span class="lockmark">🔒 SECURED</span>' : '') + '</span>' +
+        '<span class="val">+' + it.value + (isTarget ? ' <span class="reassigned stampin" style="margin-left:8px;">CLAIMING…</span>' : '') + '</span></div>');
+      setTimeout(revealNext, isTarget ? 1400 : 650);
+    } else {
+      setTimeout(verdict, 800);
+    }
+  }
+  function verdict() {
+    const v = $('meetverdict');
+    if (targets.length === 0) {
+      // Malicious Compliance
+      v.innerHTML = '<div class="event" style="border-left-color: var(--lock);"><b>' + BOSS + ' reaches the end of the slide.</b><br><br>Every item is secured. Documented. Witnessed. Filed. There is nothing on the board with his hand-shaped absence on it.<br><br>"Well," he says. He says it again. The room has never heard him say a word twice.<br><br><span class="secure">NOTHING WAS REASSIGNED.</span></div>';
+      log('The Friday Meeting: ' + BOSS + ' claimed NOTHING.');
+      v.insertAdjacentHTML('beforeend', '<button class="choice" id="toend" style="margin-top:10px;">Watch him improvise a closing thought</button>');
+      $('toend').onclick = () => ending('compliance');
+    } else {
+      let total = 0;
+      targets.forEach(t => { S.credit -= t.value; t.stolen = true; total += t.value; });
+      floatDelta($('stat-credit'), '-' + total + ' CREDIT', false);
+      render();
+      const t1 = targets[0], t2 = targets[1];
+      let html = '<div class="event" style="border-left-color: var(--danger);"><b>He arrives at "' + t1.name + '."</b><br><br>"And I\'m especially proud," he says, warming like a photocopier, "of what <i>we</i> — and I\'ll take a little credit here —" (laughter, obedient) "— accomplished on this one."<br><br><span class="reassigned stampin">REASSIGNED → ' + BOSS.toUpperCase() + '</span>';
+      if (t2) {
+        html += '<br><br>"And," he adds, pluralizing without shame, "there\'s <i>' + t2.name + '</i> too. Team effort. My team."<br><br><span class="reassigned stampin">REASSIGNED → ' + BOSS.toUpperCase() + '</span>';
+      }
+      html += '<br><br>+' + total + ' Credit converts to his Raise Points. Next week he presents it Upstairs — to The President, whom you have never met, and who signs raises for whoever is standing nearest the work when it arrives. The slide advances. The week is over.</div>';
+      v.innerHTML = html;
+      log('The Friday Meeting: ' + BOSS + ' claimed ' + targets.map(t => '"' + t.name + '" (+' + t.value + ')').join(' and ') + '.');
+      v.insertAdjacentHTML('beforeend', '<button class="choice" id="toend" style="margin-top:10px;">Gather your things</button>');
+      $('toend').onclick = () => ending('survived');
+    }
+  }
+  revealNext();
+}
+
+// ---------- endings & leverage ----------
+function leverageFor(kind, grade) {
+  if (kind === 'burnout') return 3;
+  const kept = S.items.filter(i => !i.stolen).reduce((a, b) => a + b.value, 0);
+  const bonus = kind === 'compliance' ? 8 : grade === 'A' ? 6 : grade === 'B' ? 4 : grade === 'C' ? 2 : 1;
+  return Math.round(kept / 5) + Math.round(S.sanity / 20) + bonus;
+}
+
+function awardLeverage(kind, grade) {
+  const earned = leverageFor(kind, grade);
+  META.leverage += earned;
+  saveMeta();
+  return earned;
+}
+
+function burnout() {
+  S.over = true;
+  document.body.classList.add('burnout-fx');
+  const earned = awardLeverage('burnout');
+  setTimeout(() => {
+    const el = $('card');
+    el.innerHTML = '<div class="endingtitle">BURNOUT</div>' +
+      '<div class="flavor">It happens quietly, on day ' + (S.day + 1) + ' of 5, somewhere between one notification and the next. You stand up. You put your badge on the desk, face down, the way you\'d close a book you didn\'t finish.<br><br>' +
+      'HR sends a wellness survey to your personal email within the hour. The character limit is still 40.<br><br>' +
+      'The tracker keeps running for a while after you leave. Nobody turns it off. It isn\'t clear anyone knows how.</div>' +
+      scoreBlock() +
+      '<div class="event">+' + earned + ' LEVERAGE. Every run teaches the system\'s shape. This one taught you where the floor is.</div>' +
+      '<button class="choice" id="toStore" style="margin-top:10px;">Go home. It\'s the weekend, technically.</button>';
+    $('toStore').onclick = storeScreen;
+  }, 850);
+}
+
+function scoreBlock() {
+  const kept = S.items.filter(i => !i.stolen).reduce((a, b) => a + b.value, 0);
+  const stolen = S.items.filter(i => i.stolen).reduce((a, b) => a + b.value, 0);
+  const col = (3.4 + 0.2 * (META.week - 1)).toFixed(1);
+  return '<div class="scoregrid">' +
+    'Week <b>' + META.week + '</b> · Credit kept: <b>' + kept + '</b> · Claimed by ' + BOSS + ': <b style="color:var(--danger)">' + stolen + '</b> · Sanity: <b>' + S.sanity + '</b> · Reputation: <b>' + S.rep + '</b> · Ally: <b>' + (S.ally ? 'Chris' : 'none') + '</b><br>' +
+    'Projected annual raise: <b>3.0%</b> (capped) · Payable: <b>next July</b> · Cost-of-living increase since request: <b>' + col + '%</b>' +
+    '</div>';
+}
+
+function ending(kind) {
+  S.over = true;
+  const el = $('card');
+  if (kind === 'quit') {
+    el.innerHTML = '<div class="endingtitle">TWO WEEKS\' NOTICE</div>' +
+      '<div class="flavor">You wait until he finishes the word "wins." Then you stand, cross Conference Room C, and set the letter beside his laptop — on the keyboard, actually, where it cannot be scrolled past.<br><br>' +
+      'And here is the thing you will tell people for years: <b>he looks up.</b> For the first time in institutional memory, ' + BOSS + ' looks up from the screen at a human being who is leaving. The room watches him do it. Somebody\'s coffee goes cold in real time.<br><br>' +
+      '"We\'d hate to lose you," he says, reaching for the phrases. "We were about to talk about your growth."<br><br>' +
+      'The raise was capped at 3%. The exit never was. You walk out through the lobby, past the founder\'s portrait, out the doors, into the enormous, unmonitored afternoon.</div>' +
+      scoreBlock() +
+      '<div class="event" style="border-left-color: var(--lock);"><b>THE TRUE ENDING.</b> Built across ' + META.week + ' week' + (META.week > 1 ? 's' : '') + ': a portfolio, a network, a runway. None of it appeared on their tracker. That was the point.</div>' +
+      '<button class="choice" id="newgame" style="margin-top:10px;">NEW GAME — someone else\'s first Monday</button>';
+    $('newgame').onclick = () => { try { localStorage.removeItem(META_KEY); } catch (e) {} location.reload(); };
+    return;
+  }
+  if (kind === 'compliance') {
+    const earned = awardLeverage('compliance');
+    el.innerHTML = '<div class="endingtitle">MALICIOUS COMPLIANCE</div>' +
+      '<div class="flavor">You beat the system with its own favorite weapon: documentation. Every win secured, every trail papered, every witness looped. He stood at the front of Conference Room C with nothing to take, and for 4 entire minutes, ' + BOSS + ' experienced what the wellness module calls "an opportunity for growth."<br><br>You have not escaped. You have merely won. On Monday it begins again — but they know, now. And so do you.</div>' +
+      scoreBlock() +
+      '<div class="event">+' + earned + ' LEVERAGE (compliance bonus). The cleanest win the building recognizes, and it recognizes it through gritted teeth.</div>' +
+      '<button class="choice" id="toStore" style="margin-top:10px;">Go home. The weekend is yours — both days.</button>';
+  } else {
+    // Grade is about what he TOOK, not what you made — protection is the game.
+    const stolen = S.items.filter(i => i.stolen).reduce((a, b) => a + b.value, 0);
+    const grade = stolen <= 5 && S.sanity >= 50 ? 'A'
+                : stolen <= 10 && S.sanity >= 35 ? 'B'
+                : S.sanity >= 25 ? 'C' : 'D';
+    const earned = awardLeverage('survived', grade);
+    el.innerHTML = '<div class="endingtitle">WEEK SURVIVED · GRADE ' + grade + '</div>' +
+      '<div class="tag">GRADED ON WHAT HE TOOK, NOT WHAT YOU MADE</div>' +
+      '<div class="flavor">You made it to 5 PM Friday with your badge, most of your credit, and a to-go cup of institutional coffee you will not drink. The parking lot is gold in the late light. For two whole days, your time belongs to you — minus whatever Saturday email is already being drafted.</div>' +
+      scoreBlock() +
+      '<div class="event">+' + earned + ' LEVERAGE. The raise is capped. The exit is not.</div>' +
+      '<button class="choice" id="toStore" style="margin-top:10px;">Go home. Spend the weekend on yourself.</button>';
+  }
+  $('toStore').onclick = storeScreen;
+}
+
+// ---------- the store (Saturday — your time, your money, their absence) ----------
+function storeScreen() {
+  const el = $('card');
+  el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  const owned = STORE.filter(it => META.up[it.id]).length;
+  const escapeCount = ['portfolio', 'network', 'savings'].filter(k => META.up[k]).length;
+  let html = '<h2>Saturday, 9:04 AM</h2><div class="tag">YOUR TIME · NO BADGE · NOT MONITORED (PROBABLY)</div>' +
+    '<div class="flavor">The week paid you in the only currency the building can\'t claim. Spend it on the version of you that leaves.</div>' +
+    '<div class="scoregrid">LEVERAGE: <b>' + META.leverage + '</b> · ESCAPE PLAN: <b>' + escapeCount + '/3</b>' + (escapeReady() ? ' · <span class="secure">READY — the letter is in your bag</span>' : '') + '</div>';
+  STORE.forEach(it => {
+    const has = META.up[it.id];
+    const afford = META.leverage >= it.cost;
+    if (has) {
+      html += '<div class="riskitem locked"><span>' + it.name + ' <span class="lockmark">✓ YOURS</span></span><span class="val">' + it.desc + '</span></div>';
+    } else {
+      html += '<button class="choice" data-buy="' + it.id + '" ' + (afford ? '' : 'disabled') + '>' + (it.escape ? '⬒ ' : '') + it.name + ' — ' + it.cost + ' Leverage<span class="cost">' + it.desc + '</span></button>';
+    }
+  });
+  html += '<button class="choice" id="nextweek" style="margin-top:14px; border-color: var(--accent); color: var(--accent);">CLOCK IN — WEEK ' + (META.week + 1) + '<span class="cost">Monday always comes. But you are not the same shape you were.</span></button>';
+  el.innerHTML = html;
+  el.querySelectorAll('[data-buy]').forEach(btn => {
+    btn.onclick = () => {
+      const it = STORE.find(x => x.id === btn.dataset.buy);
+      if (!it || META.up[it.id] || META.leverage < it.cost) return;
+      META.leverage -= it.cost;
+      META.up[it.id] = true;
+      saveMeta();
+      storeScreen();
+    };
+  });
+  $('nextweek').onclick = () => { META.week += 1; saveMeta(); location.reload(); };
+}
+
+// ---------- boot ----------
+function buildBootLines() {
+  const lines = [
+    'CORESTONE DYNAMICS — OPERATIONS TERMINAL 4B',
+    'EMPLOYEE VERIFIED. WELCOME BACK. YOU WERE MISSED, PROCEDURALLY.',
+    'WEEK ' + META.week + '. YOUR WORK IS IMPORTANT. YOUR WORK IS MYSTERIOUS.'
+  ];
+  // Difficulty is announced, never hidden. The policy updates ARE the joke.
+  if (META.week >= 2) lines.push('POLICY UPDATE: EVENING AVAILABILITY IS NOW A CORE VALUE.');
+  if (META.week >= 3) lines.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. DIRECTOR MILLER HAS A REPUTATION TO MAINTAIN.');
+  if (META.week >= 4) lines.push('NOTICE: THE BUILDING HAS SETTLED. EVERYTHING COSTS SLIGHTLY MORE NOW.');
+  if (META.week >= 5) lines.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A SECOND SIGNATURE.');
+  lines.push('REMINDER: THE FRIDAY MEETING IS AT 4:00 PM.');
+  lines.push('IT HAS ALWAYS BEEN AT 4:00 PM.');
+  return lines;
+}
+const BOOTLINES = buildBootLines();
+function boot() {
+  const el = $('bootlines');
+  let li = 0, ci = 0, out = '';
+  function type() {
+    if (li >= BOOTLINES.length) {
+      el.classList.remove('cursor');
+      $('bootbtn').style.display = 'block';
+      return;
+    }
+    const line = BOOTLINES[li];
+    if (ci < line.length) {
+      out += line[ci++];
+      el.textContent = out;
+      setTimeout(type, 18 + Math.random() * 20);
+    } else {
+      out += '\n'; li++; ci = 0;
+      setTimeout(type, 320);
+    }
+  }
+  type();
+  $('bootbtn').onclick = () => {
+    // apply owned upgrades to the fresh week
+    S.maxTime = 10 + (META.up.coffee ? 1 : 0);
+    S.pto = 2 + (META.up.pto ? 1 : 0);
+    if (META.up.lunch) { S.ally = true; log('Standing lunch with Chris: ally from day one.'); }
+    $('boot').style.display = 'none';
+    $('game').style.display = 'block';
+    buildWeek();
+    render();
+    startDay();
+  };
+  if (META.week > 1 || META.leverage > 0) {
+    $('boot').insertAdjacentHTML('beforeend',
+      '<div style="margin-top:26px;"><button id="wipebtn" style="background:none;border:1px dashed var(--ink-dim);color:var(--ink-dim);font-family:inherit;font-size:0.7em;letter-spacing:2px;padding:6px 14px;cursor:pointer;">ERASE EMPLOYEE RECORD (reset save)</button></div>');
+    $('wipebtn').onclick = () => {
+      if (confirm('Erase all progress? The building will not remember you. Neither will the save file.')) {
+        try { localStorage.removeItem(META_KEY); } catch (e) {}
+        location.reload();
+      }
+    };
+  }
+}
+boot();
+</script>
+</body>
+</html>
