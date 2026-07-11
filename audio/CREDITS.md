@@ -7,6 +7,6 @@ Every third-party audio asset used in this project must be free (ideally CC0 or 
 | _(none yet)_ | | | | |
 
 ## Approved sources
-- [OpenGameArt.org](https://opengameart.org/) — filter to CC0/CC-BY only.
-- [Freesound.org](https://freesound.org/) — filter to CC0/CC-BY only.
-- [incompetech.com](https://incompetech.com/) (Kevin MacLeod) — free with attribution; credit "Music by Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0."
+- [OpenGameArt.org](https://opengameart.org/): filter to CC0/CC-BY only.
+- [Freesound.org](https://freesound.org/): filter to CC0/CC-BY only.
+- [incompetech.com](https://incompetech.com/) (Kevin MacLeod): free with attribution; credit "Music by Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0."

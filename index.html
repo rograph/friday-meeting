@@ -176,6 +176,29 @@
     70% { transform: scale(0.95) rotate(2deg); opacity: 1; }
     100% { transform: scale(1) rotate(0); }
   }
+  body.flashback #app { animation: flashcut .6s ease-out; }
+  @keyframes flashcut {
+    0% { filter: brightness(3.6) grayscale(1); }
+    100% { filter: brightness(1) grayscale(0); }
+  }
+
+  /* ---- CRT power-off wipe between days ---- */
+  body.tvoff #app {
+    animation: tvOff .45s ease-in forwards;
+  }
+  body.tvon #app {
+    animation: tvOn .45s ease-out;
+  }
+  @keyframes tvOff {
+    0% { transform: scaleY(1); filter: brightness(1); }
+    70% { transform: scaleY(0.006); filter: brightness(3); }
+    100% { transform: scaleY(0.006); filter: brightness(0); opacity: 0; }
+  }
+  @keyframes tvOn {
+    0% { transform: scaleY(0.006); filter: brightness(3); opacity: 1; }
+    100% { transform: scaleY(1); filter: brightness(1); }
+  }
+
   /* ---- Day title interstitial ---- */
   #interstitial {
     position: fixed; inset: 0; z-index: 60;
@@ -209,6 +232,25 @@
     text-shadow: 0 0 8px rgba(82,224,210,0.5);
   }
   #bootbtn:hover { background: rgba(82,224,210,0.1); }
+  #noticebtn {
+    display: inline-block; margin: 22px auto 0;
+    background: none; border: 1px solid var(--line); color: var(--ink-dim);
+    font-family: inherit; font-size: 0.78em; letter-spacing: 2px;
+    padding: 8px 18px; cursor: pointer;
+  }
+  #noticebtn:hover { border-color: var(--warn); color: var(--warn); }
+  #noticeoverlay {
+    display: none; position: fixed; inset: 0; z-index: 80;
+    background: rgba(4,18,29,0.96);
+    overflow-y: auto;
+  }
+  #noticeoverlay .inner {
+    max-width: 620px; margin: 8vh auto; padding: 24px;
+    border: 1px solid var(--line); background: var(--panel);
+    font-size: 0.85em; line-height: 1.8;
+  }
+  #noticeoverlay h2 { color: var(--warn); letter-spacing: 3px; font-size: 1em; margin-top: 0; }
+  #noticeoverlay .noticerow { border-left: 2px solid var(--warn); padding: 6px 0 6px 10px; margin-bottom: 10px; letter-spacing: 1px; }
   /* ---- Meeting / endings ---- */
   .reassigned {
     color: var(--danger); border: 2px solid var(--danger);
@@ -233,11 +275,154 @@
   #log { font-size: 0.72em; color: var(--ink-dim); margin-top: 18px; line-height: 1.7; border-top: 1px dashed var(--line); padding-top: 8px; max-height: 130px; overflow-y: auto; }
   .footer-note { margin-top: 26px; font-size: 0.7em; color: var(--ink-dim); letter-spacing: 1px; }
   a { color: var(--accent); }
+  #musicbtn {
+    position: fixed; top: 12px; right: 14px; z-index: 70;
+    background: rgba(4,18,29,0.85);
+    border: 1px solid var(--line); color: var(--ink-dim);
+    font-family: inherit; font-size: 0.7em; letter-spacing: 2px;
+    padding: 6px 12px; cursor: pointer;
+  }
+  #musicbtn.on { color: var(--accent); border-color: var(--accent); text-shadow: 0 0 6px rgba(82,224,210,0.4); }
+  #helpbtn {
+    position: fixed; top: 12px; right: 148px; z-index: 70;
+    background: rgba(4,18,29,0.85);
+    border: 1px solid var(--line); color: var(--ink-dim);
+    font-family: inherit; font-size: 0.7em; letter-spacing: 2px;
+    padding: 6px 12px; cursor: pointer;
+  }
+  #helpoverlay {
+    display: none; position: fixed; inset: 0; z-index: 80;
+    background: rgba(4,18,29,0.96);
+    overflow-y: auto;
+  }
+  #helpoverlay .inner {
+    max-width: 620px; margin: 8vh auto; padding: 24px;
+    border: 1px solid var(--line); background: var(--panel);
+    font-size: 0.85em; line-height: 1.8;
+  }
+  #helpoverlay h2 { color: var(--accent); letter-spacing: 3px; font-size: 1em; margin-top: 0; }
+  #helpoverlay b { color: var(--accent); }
+  #cabinetbtn {
+    position: fixed; top: 12px; right: 300px; z-index: 70;
+    background: rgba(4,18,29,0.85);
+    border: 1px solid var(--line); color: var(--ink-dim);
+    font-family: inherit; font-size: 0.7em; letter-spacing: 2px;
+    padding: 6px 12px; cursor: pointer;
+  }
+  #cabinetoverlay {
+    display: none; position: fixed; inset: 0; z-index: 80;
+    background: rgba(4,18,29,0.96);
+    overflow-y: auto;
+  }
+  #cabinetoverlay .inner {
+    max-width: 620px; margin: 8vh auto; padding: 24px;
+    border: 1px solid var(--line); background: var(--panel);
+    font-size: 0.85em; line-height: 1.8;
+  }
+  #cabinetoverlay h2 { color: var(--accent); letter-spacing: 3px; font-size: 1em; margin-top: 0; }
+  #cabinetoverlay h3 { color: var(--ink); letter-spacing: 2px; font-size: 0.85em; border-top: 1px dashed var(--line); padding-top: 12px; margin-top: 16px; }
+  #cabinetoverlay .filerow { border-left: 2px solid var(--lock); padding: 6px 0 6px 10px; margin-bottom: 8px; font-size: 0.92em; }
+  #cabinetoverlay .fileweek { color: var(--ink-dim); font-size: 0.85em; letter-spacing: 1px; }
+  #cabinetoverlay .filenote { color: var(--ink-dim); }
+  #cabinetoverlay .contractrow.met { border-left-color: var(--lock); }
+  #cabinetoverlay .contractrow.unmet { border-left-color: var(--ink-dim); }
+  #stat-risk { border-color: var(--danger); min-width: 150px; }
+  #stat-risk b { font-size: 0.95em; }
+  #app { transition: filter .8s; }
+  .card { position: relative; }
+  .narrator {
+    color: var(--ink-dim); font-style: italic; font-size: 0.8em;
+    margin-bottom: 12px; letter-spacing: 1px;
+    animation: pulse 3.5s infinite;
+  }
+  .card.dissoc .flavor { animation: textdrift 5s ease-in-out infinite; }
+  @keyframes textdrift {
+    0%, 100% { letter-spacing: 0; }
+    50% { letter-spacing: 0.7px; }
+  }
+  .inkstamp {
+    position: absolute; top: 34%; left: 50%; z-index: 5; pointer-events: none;
+    transform: translate(-50%, -50%) rotate(-12deg);
+    border: 3px solid var(--lock); color: var(--lock);
+    font-size: 2em; padding: 4px 20px; letter-spacing: 8px;
+    animation: inkIn .9s ease-out forwards;
+  }
+  @keyframes inkIn {
+    0% { transform: translate(-50%, -50%) rotate(-12deg) scale(2.4); opacity: 0; }
+    35% { transform: translate(-50%, -50%) rotate(-12deg) scale(1); opacity: 0.95; }
+    75% { opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) rotate(-12deg) scale(1); opacity: 0; }
+  }
+  .steal-anim { animation: stealOut 1s ease-in forwards; }
+  @keyframes stealOut {
+    30% { transform: translateX(-8px); }
+    100% { transform: translateX(135%); opacity: 0; }
+  }
+  .balloon {
+    position: fixed; bottom: -18%; left: 60%; z-index: 76; pointer-events: none;
+    width: 44px; height: 56px;
+    border-radius: 50% 50% 48% 52% / 55% 55% 45% 45%;
+    background: var(--danger); opacity: 0.85;
+    animation: balloonUp 9s linear forwards;
+  }
+  .balloon::after {
+    content: ''; position: absolute; top: 100%; left: 50%;
+    width: 1px; height: 74px; background: var(--ink-dim);
+  }
+  @keyframes balloonUp {
+    0% { bottom: -18%; transform: translateX(0); }
+    50% { transform: translateX(-22px); }
+    100% { bottom: 112%; transform: translateX(6px); }
+  }
+  #contractline {
+    font-size: 0.72em; color: var(--warn); letter-spacing: 1px;
+    margin: -6px 0 14px; min-height: 1em;
+  }
+  .formfield {
+    display: flex; justify-content: space-between; align-items: center;
+    border: 1px dashed var(--line); padding: 8px 12px; margin-bottom: 6px;
+    font-size: 0.82em; cursor: pointer; color: var(--ink-dim);
+  }
+  .formfield.filled { border-style: solid; border-color: var(--accent); color: var(--ink); cursor: default; }
+  .formfield .fv { color: var(--accent); }
+  .savebtn {
+    background: none; border: 1px dashed var(--ink-dim); color: var(--ink-dim);
+    font-family: inherit; font-size: 0.7em; letter-spacing: 2px;
+    padding: 6px 14px; cursor: pointer; margin: 0 4px;
+  }
 </style>
 </head>
 <body>
 <div id="crt"></div>
 <div id="flicker"></div>
+<button id="musicbtn" title="Ambient hum. Generated by the building itself.">♪ AMBIENT: OFF</button>
+<button id="helpbtn" title="The employee handbook. Abridged.">? HANDBOOK</button>
+<button id="cabinetbtn" title="Everything you've quietly kept.">🗄 FILE CABINET</button>
+<div id="cabinetoverlay"><div class="inner">
+  <h2>THE FILE CABINET</h2>
+  <div style="color:var(--ink-dim);font-size:0.85em;">Nothing in here appears on the company's tracker. That was always the point.</div>
+  <div id="cabinetcontent"></div>
+  <button class="choice" id="cabinetclose" style="margin-top:14px;">Close the drawer</button>
+</div></div>
+<div id="noticeoverlay"><div class="inner">
+  <h2>POLICY NOTICES</h2>
+  <div style="color:var(--ink-dim);font-size:0.85em;">Everything that changed this week. None of it was hidden. It just wasn't going to fit on the boot screen.</div>
+  <div id="noticecontent"></div>
+  <button class="choice" id="noticeclose" style="margin-top:14px;">Acknowledge and close</button>
+</div></div>
+<div id="helpoverlay"><div class="inner">
+  <h2>EMPLOYEE HANDBOOK (ABRIDGED)</h2>
+  <b>Sanity</b> is your health. At zero, you burn out and the run ends.<br>
+  <b>Time</b> resets each morning. Run out and you enter Crunch: sanity costs rise 50%.<br>
+  <b>Credit</b> is what your work is worth. Every result you produce appears on the <b>At Risk tracker</b> (top bar, and in full at end of day).<br>
+  <b>Paper Trails</b> lock an item so it cannot be claimed. Locks cost Time. Targets freeze at midnight Thursday.<br>
+  <b>Friday, 4:00 PM:</b> Director Miller reads the week aloud and claims your most valuable unlocked item. Later weeks, he claims more. Lock everything and he claims nothing.<br>
+  <b>Reputation</b> matters at the edges. Below 30, you may not decline evening "opportunities." At 70 or above, your standing shields your single best unlocked item from being claimed (he cannot publicly take the headline win of someone that visible).<br>
+  <b>PTO</b> skips a card. Its use is noted.<br>
+  <b>Leverage</b> is paid at week's end and spent on Saturdays, on the version of you that leaves. Three purchases make up the Escape Plan. Complete it.<br><br>
+  This handbook is provided for your convenience. It is not a contract. Nothing is a contract.<br><br>
+  <button class="choice" id="helpclose">Return to work</button>
+</div></div>
 
 <div id="interstitial"><div class="big" id="int-big"></div><div class="sub" id="int-sub"></div></div>
 
@@ -258,18 +443,20 @@
       <div class="stat" id="stat-credit">Credit <b id="s-credit">0</b></div>
       <div class="stat" id="stat-rep">Reputation <b id="s-rep">50</b></div>
       <div class="stat" id="stat-pto">PTO <b id="s-pto">2</b></div>
+      <div class="stat" id="stat-risk">At Risk <b id="s-risk">none</b></div>
       <div id="crunchtag">CRUNCH</div>
     </div>
+    <div id="contractline"></div>
     <div class="card" id="card"></div>
     <div id="log"></div>
-    <div class="footer-note">CORESTONE DYNAMICS · OPERATIONS WING · THIS TERMINAL IS MONITORED FOR YOUR SAFETY</div>
+    <div class="footer-note">EVERWELL GROUP · OPERATIONS WING · THIS TERMINAL IS MONITORED FOR YOUR SAFETY</div>
   </div>
 </div>
 
 <script>
 'use strict';
 // =============================================================
-// FRIDAY MEETING — full-week vertical slice (v0.2)
+// FRIDAY MEETING: full-week vertical slice (v0.2)
 // Balance v0.1 per docs/Friday_Meeting_Design_Doc.md
 // All names fictional. Boss name is a placeholder pending lore thread.
 // =============================================================
@@ -280,8 +467,10 @@ const BOSS = 'Director Miller';
 // ---------- meta-progression (persists across weeks via localStorage) ----------
 const META_KEY = 'fm_meta_v1';
 function loadMeta() {
-  try { return Object.assign({ week: 1, leverage: 0, up: {} }, JSON.parse(localStorage.getItem(META_KEY)) || {}); }
-  catch (e) { return { week: 1, leverage: 0, up: {} }; }
+  const def = { week: 1, leverage: 0, up: {}, life: { plant: 2, friend: 2, hobby: 2 }, ninaTrust: false, presidentSeen: false,
+    fileCabinet: [], contractHistory: [], lastClaimLine: -1 };
+  try { return Object.assign(def, JSON.parse(localStorage.getItem(META_KEY)) || {}); }
+  catch (e) { return def; }
 }
 const META = loadMeta();
 function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
@@ -294,17 +483,104 @@ const STORE = [
   { id: 'templates',name: 'The Templates Folder',              cost: 10, desc: 'Paper trails cost 1 less Time. You\'ve done this before. You\'ll do it again.' },
   { id: 'lunch',    name: 'Standing Lunch with Chris',         cost: 10, desc: 'Start every week with Chris as an ally (one free lock per week).' },
   { id: 'pto',      name: 'Unused PTO, Actually Used',         cost: 8,  desc: '+1 PTO per week.' },
-  { id: 'portfolio',name: 'Portfolio Site, Built at Midnight', cost: 25, desc: 'ESCAPE PLAN 1/3 — your work, with your name on it, on a domain they don\'t own.', escape: true },
-  { id: 'network',  name: 'The Network',                       cost: 25, desc: 'ESCAPE PLAN 2/3 — old colleagues. The people you walked to parking lots.', escape: true },
-  { id: 'savings',  name: 'Six Months of Runway',              cost: 30, desc: 'ESCAPE PLAN 3/3 — the number that changes the sound of your voice in meetings.', escape: true }
+  { id: 'portfolio',name: 'Portfolio Site, Built at Midnight', cost: 25, desc: 'ESCAPE PLAN 1/3: your work, with your name on it, on a domain they don\'t own.', escape: true },
+  { id: 'network',  name: 'The Network',                       cost: 25, desc: 'ESCAPE PLAN 2/3: old colleagues. The people you walked to parking lots.', escape: true },
+  { id: 'savings',  name: 'Six Months of Runway',              cost: 30, desc: 'ESCAPE PLAN 3/3: the number that changes the sound of your voice in meetings.', escape: true }
 ];
 function escapeReady() { return META.up.portfolio && META.up.network && META.up.savings; }
+
+// ---------- weekly contracts (optional Monday objectives) ----------
+const CONTRACTS = [
+  { id: 'clean',     name: 'THE CLEAN WEEK', desc: 'Never enter Crunch',        check: () => !S.crunched },
+  { id: 'archivist', name: 'THE ARCHIVIST',  desc: 'End with 3+ items locked',  check: () => S.items.filter(i => i.locked).length >= 3 },
+  { id: 'stoic',     name: 'THE STOIC',      desc: 'End with 60+ Sanity',       check: () => S.sanity >= 60 },
+  { id: 'diplomat',  name: 'THE DIPLOMAT',   desc: 'End with 60+ Reputation',   check: () => S.rep >= 60 },
+  { id: 'ghost',     name: 'THE GHOST',      desc: 'Use no PTO',                check: () => !S.ptoUsed }
+];
+
+// ---------- weekly modifiers (one policy per week, announced at boot) ----------
+const MODIFIERS = [
+  { id: 'calm',   boot: 'NO ADDITIONAL POLICY UPDATES THIS WEEK. THIS IS NOT REASSURING.' },
+  { id: 'audit',  boot: 'POLICY UPDATE: AUDIT WEEK. DOCUMENTATION COSTS MORE, AND IS WORTH MORE.' },
+  { id: 'quota',  boot: 'POLICY UPDATE: A MID-WEEK CHECKPOINT HAS BEEN INTRODUCED. 15 CREDIT BY WEDNESDAY EOD.' },
+  { id: 'vendor', boot: 'NOTICE: A VENDOR HAS BEEN GRANTED "STRATEGIC PARTNER" STATUS. THEY HAVE YOUR DIRECT LINE.' }
+];
+const MOD = META.week === 1 ? MODIFIERS[0] : MODIFIERS[Math.floor(Math.random() * MODIFIERS.length)];
+
+// ---------- the boss's claim line (varies so Friday never reads the same twice in a row) ----------
+const CLAIM_LINES = [
+  () => '"And I\'m especially proud," he says, warming like a photocopier, "of what <i>we</i>, and I\'ll take a little credit here," (laughter, obedient) "accomplished on this one."',
+  () => '"This is exactly the kind of thing," he says, already reaching for the pointer, "that happens when a team pulls together. I like to think I set the tone for that."',
+  () => '"Huge win," he says, nodding at no one in particular, "and look, I\'m not going to stand up here and take all the credit." He stands up there and takes most of it.',
+  () => '"You know," he says, "I actually pushed hard for this one behind the scenes." Nobody recalls seeing him push anything. The slide does not ask for corroboration.',
+  () => '"I\'m proud of the team on this," he says, meaning himself, in the plural he has used since his first promotion and never once revisited.',
+  () => '"Big one," he says, tapping the slide twice like a man checking a watch that stopped years ago. "Glad I could help steer this home."'
+];
+function pickClaimLine() {
+  let idx = Math.floor(Math.random() * CLAIM_LINES.length);
+  if (CLAIM_LINES.length > 1) {
+    while (idx === META.lastClaimLine) idx = Math.floor(Math.random() * CLAIM_LINES.length);
+  }
+  META.lastClaimLine = idx; saveMeta();
+  return CLAIM_LINES[idx];
+}
+
+// ---------- the chairs (something is subtly, never-explained-ly different every Monday) ----------
+const CHAIR_DETAILS = [
+  'Chairs in a perfect circle, like someone measured it.',
+  'Chairs in a perfect circle. One more chair today than there was last week. Nobody counts out loud.',
+  'Chairs in a perfect circle, a half-foot tighter than last week. Nobody mentions the elbow room.',
+  'Chairs in a perfect circle. One of them faces slightly toward the door today, as if it got there first.',
+  'Chairs in a perfect circle, one short. Nobody stands. Nobody does the math out loud.',
+  'Chairs in a perfect circle. The seat that\'s usually cold is warm. Nobody sat in it before you did.',
+  'Chairs in a perfect circle, rotated one position clockwise from last week. Everyone finds their new seat without being told which one it is.',
+  'Chairs in a perfect circle. A name is written faintly in pencil under the seat by the door. It isn\'t anyone who still works here.',
+  'Chairs in a perfect circle, exactly as many as there are employees. This could be a coincidence. It has been a coincidence for months.',
+  'Chairs in a perfect circle. Today it isn\'t quite a circle. Nobody has fixed it. Nobody has said so, either.',
+  'Chairs in a perfect circle, freshly wiped down, all of them, though nothing was spilled that anyone will admit to.',
+  'Chairs in a perfect circle. Yours is very slightly warmer than the others, like it was expecting you specifically.'
+];
+
+// ---------- narrator inversion (below 30 Sanity, the terminal gets ahead of you) ----------
+const NARRATOR = [
+  'You will choose the safe option. You are known here.',
+  'You have already decided. The terminal is simply waiting.',
+  'Attendance is what you are.',
+  'The choice was noted before you made it.',
+  'Go ahead. It has already been minuted.'
+];
+
+// ---------- card unlock schedule (new saves start lean; files are added weekly) ----------
+const CARD_UNLOCKS = {
+  quickSync: 1, fireDrill: 1, portal: 1, complaint: 1, coverShift: 1, partnership: 1,
+  replyAll: 1, dataRequest: 1, training: 1, theNumbers: 1, presidentDeck: 1, ninaCoffee: 1,
+  realignment: 2, offboarding: 2, rumor: 2,
+  clarification: 3, lineItem: 3, circleBack: 3, farewell: 3,
+  hrConsult: 4, facilitiesTicket: 4, headStart: 4,
+  upstream: 5, parallelTracker: 5, retrospective: 5, matcha: 5,
+  perReed: 6, procurement: 6,
+  austerity: 7,
+  thePriority: 2, theBookshelf: 3, theHandoff: 4,
+  kudosChannel: 1, passwordReset: 1, postMeetingMeeting: 1, brokenPrinter: 1, sharedCalendar: 1,
+  theBackfill: 2, onboardingBuddy: 2, allStaffSurvey: 3
+};
 
 const S = {
   sanity: 100, time: 10, maxTime: 10, credit: 0, rep: 50, pto: 2,
   day: 0, items: [], ally: false, allyUsed: false,
-  queue: [], log: [], over: false
+  queue: [], log: [], over: false, vendor: false,
+  drains: [], crunched: false, ptoUsed: false, contract: null, lifeDelta: 0,
+  declines: 0, accepts: 0, rumorFestering: false, rumorSquashed: false,
+  hrFlagged: false, millerPleased: false, millerAnnoyed: false, cabinetPinned: false
 };
+let CONTEXT = 'The morning';
+
+const VENDOR_PINGS = [
+  '"Just circling back on the invoice!" The renewal window opens in six months. It has been six months away for three weeks now.',
+  '"Bumping this to the top of your inbox!" It rises. It always rises.',
+  '"Hope you\'re well! Any movement on our end?" There is no movement. There is a date. They have the date.',
+  '"Quick nudge on this!" The nudge is neither quick nor, at this point, a nudge.'
+];
 
 const $ = id => document.getElementById(id);
 
@@ -326,18 +602,20 @@ function inCrunch() { return S.time <= 0; }
 
 function apply(d, opts) {
   opts = opts || {};
-  // sanity cost pipeline: base → week-4+ "the building has settled" (+1) → therapy (-1) → crunch (×1.5)
+  // sanity cost pipeline: base → settling surcharge (wk3 +1, wk6 +2) → therapy (-1) → crunch (×1.5)
   let sanityCost = d.sanity || 0;
-  if (sanityCost > 0 && META.week >= 4) sanityCost += 1;
+  if (sanityCost > 0) sanityCost += META.week >= 6 ? 2 : META.week >= 3 ? 1 : 0;
   if (sanityCost > 0 && META.up.therapy) sanityCost = Math.max(1, sanityCost - 1);
   if (sanityCost > 0 && inCrunch()) sanityCost = Math.ceil(sanityCost * 1.5);
 
   if (d.time) {
     S.time = clamp(S.time - d.time, 0, 99);
+    if (S.time === 0) S.crunched = true;
     floatDelta($('stat-time'), '-' + d.time + ' TIME', false);
   }
   if (sanityCost) {
     S.sanity = clamp(S.sanity - sanityCost, 0, 100);
+    S.drains.push({ src: (opts.src || CONTEXT), amt: sanityCost });
     floatDelta($('stat-sanity'), '-' + sanityCost + ' SANITY' + (sanityCost !== (d.sanity||0) ? ' (CRUNCH)' : ''), false);
   }
   if (d.heal) {
@@ -362,21 +640,129 @@ function apply(d, opts) {
   return true;
 }
 
+// ---------- tiny procedural SFX (independent of the ambient toggle) ----------
+let SFXC = null;
+function sfx(kind) {
+  try {
+    if (!SFXC) SFXC = new (window.AudioContext || window.webkitAudioContext)();
+    const t = SFXC.currentTime;
+    const o = SFXC.createOscillator(), g = SFXC.createGain();
+    o.connect(g); g.connect(SFXC.destination);
+    if (kind === 'click') {
+      o.type = 'square'; o.frequency.value = 740; g.gain.value = 0.025;
+      g.gain.linearRampToValueAtTime(0, t + 0.05); o.start(t); o.stop(t + 0.05);
+    } else if (kind === 'lock') {
+      o.type = 'sine'; o.frequency.setValueAtTime(520, t); o.frequency.setValueAtTime(780, t + 0.09);
+      g.gain.value = 0.05; g.gain.linearRampToValueAtTime(0, t + 0.25); o.start(t); o.stop(t + 0.25);
+    } else if (kind === 'stamp') {
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.18);
+      g.gain.value = 0.08; g.gain.linearRampToValueAtTime(0, t + 0.2); o.start(t); o.stop(t + 0.2);
+    } else if (kind === 'bad') {
+      o.type = 'triangle'; o.frequency.setValueAtTime(300, t); o.frequency.exponentialRampToValueAtTime(110, t + 0.28);
+      g.gain.value = 0.05; g.gain.linearRampToValueAtTime(0, t + 0.3); o.start(t); o.stop(t + 0.3);
+    } else if (kind === 'ping') {
+      o.type = 'sine'; o.frequency.setValueAtTime(1180, t); o.frequency.setValueAtTime(1560, t + 0.07);
+      g.gain.value = 0.035; g.gain.linearRampToValueAtTime(0, t + 0.16); o.start(t); o.stop(t + 0.16);
+    } else if (kind === 'buy') {
+      o.type = 'sine'; o.frequency.setValueAtTime(660, t); o.frequency.setValueAtTime(990, t + 0.08);
+      g.gain.value = 0.05; g.gain.linearRampToValueAtTime(0, t + 0.22); o.start(t); o.stop(t + 0.22);
+    } else if (kind === 'day') {
+      o.type = 'sine'; o.frequency.setValueAtTime(392, t); o.frequency.setValueAtTime(523.25, t + 0.18);
+      g.gain.value = 0.045; g.gain.linearRampToValueAtTime(0, t + 0.5); o.start(t); o.stop(t + 0.5);
+    } else if (kind === 'type') {
+      // typewriter strike: a sharp metallic snap plus a dull body thock underneath
+      const snap = SFXC.createBufferSource();
+      snap.buffer = noiseBuffer();
+      snap.playbackRate.value = 0.9 + Math.random() * 0.3;
+      const bp = SFXC.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = 1900 + Math.random() * 1100; bp.Q.value = 2.8;
+      const sg = SFXC.createGain();
+      sg.gain.setValueAtTime(0.055, t);
+      sg.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+      snap.connect(bp); bp.connect(sg); sg.connect(SFXC.destination);
+      snap.start(t); snap.stop(t + 0.03);
+      const body = SFXC.createBufferSource();
+      body.buffer = noiseBuffer();
+      body.playbackRate.value = 0.5 + Math.random() * 0.2;
+      const lp = SFXC.createBiquadFilter();
+      lp.type = 'lowpass'; lp.frequency.value = 320; lp.Q.value = 1;
+      const bg2 = SFXC.createGain();
+      bg2.gain.setValueAtTime(0.05, t);
+      bg2.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      body.connect(lp); lp.connect(bg2); bg2.connect(SFXC.destination);
+      body.start(t); body.stop(t + 0.05);
+    } else if (kind === 'ding') {
+      // the carriage-return bell, faint and a little too patient
+      o.type = 'sine'; o.frequency.value = 1150;
+      g.gain.setValueAtTime(0.038, t);
+      g.gain.exponentialRampToValueAtTime(0.0008, t + 0.9);
+      o.start(t); o.stop(t + 0.9);
+    } else if (kind === 'riser') {
+      // the flashback swell: noise rising through a sweeping filter, then a hard cut
+      const nb = SFXC.createBufferSource();
+      nb.buffer = flatNoiseBuffer();
+      const bp = SFXC.createBiquadFilter();
+      bp.type = 'bandpass'; bp.Q.value = 1.3;
+      bp.frequency.setValueAtTime(140, t);
+      bp.frequency.exponentialRampToValueAtTime(2800, t + 2.1);
+      const rg = SFXC.createGain();
+      rg.gain.setValueAtTime(0.004, t);
+      rg.gain.exponentialRampToValueAtTime(0.16, t + 2.1);
+      rg.gain.setValueAtTime(0.0001, t + 2.18);
+      nb.connect(bp); bp.connect(rg); rg.connect(SFXC.destination);
+      nb.start(t); nb.stop(t + 2.2);
+    }
+  } catch (e) {}
+}
+
+let _flatBuf = null;
+function flatNoiseBuffer() {
+  if (_flatBuf) return _flatBuf;
+  const len = Math.floor(SFXC.sampleRate * 2.4);
+  _flatBuf = SFXC.createBuffer(1, len, SFXC.sampleRate);
+  const d = _flatBuf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  return _flatBuf;
+}
+
+let _noiseBuf = null;
+function noiseBuffer() {
+  if (_noiseBuf) return _noiseBuf;
+  const len = Math.floor(SFXC.sampleRate * 0.06);
+  _noiseBuf = SFXC.createBuffer(1, len, SFXC.sampleRate);
+  const d = _noiseBuf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  return _noiseBuf;
+}
+
 function render() {
   $('s-sanity').textContent = S.sanity;
   $('s-time').textContent = S.time;
   $('s-credit').textContent = S.credit;
   $('s-rep').textContent = S.rep;
   $('s-pto').textContent = S.pto;
-  $('daylabel').textContent = (DAYS[S.day] || '—') + ' · WEEK ' + META.week;
+  $('daylabel').textContent = (DAYS[S.day] || '·') + ' · WEEK ' + META.week;
   const bar = $('sanitybar');
   bar.style.width = S.sanity + '%';
   bar.style.background = S.sanity > 60 ? 'var(--accent)' : S.sanity > 30 ? 'var(--warn)' : 'var(--danger)';
   const crunch = inCrunch();
   $('crunchtag').style.display = crunch ? 'block' : 'none';
   document.body.classList.toggle('crunch', crunch);
+  // the tracker never sleeps: the current target is always visible
+  const riskTop = topUnlocked();
+  if (riskTop) {
+    const nm = riskTop.name.length > 20 ? riskTop.name.slice(0, 19) + '…' : riskTop.name;
+    $('s-risk').textContent = nm + ' +' + riskTop.value;
+    $('stat-risk').style.borderColor = 'var(--danger)';
+  } else {
+    $('s-risk').textContent = S.items.length ? 'all secured' : 'none';
+    $('stat-risk').style.borderColor = S.items.length ? 'var(--lock)' : 'var(--line)';
+  }
   $('log').innerHTML = S.log.slice(-8).map(l => '&raquo; ' + l).join('<br>');
   $('log').scrollTop = $('log').scrollHeight;
+  // the office darkens as your Time runs out
+  $('app').style.filter = 'brightness(' + (crunch ? 0.8 : S.time <= 2 ? 0.9 : 1) + ')';
+  updateMusicMood();
 }
 
 function log(t) { S.log.push(t); }
@@ -394,25 +780,58 @@ function costLabel(d) {
 
 function showCard(c, onDone) {
   const el = $('card');
+  CONTEXT = c.title;
   el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
-  let html = '<h2>' + c.title + '</h2><div class="tag">' + (c.tag || 'ENCOUNTER') + '</div><div class="flavor">' + c.flavor + '</div>';
-  html += c.choices.map((ch, i) =>
-    '<button class="choice" data-i="' + i + '">' + ch.label + '<span class="cost">' + costLabel(ch.delta) + '</span></button>'
-  ).join('');
+  // below 30 Sanity: the text drifts, words repeat repeat, and the terminal
+  // starts describing your choices before you make them
+  const dissoc = S.sanity < 30 && S.sanity > 0;
+  el.classList.toggle('dissoc', dissoc);
+  let flavor = c.flavor;
+  if (dissoc) {
+    const words = flavor.split(' ');
+    if (words.length > 6) {
+      const i = 3 + Math.floor(Math.random() * (words.length - 4));
+      if (!/[<>"']/.test(words[i])) words.splice(i, 0, words[i]);
+      flavor = words.join(' ');
+    }
+  }
+  let html = '<h2>' + c.title + '</h2><div class="tag">' + (c.tag || 'ENCOUNTER') + '</div><div class="flavor">' + flavor + '</div>';
+  if (dissoc) {
+    html += '<div class="narrator">' + NARRATOR[Math.floor(Math.random() * NARRATOR.length)] + '</div>';
+  }
+  // the vendor never stops. once per day, at most, they circle back.
+  if (S.vendor && S.vendorPingedDay !== S.day && Math.random() < 0.6 && !S.over) {
+    S.vendorPingedDay = S.day;
+    html = '<div class="event" style="border-left-color: var(--warn);">INBOX · ' + VENDOR_PINGS[Math.floor(Math.random() * VENDOR_PINGS.length)] + '</div>' + html;
+    setTimeout(() => { if (!S.over) { sfx('ping'); apply({ sanity: 2 }); log('The vendor circled back. Again.'); } }, 400);
+  }
+  html += c.choices.map((ch, i) => {
+    // below 30 Reputation, declining is a privilege you no longer have
+    if (ch.decline && S.rep < 30) {
+      return '<button class="choice" disabled>' + ch.label + '<span class="cost">unavailable at your current standing</span></button>';
+    }
+    return '<button class="choice" data-i="' + i + '">' + ch.label + '<span class="cost">' + costLabel(ch.delta) + '</span></button>';
+  }).join('');
   if (c.ptoAllowed && S.pto > 0) {
-    html += '<button class="choice pto" data-i="pto">Use PTO — skip this entirely<span class="cost">-1 PTO · -3 Rep (its use is noted)</span></button>';
+    html += '<button class="choice pto" data-i="pto">Use PTO: skip this entirely<span class="cost">-1 PTO · -3 Rep (its use is noted)</span></button>';
   }
   el.innerHTML = html;
   el.querySelectorAll('button.choice').forEach(btn => {
+    if (btn.disabled) return;
     btn.onclick = () => {
+      sfx('click');
       el.querySelectorAll('button.choice').forEach(b => b.disabled = true);
       if (btn.dataset.i === 'pto') {
+        S.ptoUsed = true;
         apply({ pto: 1, rep: -3 });
         log('PTO used on "' + c.title + '." A form appears in your inbox: "We support your rest."');
         showResult('You take the afternoon. Your badge logs the exact minute you leave.', onDone);
         return;
       }
       const ch = c.choices[btn.dataset.i];
+      if (ch.life) S.lifeDelta += ch.life;
+      if (ch.decline) S.declines++;
+      if (ch.voluntold) S.accepts++;
       const alive = apply(ch.delta);
       if (!alive) return;
       log(ch.log || ch.label);
@@ -433,8 +852,22 @@ function interstitial(big, sub, then) {
   const el = $('interstitial');
   $('int-big').textContent = big;
   $('int-sub').textContent = sub;
-  el.style.display = 'flex';
-  setTimeout(() => { el.style.display = 'none'; then(); }, 1900);
+  // CRT power-off: the day collapses to a bright line, then the next one boots
+  const isFriday = big === 'FRIDAY';
+  $('int-big').style.color = isFriday ? 'var(--danger)' : '';
+  $('int-big').style.textShadow = isFriday ? '0 0 26px rgba(224,121,106,0.6)' : '';
+  document.body.classList.add('tvoff');
+  setTimeout(() => {
+    sfx(isFriday ? 'riser' : 'day');
+    el.style.display = 'flex';
+    setTimeout(() => {
+      el.style.display = 'none';
+      document.body.classList.remove('tvoff');
+      document.body.classList.add('tvon');
+      setTimeout(() => document.body.classList.remove('tvon'), 500);
+      then();
+    }, 1900);
+  }, 480);
 }
 
 // ---------- card pool ----------
@@ -443,7 +876,7 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 const CARDS = {
   standup: () => ({
     title: 'Daily Standup', tag: 'MEETING · 9:15 AM', ptoAllowed: false,
-    flavor: 'Chairs in a perfect circle, like someone measured it. Nobody remembers whose idea the circle was. It\'s your turn.',
+    flavor: CHAIR_DETAILS[(META.week - 1) % CHAIR_DETAILS.length] + ' Nobody remembers whose idea the circle was. It\'s your turn.',
     choices: [
       { label: 'Give the 30-second version', delta: { time: 2 },
         result: 'You kept it tight. The room nods in unison, half a second too late.',
@@ -456,7 +889,7 @@ const CARDS = {
           showResult('Standup adjourns. The circle of chairs remains, waiting.', done);
         } },
       { label: 'Actually explain the shared-drive outage properly', delta: { time: 3, credit: 3, creditItem: 'Shared-drive outage, explained' },
-        result: 'Thorough. No ambush questions later. A small, appreciative silence — the kind that feels almost like being watched.' }
+        result: 'Thorough. No ambush questions later. A small, appreciative silence, the kind that feels almost like being watched.' }
     ]
   }),
   quickSync: () => ({
@@ -471,7 +904,7 @@ const CARDS = {
   }),
   fireDrill: () => ({
     title: 'Emergency Meeting', tag: 'MEETING · UNSCHEDULED', ptoAllowed: true,
-    flavor: 'A calendar invite arrives for a meeting that started four minutes ago. Subject: "URGENT — Alignment." No agenda. Attendance is visible to everyone.',
+    flavor: 'A calendar invite arrives for a meeting that started four minutes ago. Subject: "URGENT: Alignment." No agenda. Attendance is visible to everyone.',
     choices: [
       { label: 'Drop everything and go', delta: { time: 3, sanity: 10, credit: 9, creditItem: 'Urgent alignment, achieved' },
         result: 'Forty minutes to establish that everyone was already aligned. You are thanked for your flexibility, which is now expected.' },
@@ -479,27 +912,42 @@ const CARDS = {
         result: 'You walk in mid-sentence. The sentence pauses. It resumes only after you sit.' }
     ]
   }),
-  oneOnOne: () => ({
+  oneOnOne: () => {
+    // Half the time, the 1:1 simply doesn't happen. This is a feature of his calendar, not a bug.
+    if (Math.random() < 0.5) return {
+      title: '1:1 with ' + BOSS + ' · CANCELLED', tag: 'MEETING · DECLINED 4 MINUTES BEFORE START', ptoAllowed: false,
+      flavor: 'The decline arrives at 10:56 for the 11:00. No reason given. No reschedule offered. The invite simply folds itself away, like it was never load-bearing. You had prepared talking points. One of them was the word "compensation," written small, in the margin, where it has lived for three quarters now. A performance conversation that never happens is a raise that never has to be declined.',
+      choices: [
+        { label: 'Email him your update anyway, in writing, on the record', delta: { time: 1, credit: 3, creditItem: 'Weekly update, in writing' },
+          result: 'No reply. But it exists now, timestamped, quotable, and, unlike the meeting, impossible to cancel four minutes before it starts.' },
+        { label: 'Take the free half hour. You didn\'t want to see him anyway.', delta: { heal: 4 },
+          result: 'Thirty unsupervised minutes. You drink coffee at a window. Somewhere above, his calendar rearranges itself around the shape of everything he\'d rather not discuss.' }
+      ]
+    };
+    return {
     title: '1:1 with ' + BOSS, tag: 'MEETING · RECURRING · CAMERA ON', ptoAllowed: false,
-    flavor: BOSS + ' smiles the way the building smiles: at scheduled intervals. "So. What are we excited about this week? Don\'t be modest. Modesty is a form of withholding."',
+    flavor: BOSS + ' smiles the way the building smiles: at scheduled intervals. He seems mildly surprised the meeting is happening at all. So are you; it usually doesn\'t. "So. What are we excited about this week? Don\'t be modest. Modesty is a form of withholding."',
     choices: [
-      { label: 'Tell him about your best work — in detail', delta: { time: 2, rep: 5 },
+      { label: 'Tell him about your best work, in detail', delta: { time: 2, rep: 5 },
         result: 'He listens with total attention, writing nothing down. He never writes anything down. He never has to.',
         after: (done) => {
           const top = topUnlocked();
           if (top) {
             top.noticed = true;
-            $('card').insertAdjacentHTML('beforeend', '<div class="event">"' + top.name + '" is now <b>NOTICED</b>. Locking it will cost extra — it is being looked at.</div>');
+            $('card').insertAdjacentHTML('beforeend', '<div class="event">"' + top.name + '" is now <b>NOTICED</b>. Locking it will cost extra. It is being looked at.</div>');
             log('"' + top.name + '" was noticed by ' + BOSS + '.');
           }
           showResult('"Wonderful," he says. "Wonderful." The second one lands differently.', done);
         } },
-      { label: 'Deflect — describe your week in fog', delta: { time: 2, rep: -4 },
+      { label: 'Deflect: describe your week in fog', delta: { time: 2, rep: -4 },
         result: '"Processes," you say. "Throughput." He nods slowly. Somewhere, a note is made about your enthusiasm.' },
       { label: 'Redirect: praise your intern\'s growth instead', delta: { time: 2, rep: 2 },
-        result: '"Mentorship," he says, tasting the word. "That\'s a leadership quality. Mine, historically."' }
+        result: '"Mentorship," he says, tasting the word. "That\'s a leadership quality. Mine, historically."' },
+      { label: 'Ask about your performance review', delta: { time: 1, rep: -2, heal: 2 },
+        result: '"Great topic. Big topic. Let\'s give it the time it deserves. Offline." The meeting ends nine minutes early. You have discovered the only word that shortens meetings in this building, and you file it away like a weapon.' }
     ]
-  }),
+    };
+  },
   portal: () => ({
     title: 'The Portal Is Down', tag: 'TASK · SEVERITY: UNDEFINED', ptoAllowed: true,
     flavor: 'The Portal is down. Nobody can tell you precisely what the Portal does, only that it must be up. Three departments you\'ve never heard of are affected. One of them may not exist.',
@@ -528,7 +976,7 @@ const CARDS = {
         result: 'Chris exhales for the first time in days. You have gained something the org chart has no field for: an ally.',
         after: (done) => {
           S.ally = true;
-          $('card').insertAdjacentHTML('beforeend', '<div class="event"><b>ALLY GAINED: Chris.</b> Once this week, Chris will file a Paper Trail for you — free of charge, off the record.</div>');
+          $('card').insertAdjacentHTML('beforeend', '<div class="event"><b>ALLY GAINED: Chris.</b> Once this week, Chris will file a Paper Trail for you, free of charge, off the record.</div>');
           log('Ally gained: Chris.');
           showResult('"I owe you," Chris says. Chris is one of the few people here who keeps ledgers accurately.', done);
         } },
@@ -538,11 +986,11 @@ const CARDS = {
   }),
   partnership: () => ({
     title: 'The Partnership', tag: 'TASK · HIGH VISIBILITY', ptoAllowed: false,
-    flavor: 'An external partner wants to sign — the deal Operations has circled for two quarters. The contact asks for you by name, because you\'re the only one who ever answered their emails. This is the biggest thing that will happen here this week.',
+    flavor: 'An external partner wants to sign: the deal Operations has circled for two quarters. The contact asks for you by name, because you\'re the only one who ever answered their emails. This is the biggest thing that will happen here this week.',
     choices: [
       { label: 'Close it. Full push.', delta: { time: 4, sanity: 10, credit: 20, creditItem: 'Partnership closed' },
         result: 'Signed. For one full minute, the work feels like the thing the mission statement claims it is. The minute passes. The tracker updates.' },
-      { label: 'Close it carefully — loop in witnesses from day one', delta: { time: 5, sanity: 12, credit: 17, creditItem: 'Partnership closed, witnessed' },
+      { label: 'Close it carefully: loop in witnesses from day one', delta: { time: 5, sanity: 12, credit: 17, creditItem: 'Partnership closed, witnessed' },
         result: 'Signed, slower, in front of people. Three colleagues can now say the words "I watched them do it." Cheap insurance. Expensive week.' }
     ]
   }),
@@ -573,22 +1021,22 @@ const CARDS = {
       { label: 'Watch it fully, click every button sincerely', delta: { time: 3, heal: 3, credit: 2, creditItem: 'Wellness module, completed' },
         result: 'You are awarded a certificate. It has your name spelled correctly, which moves you more than the module did.' },
       { label: 'Let it run while you do real work', delta: { time: 2, sanity: 4 },
-        result: 'You pass the quiz on vibes. Question 4: "Balance is: (a) a gift you give yourself (b) a gift Corestone gives you." Both are marked correct.' }
+        result: 'You pass the quiz on vibes. Question 4: "Balance is: (a) a gift you give yourself (b) a gift Everwell gives you." Both are marked correct.' }
     ]
   }),
   presidentDeck: () => ({
     title: 'A Dashboard for Upstairs', tag: 'TASK · AUDIENCE: UNKNOWN', ptoAllowed: false,
-    flavor: BOSS + ' needs "something visual" for a presentation Upstairs. Upstairs is where The President is. You have never met The President. Nobody on this floor has met The President — but the elevator has a button that requires a key, so the evidence is strong.',
+    flavor: BOSS + ' needs "something visual" for a presentation Upstairs. Upstairs is where The President is. You have never met The President. Nobody on this floor has met The President. But the elevator has a button that requires a key, so the evidence is strong.',
     choices: [
       { label: 'Build it beautiful. Make the numbers sing.', delta: { time: 3, sanity: 6, credit: 14, creditItem: 'The Dashboard', noticeItem: true },
         result: 'It is the best thing you\'ve made all quarter. It is also, as of this moment, cargo.',
         after: (done) => {
-          $('card').insertAdjacentHTML('beforeend', '<div class="event">"The Dashboard" is <b>NOTICED</b> from birth — it was built to travel. Locking it will cost extra.</div>');
+          $('card').insertAdjacentHTML('beforeend', '<div class="event">"The Dashboard" is <b>NOTICED</b> from birth. It was built to travel. Locking it will cost extra.</div>');
           log('"The Dashboard" was built for Upstairs. Noticed on arrival.');
           showResult(BOSS + ' looks at it the way a courier looks at a package. "The President is going to love this," he says. The pronoun situation goes unexamined.', done);
         } },
-      { label: 'Build it plain — your name embedded in the data footer of every page', delta: { time: 4, sanity: 6, credit: 10, creditItem: 'The Dashboard (watermarked)', lockItem: true },
-        result: 'Less impressive. But your name runs through it like rebar — strip it out and the whole thing collapses into a slide about nothing. <span class="secure">It arrives on the tracker already 🔒 SECURED.</span>' }
+      { label: 'Build it plain, your name embedded in the data footer of every page', delta: { time: 4, sanity: 6, credit: 10, creditItem: 'The Dashboard (watermarked)', lockItem: true },
+        result: 'Less impressive. But your name runs through it like rebar. Strip it out and the whole thing collapses into a slide about nothing. <span class="secure">It arrives on the tracker already 🔒 SECURED.</span>' }
     ]
   }),
   realignment: () => ({
@@ -604,18 +1052,20 @@ const CARDS = {
           showResult('Leadership calls you "a utility player." You look up whether utility players get paid more. They do. Elsewhere.', done);
         } },
       { label: 'Ask, in writing, about a compensation adjustment', delta: { rep: -4, sanity: 4 },
-        result: '"Great question. The comp review cycle opens in Q3." It is currently Q3. "The next Q3." Your written question creates just enough friction that the transition is paused, pending alignment — your week, at least, stays yours.' }
+        result: '"Great question. The comp review cycle opens in Q3." It is currently Q3. "The next Q3." Your written question creates just enough friction that the transition is paused, pending alignment. Your week, at least, stays yours.' }
     ]
   }),
   offboarding: () => ({
     title: 'The Offboarding', tag: 'MEETING · ROOM BOOKED FOR 15 MINUTES', ptoAllowed: false,
-    flavor: 'You\'re asked to sit in on a termination, "as a witness." Dave from Records is let go. ' + BOSS + ' does not look at Dave once — not during the preamble, not during the word "restructuring," not during the question Dave asks twice. He looks at his laptop the entire meeting, scrolling gently, as though the meeting were happening somewhere on his screen and Dave were the interruption.',
+    flavor: 'You\'re asked to sit in on a termination, "as a witness." Dave from Records is let go. ' + BOSS + ' does not look at Dave once. Not during the preamble, not during the word "restructuring," not during the question Dave asks twice. He looks at his laptop the entire meeting, scrolling gently, as though the meeting were happening somewhere on his screen and Dave were the interruption.',
     choices: [
       { label: 'Walk Dave to the parking lot. Carry the box.', delta: { time: 2, sanity: 3 },
         result: '"Fourteen years," Dave says at the curb, "and he never looked up." You carry the box. It is very light. Fourteen years, and the box is light.',
         after: (done) => {
-          META.leverage += 3; saveMeta();
-          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+3 LEVERAGE.</b> The company has no field for this. Dave will land somewhere — people always do — and people remember who walked them out.</div>');
+          META.leverage += 3;
+          META.fileCabinet.push({ title: 'Dave, Walked Out', week: META.week, note: 'Fourteen years. The box was light. You carried it anyway.' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+3 LEVERAGE.</b> The company has no field for this. Dave will land somewhere, people always do, and people remember who walked them out.</div>');
           log('Walked Dave out. +3 Leverage. The building did not record it, which is how you know it was real.');
           showResult('The vacancy is posted before you\'re back at your desk. It asks for a "self-starter."', done);
         } },
@@ -628,9 +1078,11 @@ const CARDS = {
     flavor: 'By 10 AM, everyone knows Sarah and Tom are dating. Sarah and Tom are not dating. You know the rumor\'s point of origin precisely, because he told it to you first this morning, door open, delighted: ' + BOSS + '. "They\'d be cute," he said, in the tone of a man moving pieces on a board only he can see.',
     choices: [
       { label: 'Kill it everywhere you find it', delta: { time: 2, rep: 3 },
-        result: 'It takes all day. Rumors die of exposure to specifics, and you administer specifics at every kitchenette. By 4 PM it\'s dead. Sarah nods at you in the hallway — the office equivalent of a medal ceremony.' },
+        result: 'It takes all day. Rumors die of exposure to specifics, and you administer specifics at every kitchenette. By 4 PM it\'s dead. Sarah nods at you in the hallway: the office equivalent of a medal ceremony.',
+        after: (done) => { S.rumorSquashed = true; log('The rumor died of specifics. Someone will remember this on Friday.'); showResult('It takes all day. Rumors die of exposure to specifics, and you administer specifics at every kitchenette. By 4 PM it\'s dead. Sarah nods at you in the hallway: the office equivalent of a medal ceremony.', done); } },
       { label: 'Not your circus', delta: { sanity: 5 },
-        result: 'By Thursday the rumor has a timeline, a backstory, and a betting pool. Sarah moves desks. Tom eats lunch in his car. The office is 4% worse forever, which was, as far as you can tell, the entire point.' }
+        result: 'By Thursday the rumor has a timeline, a backstory, and a betting pool. Sarah moves desks. Tom eats lunch in his car. The office is 4% worse forever, which was, as far as you can tell, the entire point.',
+        after: (done) => { S.rumorFestering = true; log('The rumor was left to grow. It will still be growing on Friday.'); showResult('By Thursday the rumor has a timeline, a backstory, and a betting pool. Sarah moves desks. Tom eats lunch in his car. The office is 4% worse forever, which was, as far as you can tell, the entire point.', done); } }
     ]
   }),
   clarification: () => ({
@@ -645,18 +1097,249 @@ const CARDS = {
   }),
   lineItem: () => ({
     title: 'The Line Item', tag: 'TASK · YOU HAVE READ ACCESS', ptoAllowed: false,
-    flavor: 'You administer the program budget, which means you can see every salary in it, which means you watched ' + BOSS + '\'s increase land the same week yours "wasn\'t in the cards this cycle." He is explaining why, right now, at your desk, gesturing at the very dashboard you built and he presented. The dashboard is open. The Personnel tab is one click away. He does not know this. Or — worse — he does.',
+    flavor: 'You administer the program budget, which means you can see every salary in it, which means you watched ' + BOSS + '\'s increase land the same week yours "wasn\'t in the cards this cycle." He is explaining why, right now, at your desk, gesturing at the very dashboard you built and he presented. The dashboard is open. The Personnel tab is one click away. He does not know this. Or, worse, he does.',
     choices: [
       { label: 'Say nothing. Screenshot the moment into memory.', delta: { sanity: 5 },
         result: '"Anyway," he finishes, "we value you enormously." The word enormously is doing exactly none of the work.',
         after: (done) => {
-          META.leverage += 2; saveMeta();
+          META.leverage += 2;
+          META.fileCabinet.push({ title: 'The Line Item', week: META.week, note: 'The budget, in full. You will never unsee row 34.' });
+          saveMeta();
           $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+2 LEVERAGE.</b> The spreadsheet has radicalized you. Quietly, professionally, in eleven-point font.</div>');
           log('The Line Item: +2 Leverage. You can see the budget. You will never unsee the budget.');
           showResult('You save the file. You save it again. Some documents you keep the way other people keep receipts.', done);
         } },
-      { label: 'Ask him to walk you through the program budget — cell by cell', delta: { time: 2, rep: -3, heal: 4 },
+      { label: 'Ask him to walk you through the program budget, cell by cell', delta: { time: 2, rep: -3, heal: 4 },
         result: 'You scroll. He watches his own line item approach like weather. "This is more of an offline conversation," he says, in the middle of one. Worth every Rep point. You both know what row 34 says.' }
+    ]
+  }),
+  hrConsult: () => ({
+    title: 'A Visit to Human Resources', tag: 'DEPARTMENT · CLIENT: NOT YOU', ptoAllowed: true,
+    flavor: 'You bring HR a simple question about the raise process. Dana from HR listens with enormous warmth. Dana takes notes. The notes go in a file. The file is not for you. It has never been for you. HR helps employees the way a moat helps a castle, and you, to be clear, are not the castle.',
+    choices: [
+      { label: 'File a formal inquiry', delta: { time: 2, sanity: 4, rep: -3 },
+        result: '"We take this very seriously," Dana says, and the strange thing is that it\'s true. They take it seriously the way a filter takes debris seriously.',
+        after: (done) => {
+          S.hrFlagged = true;
+          const top = topUnlocked();
+          if (top) top.noticed = true;
+          $('card').insertAdjacentHTML('beforeend', '<div class="event">Your inquiry was forwarded, in full, with your name on it, to the person it was about. For transparency.' + (top ? ' He is, understandably, paying closer attention to your work now.' : '') + '</div>');
+          log('HR inquiry filed. It arrived on ' + BOSS + '\'s desk by lunch.' + (top ? ' "' + top.name + '" is now being watched more closely.' : ''));
+          showResult('By 2 PM, ' + BOSS + ' walks past your desk and says "all good?" without stopping. The inquiry is now closed. Nobody closed it. It closed the way doors close in a draft.', done);
+        } },
+      { label: 'Keep it "off the record"', delta: { time: 1, heal: 3 },
+        result: 'Dana nods. "Of course. Off the record." There is no such place. The record is the building. But the coffee in HR is better, and for ten minutes someone pretended to be on your side, which is, weirdly, something.' }
+    ]
+  }),
+  circleBack: () => ({
+    title: 'The Circle-Back', tag: 'VENDOR · ATTEMPT #11', ptoAllowed: true,
+    flavor: 'A vendor emails about renewing their invoice. The renewal window opens in six months. They know this. You told them. In writing. Twice. The email says "just circling back!" and it is the fourth circle this month; the shape they are drawing is no longer a circle, it is a spiral, and you are at the center of it.',
+    choices: [
+      { label: 'Reply with the same answer as last week', delta: { time: 1, credit: 2, creditItem: 'Vendor, managed (again)' },
+        result: '"Perfect, thanks so much! We\'ll follow up soon," they reply, instantly, like a trap snapping shut.',
+        after: (done) => {
+          S.vendor = true;
+          $('card').insertAdjacentHTML('beforeend', '<div class="event">They will circle back. They always circle back. Expect follow-ups for the rest of the week.</div>');
+          log('The vendor was answered. The vendor was not stopped.');
+          showResult('Your reply joins a thread that is now longer than the original contract.', done);
+        } },
+      { label: 'Send the email to end all emails: the date in bold, plus a calendar invite for six months out', delta: { time: 2, sanity: 3, credit: 5, creditItem: 'Vendor expectations, permanently aligned' },
+        result: 'Silence. Actual silence. Somewhere in their CRM, you have been marked "nurtured." But the spiral is broken, and the inbox is quiet, and quiet has a value the tracker cannot hold.' }
+    ]
+  }),
+  facilitiesTicket: () => ({
+    title: 'Ticket #4471', tag: 'FACILITIES · OPENED: MARCH', ptoAllowed: true,
+    flavor: 'The light above your desk has flickered since March. You filed a ticket. Today, after four months of the status "IN QUEUE," it updates: "CLOSED: RESOLVED." Nothing was resolved. Nobody came. The light flickers in the exact rhythm it has always flickered, which you now recognize faster than your own ringtone. Facilities receives tickets the way the ocean receives rivers: fully, warmly, and without any change in behavior.',
+    choices: [
+      { label: 'Reopen the ticket', delta: { time: 1, sanity: 3 },
+        result: 'Ticket #4471 is now ticket #6203. It enters the queue young and full of hope. Estimated response time: within ten business months. The old ticket\'s closure survey asks how satisfied you were with the work performed. There was no work. You give it three stars.' },
+      { label: 'Fix it yourself, with a ladder you are not authorized to use', delta: { time: 2, credit: 4, heal: 2, creditItem: 'Light fixed, unauthorized', noticeItem: true },
+        result: 'Four minutes. It took four minutes. The steady light is beautiful. A month from now, Facilities will close ticket #6203 anyway: "RESOLVED: no longer reproducible." In a way, they will be right, and that is the worst part. Someone saw the ladder, though. Unauthorized fixes get remembered faster than authorized ones.' }
+    ]
+  }),
+  headStart: () => ({
+    title: 'The Head Start', tag: 'DIRECTOR BROOKS · SUBJECT: quick ask', ptoAllowed: true,
+    flavor: 'One hour into the vendor reconciliation, Director Brooks appears at your desk: "Hey! When you get a chance, can you start looking at the vendor reconciliation? Shouldn\'t take long." You are looking at it. It is open on your screen. Your cursor is inside it. Brooks has managed, once again, to assign you the present tense.',
+    choices: [
+      { label: 'Reply "already on it," with a progress screenshot', delta: { time: 1, credit: 4, creditItem: 'Reconciliation, already in progress' },
+        result: '"Amazing turnaround!" Brooks replies. The turnaround was negative one hour. You have been credited with time travel, which is not one of your listed duties, but neither is Finance.' },
+      { label: '"Great idea. Starting now." Change nothing.', delta: { heal: 3, credit: 2, creditItem: 'Task, started retroactively' },
+        result: 'Brooks feels managerial. You feel nothing. The work continues at the exact speed it was already traveling. In Friday\'s status meeting, Brooks will describe this moment as "lighting a fire."' }
+    ]
+  }),
+  upstream: () => ({
+    title: 'The Escalation Path', tag: 'VP WALSH · STATUS: ACTIVE (ELSEWHERE)', ptoAllowed: true,
+    flavor: 'The org chart says Miller reports to VP Walsh, so you bring Walsh a decision only he can make. His chat status is green. He is typing. He has been typing for hours, in a channel you can see but were never invited to, where he and four close friends conduct the true business of his day: soccer. A goal celebration GIF posts as you wait. It has 5 reactions in 11 seconds. Your email has been unread for two days.',
+    choices: [
+      { label: 'Wait for a decision through official channels', delta: { time: 2, sanity: 4 },
+        result: '"Good flag," Walsh replies at 4:52 PM, between a penalty-kick debate and a hot take about the transfer window. No decision arrives. The flag remains flagged. It will be a flag forever.' },
+      { label: 'Make the decision yourself, cc him, phrase it as already decided', delta: { time: 2, credit: 7, creditItem: 'Decision made, upward, alone' },
+        result: 'He hearts your email eleven minutes after kickoff ends. "Sounds right." It is the only decision Walsh has ratified this quarter, and you made it. The group chat, sensing nothing, moves on to lineup predictions.' }
+    ]
+  }),
+  parallelTracker: () => ({
+    title: 'The Parallel Tracker', tag: 'DOUG · BUDGET · SELF-ASSIGNED', ptoAllowed: true,
+    flavor: 'Doug manages the department budget the way weather manages a picnic. Today, unprompted, Doug has built a second tracker: a spreadsheet that tracks the spreadsheet that tracks the budget. Nobody asked. Nobody needs it. But it has conditional formatting, and Doug has announced it to leadership with the word "initiative," and now there is a cell in it with your name on it, awaiting input, forever.',
+    choices: [
+      { label: 'Fill in your cells. Feed the tracker.', delta: { time: 2, sanity: 3, rep: 3 },
+        result: 'Doug thanks you "for the partnership." Leadership sees a busy team. The tracker tracks nothing. Next week there will be a third tracker. The trackers are breeding.' },
+      { label: 'Quietly link his cells to your real spreadsheet, so they fill themselves', delta: { time: 3, credit: 6, creditItem: 'Doug\'s tracker, secretly automated' },
+        result: 'Doug\'s tracker now updates itself. Doug does not know why. Doug tells leadership his "process improvements" are paying off. You have made Doug look competent, invisibly, forever, and somehow that is still less work than explaining anything to Doug.' }
+    ]
+  }),
+  retrospective: () => ({
+    title: 'The Retrospective', tag: 'MILLER · RE: A MAN GONE THREE YEARS', ptoAllowed: true,
+    flavor: 'It begins as a question about conference room bookings and ends, as everything with Miller ends, at Director Reyes, who retired three years ago and remains Miller\'s most reliable topic. "You should have seen the mess I inherited," he says, gesturing vaguely at systems Reyes built that still run the department, unattended, to this day. The trash talk has outlived three interns, two reorgs, and the plant it started next to.',
+    choices: [
+      { label: 'Nod. Let history be rewritten.', delta: { time: 1, sanity: 3, rep: 2 },
+        result: 'Reyes shrinks a little more in the official memory. Somewhere in a garden three towns away, a retired man feels nothing at all, which is the healthiest outcome available to anyone in this story.' },
+      { label: 'Mention, mildly, that Reyes\'s scheduling system still runs the department', delta: { time: 1, rep: -3, heal: 4 },
+        result: '"Well. He had help," Miller says, meaning himself, who arrived two years after it shipped. But the sentence lands, and stays landed, and the meeting about conference rooms ends four minutes early.' }
+    ]
+  }),
+  matcha: () => ({
+    title: 'The Matcha Machine', tag: 'KITCHEN · ASSET #0072 · UNTOUCHED: 14 MONTHS', ptoAllowed: true,
+    flavor: 'The kitchen remodel had one non-negotiable, per VP Walsh: a commercial-grade matcha machine. It gleams. Facilities, who have never once resolved a ticket, polish it weekly like a reliquary. Walsh has not touched it. Nobody has touched it. It cost more than your last raise, which is to say, it cost anything at all.',
+    choices: [
+      { label: 'Make yourself the first matcha in fourteen months', delta: { time: 1, heal: 6 },
+        result: 'It is excellent. Of course it is excellent. You drink it slowly by the window, on company time, from the VP\'s monument to himself. Two wrongs, one perfect green tea.' },
+      { label: 'Add it to your quiet ledger of institutional waste', delta: { time: 1 },
+        result: 'Asset #0072. Purchase price: redacted. Utilization: zero. You are not angry. You are documenting.',
+        after: (done) => {
+          META.leverage += 1;
+          META.fileCabinet.push({ title: 'Asset #0072 (The Matcha Machine)', week: META.week, note: 'Purchase price: redacted. Utilization: zero.' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The ledger grows. The ledger is patient.</div>');
+          log('The matcha machine joined the ledger. +1 Leverage.');
+          showResult('Someday, someone will ask where the culture budget went. You will not have to say anything. You will only have to scroll.', done);
+        } }
+    ]
+  }),
+  ninaCoffee: () => ({
+    title: 'Coffee with Nina', tag: 'ALLY · SHE SEES EVERYTHING', ptoAllowed: false,
+    flavor: 'Nina sits two desks over and knows everything: who is leaving before they know it, which requisitions are frozen, what was actually said after you left the room. She carries the same building you carry. Today she catches your eye and tilts her head toward the kitchen, which in your shared language means: I have information, and also, are you okay.',
+    choices: [
+      { label: 'Vent honestly. Both of you.', delta: { time: 1, heal: 8 },
+        result: 'Fifteen minutes. No solutions, no action items, nothing performed. Just two accurate people being accurate about the same building, quietly, over bad coffee. It fixes nothing. It fixes a lot.',
+        after: (done) => {
+          if (!META.ninaTrust) {
+            META.ninaTrust = true; saveMeta();
+            $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>NINA TRUSTS YOU.</b> She mentions a former manager "who gets it" at a place that treats people like adults. The Network now costs 10 less in the Saturday store. She said she\'d make a call.</div>');
+            log('Nina trusts you. The Network is 10 Leverage cheaper now.');
+          }
+          showResult('"Same time next week," she says, which is not a question, and is the closest thing this building has to a load-bearing wall.', done);
+        } },
+      { label: 'Keep it light. Weather. Weekend plans.', delta: { time: 1, heal: 3 },
+        result: 'Pleasant. Safe. She watches you decide not to say the real thing, and lets you not say it, because she has also not said it, some days.' }
+    ]
+  }),
+  farewell: () => ({
+    title: 'The Farewell Cake', tag: 'BREAK ROOM · THE THIRD THIS QUARTER', ptoAllowed: true,
+    flavor: 'There is cake in the break room again, which means someone else is leaving. Half-thawed sheet cake, a card being passed around with a pen that doesn\'t work. Turnover has tripled since Miller took over three years ago, a statistic that appears in no official deck and lives instead in the frequency of cake. The building is very good at goodbyes now. It gets so much practice.',
+    choices: [
+      { label: 'Sign the card. Chip in. Mean it.', delta: { time: 1, heal: 2, rep: 2 },
+        result: 'You write something true instead of "best of luck on your next chapter!" The departing coworker reads it twice, and hugs you, and whispers where they\'re going, which is: somewhere better. Everyone leaving goes somewhere better. That is also a statistic.' },
+      { label: 'Note the pattern in the ledger', delta: { time: 1 },
+        result: 'Third cake this quarter. Ninth this year. The bakery should invoice Miller directly.',
+        after: (done) => {
+          META.leverage += 1;
+          META.fileCabinet.push({ title: 'The Cake Count', week: META.week, note: 'Ninth this year. The truest org chart the company has.' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The ledger grows. The cake count is the truest org chart this company has.</div>');
+          log('Farewell cake #9 entered the ledger. +1 Leverage.');
+          showResult('You still sign the card. The ledger is for the system. The card is for the person.', done);
+        } }
+    ]
+  }),
+  perReed: () => ({
+    title: 'Per Director Reed', tag: 'DIRECTIVE · SOURCE: ONE FLOOR UP', ptoAllowed: true,
+    flavor: 'A new process arrives via Miller, prefaced with the four words that end all discussion: "Director Reed thinks we..." Nobody who works under Reed likes working under Reed; her own analysts send condolences in private channels. But Miller and the other two directors orbit her like she has tides, and whatever Reed thinks, Miller implements, with the devotion of a man who has never once been asked for his own opinion and hopes to keep it that way.',
+    choices: [
+      { label: 'Comply, visibly', delta: { time: 2, sanity: 4, rep: 4 },
+        result: 'The process adds four steps to a two-step task. Reed is told it is going great. Reed is always told it is going great. Somewhere below her, a floor of people quietly builds the workaround.' },
+      { label: 'Build the quiet workaround with Reed\'s own team', delta: { time: 3, credit: 8, rep: -3, creditItem: 'Reed process, made survivable' },
+        result: 'Her analysts bless you in a channel Reed cannot see. The official process remains officially followed, in the sense that a scarecrow officially farms.' }
+    ]
+  }),
+  procurement: () => ({
+    title: 'The Procurement Paradox', tag: 'BUDGET · PRIORITIES', ptoAllowed: true,
+    flavor: 'Eleven plastic plants arrived today. Miller ordered them himself, expedited. They join the plastic plants that are already here, the ones Facilities waters anyway. Meanwhile the CRM request, the one the whole team signed, the one that would save each of you an hour a day, enters its eleventh month of "under review." The plants did not require review. The plants were a vision.',
+    choices: [
+      { label: 'Resubmit the CRM case with an ROI one-pager. Round twelve.', delta: { time: 2, sanity: 4, credit: 6, creditItem: 'CRM business case, round twelve' },
+        result: '"Budget\'s tight this quarter," Miller says, unboxing a fern. The fern cost more than the monthly license. You do not say this out loud. The one-pager says it for you, on the record, forever.' },
+      { label: 'Water the plastic plants, maliciously', delta: { time: 1, heal: 4 },
+        result: 'They do not need water. Neither does the CRM request need an eleventh month. You water them anyway, slowly, with tremendous ceremony, and something in you settles.' }
+    ]
+  }),
+  austerity: () => ({
+    title: 'The Austerity Memo', tag: 'COST DISCIPLINE · EFFECTIVE TODAY', ptoAllowed: true,
+    flavor: 'A memo: paper cups are no longer provided in the kitchen, as they were found to be "an unsustainable expense." The cups cost four cents each. That same afternoon, two engraved signs are installed in the garage: RESERVED · MILLER and RESERVED · REED. The spots run to thousands a year. The signs themselves cost more than a decade of cups. Nobody says anything. The kitchen has a suggestion box. It is bolted shut, possibly as a cost measure.',
+    choices: [
+      { label: 'Bring your own mug, labeled "COST SAVINGS"', delta: { time: 1, heal: 3, rep: 2 },
+        result: 'The mug becomes minor legend. Even people who report to Reed smile at it, quickly, the way you smile at things it is not yet safe to laugh at.' },
+      { label: 'Do the math: cups versus parking. Ledger it.', delta: { time: 1 },
+        result: 'Four cents a cup. Thousands a spot. The spreadsheet does not editorialize. It does not have to.',
+        after: (done) => {
+          META.leverage += 1;
+          META.fileCabinet.push({ title: 'Cups vs. Parking', week: META.week, note: 'Four cents a cup. Thousands a spot. The math does not editorialize.' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The ledger grows. Austerity, it turns out, is a direction, and the direction is down.</div>');
+          log('Cups vs. parking entered the ledger. +1 Leverage.');
+          showResult('You save the file next to the matcha machine and the farewell cakes. The folder is getting heavy. Folders like this are how people leave well.', done);
+        } }
+    ]
+  }),
+  elevator: () => {
+    META.presidentSeen = true; saveMeta();
+    return {
+      title: 'The Elevator', tag: 'LOBBY · 8:58 AM', ptoAllowed: false,
+      flavor: 'The elevator is already open when you reach it, which has never happened. Inside stands someone you have never seen: older, unhurried, in a suit the exact color of the building. He does not press a floor. There is a keyhole where a button should be. He looks at you, and nods, precisely once, the way you would nod at a fixture you approved the purchase of.',
+      choices: [
+        { label: 'Nod back', delta: { heal: 5 },
+          result: 'The doors close on him alone. The display does not change floors. You feel seen. You are not sure by what. You take the stairs.' },
+        { label: 'Say "good morning"', delta: {},
+          result: '"It is," he says, and the doors close. You check the directory at lunch. The keyhole floor is not listed. Neither, you notice for the first time, is The President\'s office. On any floor. Anywhere.' }
+      ]
+    };
+  },
+  thePriority: () => ({
+    title: 'The Priority', tag: 'URGENT · FRAME PROVIDED · ASAP', ptoAllowed: true,
+    flavor: 'Miller calls it a priority project, and for once he is telling the truth: it is his priority. The hallway poster (TEAMWORK: a rowing crew, sun-bleached since 2011) is to be replaced, as soon as possible, by a framed photograph of VP Walsh. Nobody requested this. Walsh does not walk this hallway. The CRM request is in month twelve. The frame arrived overnight, expedited, like an organ for transplant.',
+    choices: [
+      { label: 'Hang it today. Level it perfectly.', delta: { time: 2, rep: 5, credit: 3, creditItem: 'Executive portrait, installed' },
+        result: 'Miller watches from his doorway, moved. "It changes the whole hallway," he says. It does not change the hallway. The hallway is a hallway. Walsh, laminated, gazes at the supply closet forever.',
+        after: (done) => {
+          S.millerPleased = true;
+          log('Miller is still glowing about the portrait. Paper trails cost 1 less today.');
+          showResult('Miller watches from his doorway, moved. "It changes the whole hallway," he says. It does not change the hallway. The hallway is a hallway. Walsh, laminated, gazes at the supply closet forever.', done);
+        } },
+      { label: 'Slow-walk it behind actual work', delta: { time: 1, rep: -4, heal: 3 },
+        result: 'You carry the frame visibly from place to place for three days, a prop of intent. On Thursday Miller hangs it himself, crooked, and tells the story of having done so twice, at two different volumes.',
+        after: (done) => {
+          S.millerAnnoyed = true;
+          log('Miller noticed the slow-walk. He is watching the board more closely today.');
+          showResult('You carry the frame visibly from place to place for three days, a prop of intent. On Thursday Miller hangs it himself, crooked, and tells the story of having done so twice, at two different volumes.', done);
+        } }
+    ]
+  }),
+  theHandoff: () => ({
+    title: 'The Handoff', tag: 'IT · INTERN · INCIDENT UNFILED', ptoAllowed: true,
+    flavor: 'An IT intern arrives with the replacement TV remote you requisitioned in the spring. He tests it, nods, and in the process of leaning across Conference Room B, breaks the table. Cleanly. Audibly. A table that has held the weight of a thousand slide decks folds like a card. He looks at the table, looks at you, hands you the remote with both hands like a ceremonial sword, and leaves at a speed just under running.',
+    choices: [
+      { label: 'Report the table accurately, minus the boy', delta: { time: 1, credit: 4, creditItem: 'Conference table incident, documented' },
+        result: 'Your ticket describes "sudden structural fatigue." Facilities will close it in four months, unworked: "could not reproduce." You could reproduce it. You choose not to.' },
+      { label: 'Say nothing. Let the table become a mystery.', delta: { heal: 4 },
+        result: 'By Thursday the broken table has lore: a ghost, a defect, "the weight of Q3." The intern emails you a thumbs-up from a no-reply address. You will never see him again. The remote works beautifully.' }
+    ]
+  }),
+  theBookshelf: () => ({
+    title: 'The Bookshelf', tag: 'MILLER\'S OFFICE · SPINES: PRISTINE', ptoAllowed: true,
+    flavor: 'Miller\'s bookshelf is impressive from the doorway: strategy, leadership, one biography of a wartime admiral. He quotes them often, approximately. Today he cites "something Marcus Aurelius said" that Marcus Aurelius, as far as anyone can verify, never said. The spines have never been cracked. You cannot tell if he reads the books. You cannot tell when he is lying. These may be the same skill, and he may have mastered it.',
+    choices: [
+      { label: 'Ask him which chapter that\'s from', delta: { time: 1, rep: -2, heal: 4 },
+        result: '"The middle," he says, without a pause, without a flicker, and something in you almost admires it. Almost. The admiral on the shelf stares ahead, unread, unreadable, much like his owner.' },
+      { label: 'Nod. Write it down. Let the quote enter the minutes.', delta: { time: 1, rep: 3 },
+        result: 'The counterfeit Aurelius enters the meeting minutes, then next month\'s all-hands deck, then the department newsletter. You have watched a lie become a citation. This is how the building reads.' }
     ]
   }),
   theNumbers: () => ({
@@ -666,7 +1349,95 @@ const CARDS = {
       { label: 'Refresh it properly', delta: { time: 2, credit: 5, creditItem: 'Dashboard, ritually refreshed' },
         result: 'The numbers are current now. They gleam in the dark of the unvisited tab, and perhaps that is enough.' },
       { label: 'Refresh it AND send leadership one insight from it', delta: { time: 3, sanity: 4, credit: 8, creditItem: 'Dashboard insight, surfaced' },
-        result: '"Interesting," replies leadership, within minutes — the fastest response you have ever received. The insight is never mentioned again.' }
+        result: '"Interesting," replies leadership, within minutes, the fastest response you have ever received. The insight is never mentioned again.' }
+    ]
+  }),
+  kudosChannel: () => ({
+    title: 'The Kudos Channel', tag: 'AMBIENT · PUBLIC · READ RECEIPTS ON', ptoAllowed: true,
+    flavor: 'A company-wide channel exists for "shoutouts." Today someone is shouted out for the shared-drive fix you did in March. The someone is not you. The channel has 340 members. All of them saw it. None of them will remember by Wednesday.',
+    choices: [
+      { label: 'Post your own update, quietly, with receipts', delta: { time: 2, credit: 5, creditItem: 'Shoutout, self-issued, with receipts', noticeItem: true },
+        result: 'It reads a little strange, praising yourself in public. It also reads, unmistakably, as true. Three people react with a clapping emoji. One of them is the person who was shouted out for your March fix. It is also, now, extremely visible.' },
+      { label: 'Let it go. Add it to the pile.', delta: { heal: 3 },
+        result: 'The pile does not have a name yet. It has a shape, though, and the shape is getting familiar.' }
+    ]
+  }),
+  passwordReset: () => ({
+    title: 'Password Reset, Again', tag: 'IT · POLICY · EFFECTIVE IMMEDIATELY', ptoAllowed: true,
+    flavor: 'IT rotates passwords every 45 days now, "for security." The new requirements: 16 characters, one symbol from an approved list of four, no repeats from the last 20 passwords, and it must not resemble a "previous era of your life," whatever that means. You are locked out twice before lunch.',
+    choices: [
+      { label: 'Fight through it properly', delta: { time: 2, sanity: 4 },
+        result: 'Password accepted on attempt six. It is a small, private victory nobody will ever hear about, which is, at this point, your favorite kind.' },
+      { label: 'Write it on a sticky note like everyone else', delta: { time: 1, rep: -2 },
+        result: 'Faster. Also visible from the hallway. Facilities has strong opinions about sticky notes and no opinions at all about the plastic plants.' }
+    ]
+  }),
+  postMeetingMeeting: () => ({
+    title: 'The Post-Meeting Meeting', tag: 'MEETING · RE: THE PREVIOUS MEETING', ptoAllowed: true,
+    flavor: 'A meeting is scheduled to debrief the meeting that ended nine minutes ago. Half the same people attend. The agenda item is "alignment on alignment." Someone takes notes for both meetings in the same document, which is either efficient or the whole problem.',
+    choices: [
+      { label: 'Attend and summarize crisply', delta: { time: 3, credit: 4, creditItem: 'Meeting-about-the-meeting, resolved' },
+        result: 'You produce, unbelievably, a single clear action item. The room looks at it like a strange animal.' },
+      { label: 'Skip it, send a one-line recap instead', delta: { time: 1, rep: -3 },
+        result: '"Noted, though we did cover some new ground," comes the reply. The new ground was the old ground, worn smoother.' }
+    ]
+  }),
+  brokenPrinter: () => ({
+    title: 'The Printer Ate Something Important', tag: 'FACILITIES · SEVERITY: CLIMBING', ptoAllowed: true,
+    flavor: 'The third-floor printer jams on page four of a document marked CONFIDENTIAL, and now won\'t release it or explain why. A small crowd gathers the way small crowds gather for anything with a red light on it. Nobody wants to be the one who reaches in wrong.',
+    choices: [
+      { label: 'Fix it, and read page four while you\'re in there', delta: { time: 2, sanity: 4, credit: 6, creditItem: 'Printer jam, resolved (page four noted)' },
+        result: 'The document is a draft org chart. Your box is smaller in it. You say nothing, free the page, and keep walking.' },
+      { label: 'Fix it. Don\'t look at page four.', delta: { time: 2, sanity: 2, credit: 4, creditItem: 'Printer jam, resolved' },
+        result: 'Cleanest possible outcome: the printer works, and you know nothing you didn\'t already suspect.' }
+    ]
+  }),
+  onboardingBuddy: () => ({
+    title: 'Onboarding Buddy: Jordan', tag: 'NEW HIRE · WEEK ONE, THEIRS', ptoAllowed: true,
+    flavor: 'You\'ve been assigned to onboard Jordan, who started Monday and still believes the org chart on the wall is current. Jordan asks bright, specific questions. Jordan asks what the company actually does. You have a rehearsed answer for this now. You did not always have one.',
+    choices: [
+      { label: 'Give Jordan the real version, gently', delta: { time: 2, heal: 4, rep: 2 },
+        result: 'Jordan\'s face does something complicated. "Thank you for telling me," Jordan says, meaning it, and you remember someone once did the same for you, badly, and too late.' },
+      { label: 'Give Jordan the brochure version', delta: { time: 1, rep: 4 },
+        result: '"Great question!" you say, and answer a different one. Jordan writes it down. Jordan will believe this for at least a month, possibly longer, possibly forever.' }
+    ]
+  }),
+  allStaffSurvey: () => ({
+    title: 'The All-Staff Survey (Anonymous)', tag: 'SURVEY · RESPONSES: NOT ANONYMOUS', ptoAllowed: true,
+    flavor: 'An anonymous engagement survey arrives. It asks how supported you feel, on a scale of one to five, and then, in the very next field, asks for your employee ID "for prize eligibility." The two facts sit next to each other, unbothered by each other\'s existence.',
+    choices: [
+      { label: 'Answer honestly. Skip the prize.', delta: { time: 1, sanity: 3 },
+        result: 'You give it a three. A three is generous. A three is also, apparently, "an opportunity area," according to the summary email sent to your director two weeks later.' },
+      { label: 'Answer with fives across the board', delta: { time: 1, rep: 3 },
+        result: 'Fast, safe, forgettable. The survey\'s only true finding, every year, is that everyone learns this at the same rate.' }
+    ]
+  }),
+  sharedCalendar: () => ({
+    title: 'The Shared Calendar', tag: 'CALENDAR · VISIBILITY: EVERYONE', ptoAllowed: true,
+    flavor: 'A policy update makes everyone\'s calendar visible to everyone. Your one blocked hour, labeled "focus time," is now a topic. Two people book over it within the hour, each apologizing in advance, each keeping the meeting.',
+    choices: [
+      { label: 'Defend the block. Say no, once, cleanly.', delta: { time: 1, rep: -3, heal: 5 },
+        result: 'It holds. Barely. You spend the hour in near silence, half expecting a knock that does not come.' },
+      { label: 'Let both meetings win. Reschedule your hour to never.', delta: { time: 2, sanity: 5 },
+        result: '"Focus time" becomes a color on the calendar nobody remembers assigning. It is never seen again this quarter.' }
+    ]
+  }),
+  theBackfill: () => ({
+    title: 'The Backfill That Never Comes', tag: 'STAFFING · REQ #: FROZEN', ptoAllowed: true,
+    flavor: 'HR confirms, again, that the requisition for your team\'s open seat is "actively being worked." It has been actively worked for five months. In the meantime the work of two people continues to be done by the usual one, cheerfully, in the newsletter\'s telling.',
+    choices: [
+      { label: 'Absorb it without complaint, keep the trains running', delta: { time: 3, sanity: 6, credit: 7, creditItem: 'Vacant seat, covered, unpaid' },
+        result: 'Everything ships on time. This is presented, later, as evidence the team is "appropriately staffed."' },
+      { label: 'Document the gap in writing, weekly, starting now', delta: { time: 2, sanity: 3, credit: 4, creditItem: 'Staffing gap, documented' },
+        result: 'Nothing changes this quarter. But the emails exist, dated, boring, undeniable, and boring is exactly what makes them hard to argue with later.',
+        after: (done) => {
+          META.leverage += 1;
+          META.fileCabinet.push({ title: 'Staffing Gap, Documented', week: META.week, note: 'Five months and counting. Dated, boring, undeniable.' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The ledger grows. This one has a date stamp.</div>');
+          log('The staffing gap entered the ledger. +1 Leverage.');
+          showResult('Nothing changes this quarter. But the emails exist, dated, boring, undeniable, and boring is exactly what makes them hard to argue with later.', done);
+        } }
     ]
   })
 };
@@ -674,18 +1445,18 @@ const CARDS = {
 // ---------- evening events ----------
 const EVENINGS = [
   { title: 'The Empty Train', flavor: 'The 6:40 is nearly empty. The city slides by, lit and indifferent, and belongs to no one\'s employer. For thirty-one minutes, neither do you.',
-    choices: [ { label: 'Ride home. Just ride.', delta: { heal: 13 }, result: 'You arrive home a person.' } ] },
-  { title: 'Old Friend, Late Call', flavor: 'A friend from before — from the era when you had hobbies — calls. They\'re in town. They know a place. It has no Wi-Fi, allegedly on purpose.',
-    choices: [ { label: 'Go. Order the weird thing.', delta: { heal: 15 }, result: 'You laugh at something unrelated to work for the first time in nine days. Your cheeks hurt. Good.' },
-      { label: 'Rain check — you\'re wiped', delta: { heal: 6 }, result: 'You watch forty minutes of a show you cannot describe. It helps, technically.' } ] },
+    choices: [ { label: 'Ride home. Just ride.', life: 1, delta: { heal: 10 }, result: 'You arrive home a person.' } ] },
+  { title: 'Old Friend, Late Call', flavor: 'A friend from before, from the era when you had hobbies, calls. They\'re in town. They know a place. It has no Wi-Fi, allegedly on purpose.',
+    choices: [ { label: 'Go. Order the weird thing.', life: 1, delta: { heal: 12 }, result: 'You laugh at something unrelated to work for the first time in nine days. Your cheeks hurt. Good.' },
+      { label: 'Rain check, you\'re wiped', delta: { heal: 5 }, result: 'You watch forty minutes of a show you cannot describe. It helps, technically.' } ] },
   { title: 'VOLUNTOLD: The Culture Cascade', flavor: 'An email at 5:58 PM: "Exciting! We need 3 energy champions for Saturday\'s Culture Cascade™. Attendance is voluntary." The word voluntary is in a font slightly smaller than the rest.',
-    choices: [ { label: 'Volunteer (you were going to be voluntold anyway)', delta: { sanity: 10, rep: 5 }, result: 'Saturday dissolves. You hold a sign that says "SYNERGY IS A CHOICE." A photographer captures your joy for the newsletter.' },
-      { label: 'Decline, citing "a commitment"', delta: { rep: META.up.boundary ? 0 : -5, heal: 8 }, result: META.up.boundary ? 'The commitment is sleep. You decline cleanly, without apology, the way the book taught you. Nothing happens. Nothing was ever going to happen. That was the book\'s whole point.' : 'The commitment is sleep. Your absence is noticed, catalogued, and filed under Enthusiasm, Lack Of.' } ] },
+    choices: [ { label: 'Volunteer (you were going to be voluntold anyway)', voluntold: true, life: -1, delta: { sanity: 10, rep: 5 }, result: 'Saturday dissolves. You hold a sign that says "SYNERGY IS A CHOICE." A photographer captures your joy for the newsletter.' },
+      { label: 'Decline, citing "a commitment"', decline: true, life: 1, delta: { rep: META.up.boundary ? 0 : -5, heal: 6 }, result: META.up.boundary ? 'The commitment is sleep. You decline cleanly, without apology, the way the book taught you. Nothing happens. Nothing was ever going to happen. That was the book\'s whole point.' : 'The commitment is sleep. Your absence is noticed, catalogued, and filed under Enthusiasm, Lack Of.' } ] },
   { title: 'VOLUNTOLD: Evening "Focus Sprint"', flavor: 'Leadership announces an optional evening focus sprint to "get ahead of next week." A calendar hold appears before the email finishes sending. It has already assumed your yes.',
-    choices: [ { label: 'Log on. Sprint.', delta: { sanity: 12, rep: 5, credit: 4, creditItem: 'Evening sprint output' }, result: 'By 9 PM you\'ve produced real work. It will be presented at a meeting you are not invited to.' },
-      { label: 'Decline the hold', delta: { rep: META.up.boundary ? 0 : -5, heal: 10 }, result: 'You decline with no note. The empty reason field radiates power.' } ] },
+    choices: [ { label: 'Log on. Sprint.', voluntold: true, life: -1, delta: { sanity: 12, rep: 5, credit: 4, creditItem: 'Evening sprint output' }, result: 'By 9 PM you\'ve produced real work. It will be presented at a meeting you are not invited to.' },
+      { label: 'Decline the hold', decline: true, life: 1, delta: { rep: META.up.boundary ? 0 : -5, heal: 8 }, result: 'You decline with no note. The empty reason field radiates power.' } ] },
   { title: 'Wellness Check-In', flavor: 'An automated survey: "How are you REALLY feeling?" The emoji options range from ecstatic to slightly less ecstatic. There is a free-text box. It has a character limit of 40.',
-    choices: [ { label: 'Select the approved emotion', delta: { heal: 9 }, result: 'Thank you for your honesty. Your wellness score has been updated. Your wellness score is not visible to you.' } ] }
+    choices: [ { label: 'Select the approved emotion', delta: { heal: 7 }, result: 'Thank you for your honesty. Your wellness score has been updated. Your wellness score is not visible to you.' } ] }
 ];
 
 // ---------- items / at-risk helpers ----------
@@ -695,19 +1466,40 @@ function topUnlocked() {
 }
 function lockCost(item) {
   let c = 2 + (item.noticed ? 1 : 0) + (META.week >= 5 ? 1 : 0) - (META.up.templates ? 1 : 0);
+  if (S.millerGone) c -= 1; // he left "for a thing." nobody is watching the filing cabinet.
+  if (S.millerPleased) c -= 1; // he's still glowing about the portrait
+  if (S.millerAnnoyed) c += 1; // he's still sore about the slow-walk
+  if (MOD.id === 'audit') c += 1; // audit week: documentation costs more, and is worth more
   return Math.max(1, c);
+}
+
+function inkStamp(text) {
+  const st = document.createElement('div');
+  st.className = 'inkstamp';
+  st.textContent = text;
+  $('card').appendChild(st);
+  setTimeout(() => st.remove(), 950);
 }
 
 function atRiskScreen(onDone) {
   const el = $('card');
+  CONTEXT = 'End of day';
   const isThu = S.day === 3;
+  // Miller leaves early every chance he gets. When he does, the evening loosens.
+  if (S.millerGoneDay !== S.day) {
+    S.millerGoneDay = S.day;
+    S.millerGone = Math.random() < 0.4;
+  }
   if (S.items.length === 0) {
     el.innerHTML = '<h2>At Risk</h2><div class="flavor">Nothing on the board yet. The tracker hums, patient.</div>';
     return showResult('You produced nothing claimable today. In this one narrow sense, you are safe.', onDone);
   }
   const target = topUnlocked();
-  let html = '<h2>At Risk</h2><div class="tag">CREDIT TRACKER · ' + (isThu ? '<span style="color:var(--danger)">FINAL NIGHT — TARGETS LOCK AT MIDNIGHT</span>' : 'WHAT THE FRIDAY MEETING ALREADY KNOWS ABOUT') + '</div>';
+  let html = '<h2>At Risk</h2><div class="tag">CREDIT TRACKER · ' + (isThu ? '<span style="color:var(--danger)">FINAL NIGHT · TARGETS LOCK AT MIDNIGHT</span>' : 'WHAT THE FRIDAY MEETING ALREADY KNOWS ABOUT') + '</div>';
   html += '<div class="flavor">Anything unlocked can be claimed at the Friday Meeting. Highest unlocked item is the target.</div>';
+  if (S.millerGone) {
+    html += '<div class="event" style="border-left-color: var(--lock);">It is 3:04 PM and Miller\'s office is dark. He left "for a thing." He always has a thing. The building relaxes by one degree: <b>paper trails cost 1 less tonight.</b></div>';
+  }
   S.items.forEach((it, idx) => {
     const cls = it.locked ? 'riskitem locked' : (it === target ? 'riskitem target' : 'riskitem');
     html += '<div class="' + cls + '"><span>' + it.name + (it.noticed && !it.locked ? ' <span style="color:var(--warn)">[NOTICED]</span>' : '') +
@@ -722,10 +1514,12 @@ function atRiskScreen(onDone) {
       el.insertAdjacentHTML('beforeend',
         '<button class="choice" id="lockbtn" style="margin-top:10px;">File a Paper Trail on "' + t.name + '"<span class="cost">-' + cost + ' Time' + (t.noticed ? ' (it is being looked at)' : '') + '</span></button>');
       $('lockbtn').onclick = () => {
+        sfx('lock');
         apply({ time: cost });
         t.locked = true;
         log('Paper Trail filed: "' + t.name + '" 🔒');
-        atRiskScreen(onDone);
+        inkStamp('FILED');
+        setTimeout(() => atRiskScreen(onDone), 650);
       };
     } else {
       el.insertAdjacentHTML('beforeend', '<div class="event">Out of Time. "' + t.name + '" stays exactly where it is. Someone is already looking at it.</div>');
@@ -734,14 +1528,16 @@ function atRiskScreen(onDone) {
       el.insertAdjacentHTML('beforeend',
         '<button class="choice" id="allybtn">Ask Chris to file it for you<span class="cost">free · once per week · Chris keeps accurate ledgers</span></button>');
       $('allybtn').onclick = () => {
+        sfx('lock');
         S.allyUsed = true;
         t.locked = true;
         log('Chris filed the Paper Trail on "' + t.name + '." 🔒 No charge.');
-        atRiskScreen(onDone);
+        inkStamp('FILED');
+        setTimeout(() => atRiskScreen(onDone), 650);
       };
     }
   }
-  el.insertAdjacentHTML('beforeend', '<button class="choice" id="endday" style="margin-top:10px;">' + (t ? 'Leave the rest exposed — end the day' : 'Everything is secured. End the day.') + '</button>');
+  el.insertAdjacentHTML('beforeend', '<button class="choice" id="endday" style="margin-top:10px;">' + (t ? 'Leave the rest exposed, end the day' : 'Everything is secured. End the day.') + '</button>');
   $('endday').onclick = onDone;
 }
 
@@ -749,7 +1545,14 @@ function atRiskScreen(onDone) {
 let weekDeck = [];
 
 function buildWeek() {
-  weekDeck = shuffle(['quickSync', 'fireDrill', 'portal', 'complaint', 'coverShift', 'partnership', 'replyAll', 'dataRequest', 'training', 'theNumbers', 'presidentDeck', 'realignment', 'offboarding', 'rumor', 'clarification', 'lineItem']);
+  // deal only from unlocked personnel files; new files are added each week
+  const pool = Object.keys(CARD_UNLOCKS).filter(k => CARD_UNLOCKS[k] <= META.week);
+  weekDeck = shuffle(pool);
+  // one optional contract per week
+  S.contract = CONTRACTS[Math.floor(Math.random() * CONTRACTS.length)];
+  $('contractline').textContent = 'CONTRACT: ' + S.contract.name + ' (' + S.contract.desc + ') · +4 Leverage if met';
+  // weekly modifier effects that start at 9 AM Monday
+  if (MOD.id === 'vendor') { S.vendor = true; log('The "strategic partner" has your direct line. It begins immediately.'); }
 }
 
 function dayPlan(day) {
@@ -763,7 +1566,29 @@ function dayPlan(day) {
 
 function startDay() {
   S.time = S.maxTime;
+  S.millerPleased = false; S.millerAnnoyed = false;
   S.queue = dayPlan(S.day);
+  // week 6+, once per save: the elevator is already open
+  if (META.week >= 6 && !META.presidentSeen && S.day >= 1 && S.day <= 3 && Math.random() < 0.35) {
+    S.queue.unshift('elevator');
+  }
+  // week 3+: the tracker learns. every Wednesday it notices your best exposed item on its own.
+  if (META.week >= 3 && S.day === 2) {
+    const t = topUnlocked();
+    if (t && !t.noticed) {
+      t.noticed = true;
+      log('THE TRACKER IS LEARNING: "' + t.name + '" has been noticed without any human involvement.');
+    }
+  }
+  // quota modifier: the Thursday-morning reckoning
+  if (MOD.id === 'quota' && S.day === 3) {
+    if (S.credit < 15) {
+      apply({ rep: -8 });
+      log('CHECKPOINT MISSED: 15 Credit by Wednesday EOD. Your "trajectory" has been noted. -8 Reputation.');
+    } else {
+      log('Checkpoint met. No one mentions it. Meeting it was the baseline.');
+    }
+  }
   const subs = [
     'A NEW WEEK. THE BUILDING REMEMBERS YOU.',
     'THE COFFEE MACHINE HAS BEEN "UPGRADED." NOBODY ASKED.',
@@ -787,7 +1612,7 @@ function nextEncounter() {
 
 const APPRECIATION = {
   title: 'The Annual Appreciation Event', tag: 'MANDATORY GRATITUDE · FISCAL YEAR TOTAL',
-  flavor: 'The year\'s appreciation arrives all at once, tonight: the team is bused to a driving-range entertainment complex for a few hours. There is a fajita bar. This is the appreciation. All of it. The entire year of it, served with tortillas, in lieu of — well. In lieu.',
+  flavor: 'The year\'s appreciation arrives all at once, tonight: the team is bused to a driving-range entertainment complex for a few hours. There is a fajita bar. This is the appreciation. All of it. The entire year of it, served with tortillas, in lieu of... well. In lieu.',
   choices: [
     { label: 'Swing at things. Eat the fajitas. Let it work.', delta: { heal: 10, rep: 3 },
       result: 'And here is the cruelest part: it\'s fun. For two hours you have actual fun, and the company will spend the next twelve months pointing at those two hours. "This concludes Appreciation for the fiscal year," no one says out loud, because no one has to.' },
@@ -798,7 +1623,7 @@ const APPRECIATION = {
 
 function eveningEvent() {
   if (S.over) return;
-  // Week 2+: evening availability is now a core value — voluntolds crowd out free time.
+  // Week 2+: evening availability is now a core value: voluntolds crowd out free time.
   let ev;
   if (S.day === 3) ev = APPRECIATION;
   else if (META.week >= 2 && Math.random() < 0.6) ev = EVENINGS[2 + Math.floor(Math.random() * 2)];
@@ -807,17 +1632,62 @@ function eveningEvent() {
     () => { S.day++; startDay(); });
 }
 
+// ---------- the Expense Report (grows one field per week, forever) ----------
+const EXPENSE_FIELDS = [
+  ['DATE', 'TODAY (VERIFY)'], ['AMOUNT', '$11.04'], ['JUSTIFICATION', 'OPERATIONAL NECESSITY'],
+  ['SECONDARY JUSTIFICATION', 'SEE ABOVE'], ['WITNESS', 'CHRIS (UNAWARE)'],
+  ['NOTARIZED INITIALS', 'R.O.'], ['MOOD DURING PURCHASE', 'ADEQUATE'], ['BLOOD TYPE', 'REDACTED']
+];
+
+function expenseReport(onDone) {
+  const el = $('card');
+  CONTEXT = 'The Expense Report';
+  const count = Math.min(1 + META.week, EXPENSE_FIELDS.length);
+  let filled = 0;
+  let html = '<h2>The Expense Report</h2><div class="tag">FRIDAY · FORM 7-C · REVISION ' + META.week + '</div>' +
+    '<div class="flavor">The weekly expense report is due before the Meeting. The form gains a field every revision. Nobody remembers requesting the revisions. Click each field to complete it.</div>';
+  EXPENSE_FIELDS.slice(0, count).forEach((f, i) => {
+    html += '<div class="formfield" data-f="' + i + '"><span>' + f[0] + '</span><span class="fv" id="fv-' + i + '"></span></div>';
+  });
+  html += '<button class="choice" id="submitform" disabled>Submit Form 7-C<span class="cost">-1 Time · +2 Rep</span></button>';
+  html += '<button class="choice" id="skipform">Ignore it. Live dangerously.<span class="cost">-3 Rep (the form remembers)</span></button>';
+  el.innerHTML = html;
+  el.querySelectorAll('.formfield').forEach(ff => {
+    ff.onclick = () => {
+      if (ff.classList.contains('filled')) return;
+      sfx('type');
+      ff.classList.add('filled');
+      const i = ff.dataset.f;
+      $('fv-' + i).textContent = EXPENSE_FIELDS[i][1];
+      filled++;
+      if (filled === count) { $('submitform').disabled = false; }
+    };
+  });
+  $('submitform').onclick = () => {
+    sfx('lock');
+    apply({ time: 1, rep: 2 });
+    log('Form 7-C submitted, all ' + count + ' fields. Revision ' + (META.week + 1) + ' is already being drafted.');
+    onDone();
+  };
+  $('skipform').onclick = () => {
+    sfx('click');
+    apply({ rep: -3 });
+    log('Form 7-C ignored. Somewhere, a field labeled "COMPLIANCE HISTORY" fills itself in.');
+    onDone();
+  };
+}
+
 function fridayMorning() {
-  showCard({
+  expenseReport(() => showCard({
     title: 'The Quiet Morning', tag: 'FRIDAY · 9:00 AM', ptoAllowed: false,
-    flavor: 'Friday mornings are gentle here, the way a waiting room is gentle. Everyone works softly. Everyone is listening for 4 PM. The tracker locked at midnight — what\'s secured is secured; what isn\'t, isn\'t.',
+    flavor: 'Friday mornings are gentle here, the way a waiting room is gentle. Everyone works softly. Everyone is listening for 4 PM. The tracker locked at midnight. What\'s secured is secured; what isn\'t, isn\'t.',
     choices: [
-      { label: 'Clear small tasks, keep your head down (new credit — unlockable, claimable at 4 PM)', delta: { time: 3, credit: 3, creditItem: 'Friday odds and ends' },
+      { label: 'Clear small tasks, keep your head down (new credit, arrives unlocked, claimable at 4 PM)', delta: { time: 3, credit: 3, creditItem: 'Friday odds and ends' },
         result: 'A tidy morning. The clock does not care. The clock is the most senior employee in the building.' },
       { label: 'Take a long lunch. You\'ve earned nothing less.', delta: { heal: 8 },
         result: 'You eat somewhere with real plants. When you return, the office smells like toner and anticipation.' }
     ]
-  }, fridayMeeting);
+  }, fridayMeeting));
 }
 
 // ---------- Friday Meeting (boss encounter) ----------
@@ -832,7 +1702,7 @@ function fridayMeeting() {
       choices: [
         { label: 'Hand ' + BOSS + ' the letter at 4:01 PM', delta: {},
           result: 'You wait until he finishes the word "wins."', after: () => ending('quit') },
-        { label: 'Sit through it one more time — you\'ve earned the spectacle', delta: {},
+        { label: 'Sit through it one more time. You\'ve earned the spectacle', delta: {},
           result: 'One more episode. For research.', after: (done) => meetingProper() }
       ]
     }, meetingProper);
@@ -842,24 +1712,56 @@ function fridayMeeting() {
 
 function meetingProper() {
   const el = $('card');
+  // the 4 PM flashback: the room goes white for half a second, like memory
+  sfx('riser');
+  document.body.classList.add('flashback');
+  setTimeout(() => document.body.classList.remove('flashback'), 650);
   el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
-  const claims = META.week >= 3 ? 2 : 1;
+  const claims = META.week >= 7 ? 3 : META.week >= 3 ? 2 : 1;
+
+  // The week's small, easy-to-forget choices echo here. None of this was ever hidden,
+  // it just hadn't come due yet.
+  let preamble = '';
+  if (S.rumorSquashed) { preamble += '<div class="event" style="border-left-color: var(--lock);">The rumor never came back. People remember who put it down.</div>'; }
+  if (S.rumorFestering) { preamble += '<div class="event">The rumor is still circulating, slightly mutated. Somehow your name is near it now, tangentially, unfairly.</div>'; }
+  if (S.hrFlagged) { preamble += '<div class="event">' + BOSS + ' mentions, apropos of nothing, that HR "flagged a great question" this week. He is smiling. He is always smiling.</div>'; }
+  if (S.declines >= 2) { preamble += '<div class="event">"Busy weekend?" ' + BOSS + ' asks, to the room, not to you specifically, which is worse.</div>'; }
+  else if (S.accepts >= 2 && S.declines === 0) { preamble += '<div class="event" style="border-left-color: var(--lock);">"Reliable," ' + BOSS + ' says, of you, to the room. It is meant as the highest compliment the building has.</div>'; }
+
   el.innerHTML = '<h2>The Friday Meeting</h2><div class="tag">CONFERENCE ROOM C · 4:00 PM · MANDATORY' + (claims > 1 ? ' · <span style="color:var(--danger)">HE HAS A REPUTATION TO MAINTAIN NOW</span>' : '') + '</div>' +
     '<div class="flavor" id="meetflavor">4:00 PM. Conference Room C. ' + BOSS + ' stands beside a slide titled <b>"OUR WINS."</b> The possessive pronoun is doing a lot of work.<br><br>He begins to read the week aloud.</div>' +
-    '<div id="meetitems"></div><div id="meetverdict"></div>';
+    preamble + '<div id="meetitems"></div><div id="meetverdict"></div>';
+
+  // The same choices apply a quiet, delayed Reputation cost or credit, right here, before he even starts reading.
+  if (S.rumorSquashed) apply({ rep: 2 });
+  if (S.rumorFestering) apply({ rep: -3 });
+  if (S.declines >= 2) apply({ rep: -4 });
+  else if (S.accepts >= 2 && S.declines === 0) apply({ rep: 3 });
 
   // Targets locked at Thursday midnight; locked = safe. Week 3+: he takes the top TWO unlocked.
-  const targets = S.items.filter(i => !i.locked).sort((a, b) => b.value - a.value).slice(0, claims);
+  // Reputation shields the single best unlocked item, normally at 70+. He cannot
+  // publicly claim the headline win of someone that visible, UNLESS the week's evenings
+  // made him wary of you (two or more declines raise the bar he judges you by).
+  const shieldThreshold = 70 + (S.declines >= 2 ? 10 : 0) - (S.accepts >= 2 && S.declines === 0 ? 5 : 0);
+  const unlockedSorted = S.items.filter(i => !i.locked).sort((a, b) => b.value - a.value);
+  let pool = unlockedSorted, shielded = null;
+  if (S.rep >= shieldThreshold && unlockedSorted.length > 1) {
+    shielded = unlockedSorted[0];
+    pool = unlockedSorted.slice(1);
+  }
+  const targets = pool.slice(0, claims);
   const items = S.items.slice();
   let i = 0;
   function revealNext() {
     if (i < items.length) {
       const it = items[i++];
       const isTarget = targets.includes(it);
+      const isShielded = (it === shielded);
       $('meetitems').insertAdjacentHTML('beforeend',
-        '<div class="riskitem ' + (it.locked ? 'locked' : '') + '" style="animation-duration:.5s">' +
-        '<span>' + it.name + (it.locked ? ' <span class="lockmark">🔒 SECURED</span>' : '') + '</span>' +
+        '<div class="riskitem ' + (it.locked ? 'locked' : '') + '" id="meetrow-' + (i - 1) + '" style="animation-duration:.5s">' +
+        '<span>' + it.name + (it.locked ? ' <span class="lockmark">🔒 SECURED</span>' : '') + (isShielded ? ' <span class="lockmark" style="color:var(--warn)">◈ STANDING</span>' : '') + '</span>' +
         '<span class="val">+' + it.value + (isTarget ? ' <span class="reassigned stampin" style="margin-left:8px;">CLAIMING…</span>' : '') + '</span></div>');
+      if (isTarget) sfx('stamp');
       setTimeout(revealNext, isTarget ? 1400 : 650);
     } else {
       setTimeout(verdict, 800);
@@ -867,6 +1769,15 @@ function meetingProper() {
   }
   function verdict() {
     const v = $('meetverdict');
+    // the claimed items physically leave your side of the table
+    targets.forEach(t => {
+      const idx = items.indexOf(t);
+      const row = document.getElementById('meetrow-' + idx);
+      if (row) row.classList.add('steal-anim');
+    });
+    if (shielded) {
+      v.insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--warn);">He pauses at "' + shielded.name + '." The room knows whose it is. Everyone knows whose it is. Your standing in this building makes it unclaimable, and his eyes slide off it like it\'s laminated.</div>');
+    }
     if (targets.length === 0) {
       // Malicious Compliance
       v.innerHTML = '<div class="event" style="border-left-color: var(--lock);"><b>' + BOSS + ' reaches the end of the slide.</b><br><br>Every item is secured. Documented. Witnessed. Filed. There is nothing on the board with his hand-shaped absence on it.<br><br>"Well," he says. He says it again. The room has never heard him say a word twice.<br><br><span class="secure">NOTHING WAS REASSIGNED.</span></div>';
@@ -879,11 +1790,12 @@ function meetingProper() {
       floatDelta($('stat-credit'), '-' + total + ' CREDIT', false);
       render();
       const t1 = targets[0], t2 = targets[1];
-      let html = '<div class="event" style="border-left-color: var(--danger);"><b>He arrives at "' + t1.name + '."</b><br><br>"And I\'m especially proud," he says, warming like a photocopier, "of what <i>we</i> — and I\'ll take a little credit here —" (laughter, obedient) "— accomplished on this one."<br><br><span class="reassigned stampin">REASSIGNED → ' + BOSS.toUpperCase() + '</span>';
+      const claimLine = pickClaimLine();
+      let html = '<div class="event" style="border-left-color: var(--danger);"><b>He arrives at "' + t1.name + '."</b><br><br>' + claimLine() + '<br><br><span class="reassigned stampin">REASSIGNED → ' + BOSS.toUpperCase() + '</span>';
       if (t2) {
         html += '<br><br>"And," he adds, pluralizing without shame, "there\'s <i>' + t2.name + '</i> too. Team effort. My team."<br><br><span class="reassigned stampin">REASSIGNED → ' + BOSS.toUpperCase() + '</span>';
       }
-      html += '<br><br>+' + total + ' Credit converts to his Raise Points. Next week he presents it Upstairs — to The President, whom you have never met, and who signs raises for whoever is standing nearest the work when it arrives. The slide advances. The week is over.</div>';
+      html += '<br><br>+' + total + ' Credit converts to his Raise Points. Next week he presents it Upstairs, to The President, whom you have never met, and who signs raises for whoever is standing nearest the work when it arrives. The slide advances. The week is over.</div>';
       v.innerHTML = html;
       log('The Friday Meeting: ' + BOSS + ' claimed ' + targets.map(t => '"' + t.name + '" (+' + t.value + ')').join(' and ') + '.');
       v.insertAdjacentHTML('beforeend', '<button class="choice" id="toend" style="margin-top:10px;">Gather your things</button>');
@@ -902,14 +1814,27 @@ function leverageFor(kind, grade) {
 }
 
 function awardLeverage(kind, grade) {
-  const earned = leverageFor(kind, grade);
+  let earned = leverageFor(kind, grade);
+  // audit week: every locked item pays out
+  if (MOD.id === 'audit' && kind !== 'burnout') earned += S.items.filter(i => i.locked).length;
+  // the weekly contract
+  if (S.contract && kind !== 'burnout' && S.contract.check()) { earned += 4; S.contractMet = true; }
+  if (S.contract) {
+    META.contractHistory.push({ name: S.contract.name, desc: S.contract.desc, week: META.week, met: !!S.contractMet });
+  }
   META.leverage += earned;
+  // Life Outside: the week's evenings settle into the long term
+  let d = S.lifeDelta;
+  const aspects = ['plant', 'friend', 'hobby'];
+  while (d > 0) { const a = aspects[Math.floor(Math.random() * 3)]; META.life[a] = Math.min(4, META.life[a] + 1); d--; }
+  while (d < 0) { const a = aspects[Math.floor(Math.random() * 3)]; META.life[a] = Math.max(0, META.life[a] - 1); d++; }
   saveMeta();
   return earned;
 }
 
 function burnout() {
   S.over = true;
+  sfx('bad');
   document.body.classList.add('burnout-fx');
   const earned = awardLeverage('burnout');
   setTimeout(() => {
@@ -919,6 +1844,7 @@ function burnout() {
       'HR sends a wellness survey to your personal email within the hour. The character limit is still 40.<br><br>' +
       'The tracker keeps running for a while after you leave. Nobody turns it off. It isn\'t clear anyone knows how.</div>' +
       scoreBlock() +
+      drainRecap() +
       '<div class="event">+' + earned + ' LEVERAGE. Every run teaches the system\'s shape. This one taught you where the floor is.</div>' +
       '<button class="choice" id="toStore" style="margin-top:10px;">Go home. It\'s the weekend, technically.</button>';
     $('toStore').onclick = storeScreen;
@@ -932,6 +1858,18 @@ function scoreBlock() {
   return '<div class="scoregrid">' +
     'Week <b>' + META.week + '</b> · Credit kept: <b>' + kept + '</b> · Claimed by ' + BOSS + ': <b style="color:var(--danger)">' + stolen + '</b> · Sanity: <b>' + S.sanity + '</b> · Reputation: <b>' + S.rep + '</b> · Ally: <b>' + (S.ally ? 'Chris' : 'none') + '</b><br>' +
     'Projected annual raise: <b>3.0%</b> (capped) · Payable: <b>next July</b> · Cost-of-living increase since request: <b>' + col + '%</b>' +
+    (S.contract ? '<br>Contract: <b>' + S.contract.name + '</b> (' + S.contract.desc + ') · ' + (S.contractMet ? '<b class="secure">MET, +4 Leverage</b>' : '<span style="color:var(--danger)">not met</span>') : '') +
+    '</div>';
+}
+
+// what actually drained you this week, itemized (losses must be legible)
+function drainRecap() {
+  if (!S.drains.length) return '';
+  const bySrc = {};
+  S.drains.forEach(d => { bySrc[d.src] = (bySrc[d.src] || 0) + d.amt; });
+  const top = Object.entries(bySrc).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  return '<div class="event"><b>WHERE YOUR SANITY WENT:</b><br>' +
+    top.map(t => t[0] + ' · <b style="color:var(--danger)">-' + t[1] + '</b>').join('<br>') +
     '</div>';
 }
 
@@ -940,25 +1878,30 @@ function ending(kind) {
   const el = $('card');
   if (kind === 'quit') {
     el.innerHTML = '<div class="endingtitle">TWO WEEKS\' NOTICE</div>' +
-      '<div class="flavor">You wait until he finishes the word "wins." Then you stand, cross Conference Room C, and set the letter beside his laptop — on the keyboard, actually, where it cannot be scrolled past.<br><br>' +
+      '<div class="flavor">You wait until he finishes the word "wins." Then you stand, cross Conference Room C, and set the letter beside his laptop. On the keyboard, actually, where it cannot be scrolled past.<br><br>' +
       'And here is the thing you will tell people for years: <b>he looks up.</b> For the first time in institutional memory, ' + BOSS + ' looks up from the screen at a human being who is leaving. The room watches him do it. Somebody\'s coffee goes cold in real time.<br><br>' +
       '"We\'d hate to lose you," he says, reaching for the phrases. "We were about to talk about your growth."<br><br>' +
       'The raise was capped at 3%. The exit never was. You walk out through the lobby, past the founder\'s portrait, out the doors, into the enormous, unmonitored afternoon.</div>' +
       scoreBlock() +
       '<div class="event" style="border-left-color: var(--lock);"><b>THE TRUE ENDING.</b> Built across ' + META.week + ' week' + (META.week > 1 ? 's' : '') + ': a portfolio, a network, a runway. None of it appeared on their tracker. That was the point.</div>' +
-      '<button class="choice" id="newgame" style="margin-top:10px;">NEW GAME — someone else\'s first Monday</button>';
+      '<button class="choice" id="newgame" style="margin-top:10px;">NEW GAME: someone else\'s first Monday</button>';
     $('newgame').onclick = () => { try { localStorage.removeItem(META_KEY); } catch (e) {} location.reload(); };
     return;
   }
   if (kind === 'compliance') {
     const earned = awardLeverage('compliance');
     el.innerHTML = '<div class="endingtitle">MALICIOUS COMPLIANCE</div>' +
-      '<div class="flavor">You beat the system with its own favorite weapon: documentation. Every win secured, every trail papered, every witness looped. He stood at the front of Conference Room C with nothing to take, and for 4 entire minutes, ' + BOSS + ' experienced what the wellness module calls "an opportunity for growth."<br><br>You have not escaped. You have merely won. On Monday it begins again — but they know, now. And so do you.</div>' +
+      '<div class="flavor">You beat the system with its own favorite weapon: documentation. Every win secured, every trail papered, every witness looped. He stood at the front of Conference Room C with nothing to take, and for 4 entire minutes, ' + BOSS + ' experienced what the wellness module calls "an opportunity for growth."<br><br>You have not escaped. You have merely won. On Monday it begins again. But they know, now. And so do you.</div>' +
       scoreBlock() +
       '<div class="event">+' + earned + ' LEVERAGE (compliance bonus). The cleanest win the building recognizes, and it recognizes it through gritted teeth.</div>' +
-      '<button class="choice" id="toStore" style="margin-top:10px;">Go home. The weekend is yours — both days.</button>';
+      '<button class="choice" id="toStore" style="margin-top:10px;">Go home. The weekend is yours. Both days.</button>';
+    // one balloon. exactly one. someone in Facilities was told to celebrate.
+    const b = document.createElement('div');
+    b.className = 'balloon';
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 9500);
   } else {
-    // Grade is about what he TOOK, not what you made — protection is the game.
+    // Grade is about what he TOOK, not what you made; protection is the game.
     const stolen = S.items.filter(i => i.stolen).reduce((a, b) => a + b.value, 0);
     const grade = stolen <= 5 && S.sanity >= 50 ? 'A'
                 : stolen <= 10 && S.sanity >= 35 ? 'B'
@@ -966,7 +1909,7 @@ function ending(kind) {
     const earned = awardLeverage('survived', grade);
     el.innerHTML = '<div class="endingtitle">WEEK SURVIVED · GRADE ' + grade + '</div>' +
       '<div class="tag">GRADED ON WHAT HE TOOK, NOT WHAT YOU MADE</div>' +
-      '<div class="flavor">You made it to 5 PM Friday with your badge, most of your credit, and a to-go cup of institutional coffee you will not drink. The parking lot is gold in the late light. For two whole days, your time belongs to you — minus whatever Saturday email is already being drafted.</div>' +
+      '<div class="flavor">You made it to 5 PM Friday with your badge, most of your credit, and a to-go cup of institutional coffee you will not drink. The parking lot is gold in the late light. For two whole days, your time belongs to you, minus whatever Saturday email is already being drafted.</div>' +
       scoreBlock() +
       '<div class="event">+' + earned + ' LEVERAGE. The raise is capped. The exit is not.</div>' +
       '<button class="choice" id="toStore" style="margin-top:10px;">Go home. Spend the weekend on yourself.</button>';
@@ -974,7 +1917,7 @@ function ending(kind) {
   $('toStore').onclick = storeScreen;
 }
 
-// ---------- the store (Saturday — your time, your money, their absence) ----------
+// ---------- the store (Saturday: your time, your money, their absence) ----------
 function storeScreen() {
   const el = $('card');
   el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
@@ -982,23 +1925,61 @@ function storeScreen() {
   const escapeCount = ['portfolio', 'network', 'savings'].filter(k => META.up[k]).length;
   let html = '<h2>Saturday, 9:04 AM</h2><div class="tag">YOUR TIME · NO BADGE · NOT MONITORED (PROBABLY)</div>' +
     '<div class="flavor">The week paid you in the only currency the building can\'t claim. Spend it on the version of you that leaves.</div>' +
-    '<div class="scoregrid">LEVERAGE: <b>' + META.leverage + '</b> · ESCAPE PLAN: <b>' + escapeCount + '/3</b>' + (escapeReady() ? ' · <span class="secure">READY — the letter is in your bag</span>' : '') + '</div>';
+    '<div class="scoregrid">LEVERAGE: <b>' + META.leverage + '</b> · ESCAPE PLAN: <b>' + escapeCount + '/3</b>' + (escapeReady() ? ' · <span class="secure">READY. The letter is in your bag</span>' : '') + '</div>';
+  // Life Outside: what the week's evenings did to the rest of you
+  const LIFE_WORDS = {
+    plant: ['dead', 'wilting', 'surviving', 'green', 'thriving'],
+    friend: ['a stranger now', 'drifting', 'patient', 'close', 'your person'],
+    hobby: ['forgotten', 'dusty', 'waiting', 'alive', 'flourishing']
+  };
+  html += '<div class="scoregrid" style="border-top:1px dashed var(--line);padding-top:8px;">LIFE OUTSIDE · ' +
+    'The plant: <b>' + LIFE_WORDS.plant[META.life.plant] + '</b> · ' +
+    'The friend: <b>' + LIFE_WORDS.friend[META.life.friend] + '</b> · ' +
+    'The hobby: <b>' + LIFE_WORDS.hobby[META.life.hobby] + '</b></div>';
+  // File one of this week's items away, unofficially, for free. Once a week.
+  if (S.items.length && !S.cabinetPinned) {
+    html += '<div class="tag" style="margin-top:14px;">FILE SOMETHING AWAY · ONE FREE PICK THIS WEEK</div>';
+    S.items.forEach((it, idx) => {
+      html += '<button class="choice" data-pin="' + idx + '">' + it.name + (it.stolen ? ' <span style="color:var(--danger);">(claimed by ' + BOSS + ')</span>' : it.locked ? ' <span class="lockmark">🔒</span>' : '') + '<span class="cost">keep a copy, off the books</span></button>';
+    });
+  }
   STORE.forEach(it => {
     const has = META.up[it.id];
-    const afford = META.leverage >= it.cost;
+    // Nina made a call: the Network is cheaper if she trusts you
+    const cost = (it.id === 'network' && META.ninaTrust) ? it.cost - 10 : it.cost;
+    const afford = META.leverage >= cost;
     if (has) {
-      html += '<div class="riskitem locked"><span>' + it.name + ' <span class="lockmark">✓ YOURS</span></span><span class="val">' + it.desc + '</span></div>';
+      html += '<div class="riskitem locked" style="flex-direction:column;align-items:flex-start;">' +
+        '<span>' + it.name + ' <span class="lockmark">✓ YOURS</span></span>' +
+        '<span style="color:var(--ink-dim);font-size:0.88em;white-space:normal;margin-top:4px;">' + it.desc + '</span></div>';
     } else {
-      html += '<button class="choice" data-buy="' + it.id + '" ' + (afford ? '' : 'disabled') + '>' + (it.escape ? '⬒ ' : '') + it.name + ' — ' + it.cost + ' Leverage<span class="cost">' + it.desc + '</span></button>';
+      html += '<button class="choice" data-buy="' + it.id + '" ' + (afford ? '' : 'disabled') + '>' + (it.escape ? '⬒ ' : '') + it.name + ' · ' + cost + ' Leverage' +
+        (cost !== it.cost ? ' <span class="secure">(Nina made a call)</span>' : '') +
+        '<span class="cost">' + it.desc + '</span></button>';
     }
   });
-  html += '<button class="choice" id="nextweek" style="margin-top:14px; border-color: var(--accent); color: var(--accent);">CLOCK IN — WEEK ' + (META.week + 1) + '<span class="cost">Monday always comes. But you are not the same shape you were.</span></button>';
+  html += '<button class="choice" id="nextweek" style="margin-top:14px; border-color: var(--accent); color: var(--accent);">CLOCK IN · WEEK ' + (META.week + 1) + '<span class="cost">Monday always comes. But you are not the same shape you were.</span></button>';
   el.innerHTML = html;
+  el.querySelectorAll('[data-pin]').forEach(btn => {
+    btn.onclick = () => {
+      if (S.cabinetPinned) return;
+      const it = S.items[parseInt(btn.dataset.pin, 10)];
+      if (!it) return;
+      sfx('lock');
+      S.cabinetPinned = true;
+      META.fileCabinet.push({ title: it.name, week: META.week, note: it.stolen ? 'Claimed by ' + BOSS + ' at the Friday Meeting. You kept your own copy anyway.' : it.locked ? 'Secured with a Paper Trail. Filed here too, just in case.' : 'Never claimed, never locked. Filed away all the same.' });
+      saveMeta();
+      storeScreen();
+    };
+  });
   el.querySelectorAll('[data-buy]').forEach(btn => {
     btn.onclick = () => {
       const it = STORE.find(x => x.id === btn.dataset.buy);
-      if (!it || META.up[it.id] || META.leverage < it.cost) return;
-      META.leverage -= it.cost;
+      if (!it) return;
+      const cost = (it.id === 'network' && META.ninaTrust) ? it.cost - 10 : it.cost;
+      if (META.up[it.id] || META.leverage < cost) return;
+      sfx('buy');
+      META.leverage -= cost;
       META.up[it.id] = true;
       saveMeta();
       storeScreen();
@@ -1007,44 +1988,258 @@ function storeScreen() {
   $('nextweek').onclick = () => { META.week += 1; saveMeta(); location.reload(); };
 }
 
+// ---------- ambient music (procedural Web Audio, no assets, no licensing) ----------
+// An eerie institutional hum: low detuned drones a minor second apart, slow
+// breathing LFOs, and a distant lonely tone every few seconds. All generated
+// in code, so there is nothing to license and nothing to load.
+let AC = null, musicOn = false, musicNodes = null;
+
+function startMusic() {
+  if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+  AC.resume();
+  const master = AC.createGain();
+  master.gain.setValueAtTime(0.0001, AC.currentTime);
+  master.gain.exponentialRampToValueAtTime(0.11, AC.currentTime + 5);
+  master.connect(AC.destination);
+  const nodes = { master, stoppables: [] };
+  // drones: A1, a detuned twin (slow beating), the minor second above, a high faint fifth
+  const layers = [
+    { f: 55.00, type: 'sine',     g: 0.50 },
+    { f: 55.35, type: 'sine',     g: 0.45 },
+    { f: 58.27, type: 'triangle', g: 0.14 },
+    { f: 164.8, type: 'sine',     g: 0.05 }
+  ];
+  layers.forEach((L, i) => {
+    const o = AC.createOscillator(); o.type = L.type; o.frequency.value = L.f;
+    const g = AC.createGain(); g.gain.value = L.g;
+    const lfo = AC.createOscillator(); lfo.frequency.value = 0.04 + i * 0.021;
+    const lfoG = AC.createGain(); lfoG.gain.value = L.g * 0.35;
+    lfo.connect(lfoG); lfoG.connect(g.gain);
+    o.connect(g); g.connect(master);
+    o.start(); lfo.start();
+    nodes.stoppables.push(o, lfo);
+    if (i === 1) nodes.detuneOsc = o;     // the beating twin: widens as dread grows
+    if (i === 2) nodes.minorGain = g;     // the minor second: swells as dread grows
+  });
+  // a distant tone, every ~9 seconds, from somewhere on a floor you can't badge into
+  nodes.timer = setInterval(() => {
+    if (!musicOn || !AC) return;
+    const o = AC.createOscillator(); o.type = 'sine';
+    o.frequency.value = [220, 233.08, 174.61, 246.94][Math.floor(Math.random() * 4)];
+    const g = AC.createGain(); g.gain.value = 0;
+    o.connect(g); g.connect(master);
+    const t = AC.currentTime;
+    g.gain.linearRampToValueAtTime(0.045, t + 2.5);
+    g.gain.linearRampToValueAtTime(0, t + 7);
+    o.start(t); o.stop(t + 7.2);
+  }, 9000);
+  musicNodes = nodes;
+  updateMusicMood();
+}
+
+// The building sounds wrong when things are wrong. Sanity drives the dread
+// moment to moment; the week number raises the floor it can never drop below.
+function updateMusicMood() {
+  if (!musicNodes || !AC) return;
+  try {
+    const dread = Math.min(1.3, (100 - S.sanity) / 100 + (Math.min(META.week, 8) - 1) * 0.06);
+    const t = AC.currentTime;
+    // beating widens from a slow shimmer (0.35 Hz) toward a nauseous wobble (~1.6 Hz)
+    musicNodes.detuneOsc.frequency.setTargetAtTime(55.35 + dread * 1.25, t, 2.5);
+    // the minor second swells from a whisper to a presence
+    musicNodes.minorGain.gain.setTargetAtTime(0.14 + dread * 0.22, t, 2.5);
+  } catch (e) {}
+}
+
+function stopMusic() {
+  if (!musicNodes) return;
+  const n = musicNodes; musicNodes = null;
+  clearInterval(n.timer);
+  n.master.gain.linearRampToValueAtTime(0.0001, AC.currentTime + 0.8);
+  setTimeout(() => { n.stoppables.forEach(o => { try { o.stop(); } catch (e) {} }); n.master.disconnect(); }, 1000);
+}
+
+$('musicbtn').onclick = () => {
+  musicOn = !musicOn;
+  if (musicOn) startMusic(); else { stopBootTheme(); stopMusic(); }
+  $('musicbtn').textContent = musicOn ? '♪ AMBIENT: ON' : '♪ AMBIENT: OFF';
+  $('musicbtn').classList.toggle('on', musicOn);
+};
+
+// ---------- boot theme: a slow music-box figure over the drone ----------
+// starts on the first click anywhere on the boot screen (browsers require a
+// gesture before audio), stops when the week begins; the drone carries on
+let bootTheme = null, bootStep = 0;
+const BOOT_NOTES = [220, 261.63, 246.94, 329.63, 220, 261.63, 233.08, 174.61];
+function startBootTheme() {
+  if (bootTheme) return;
+  if (!musicOn) {
+    musicOn = true; startMusic();
+    $('musicbtn').textContent = '♪ AMBIENT: ON';
+    $('musicbtn').classList.add('on');
+  }
+  bootTheme = setInterval(() => {
+    try {
+      if (!AC || !musicNodes) return;
+      const t = AC.currentTime;
+      const o = AC.createOscillator(); o.type = 'sine';
+      o.frequency.value = BOOT_NOTES[bootStep++ % BOOT_NOTES.length] * 2;
+      const g = AC.createGain();
+      g.gain.setValueAtTime(0.05, t);
+      g.gain.exponentialRampToValueAtTime(0.0008, t + 1.7);
+      o.connect(g); g.connect(musicNodes.master);
+      o.start(t); o.stop(t + 1.8);
+      // a ghost of the same note, detuned, a moment later
+      const o2 = AC.createOscillator(); o2.type = 'sine';
+      o2.frequency.value = o.frequency.value * 1.006;
+      const g2 = AC.createGain();
+      g2.gain.setValueAtTime(0.018, t + 0.22);
+      g2.gain.exponentialRampToValueAtTime(0.0006, t + 1.9);
+      o2.connect(g2); g2.connect(musicNodes.master);
+      o2.start(t + 0.22); o2.stop(t + 2);
+    } catch (e) {}
+  }, 1350);
+}
+function stopBootTheme() {
+  if (bootTheme) { clearInterval(bootTheme); bootTheme = null; }
+}
+
+$('helpbtn').onclick = () => { $('helpoverlay').style.display = 'block'; };
+$('helpoverlay').onclick = (e) => { if (e.target.id === 'helpoverlay' || e.target.id === 'helpclose') $('helpoverlay').style.display = 'none'; };
+
+// ---------- the File Cabinet: completed contracts + everything you quietly kept ----------
+function renderCabinet() {
+  const el = $('cabinetcontent');
+  let html = '<h3>COMPLETED CONTRACTS</h3>';
+  if (!META.contractHistory.length) {
+    html += '<div class="filenote">No contracts on record yet. They start showing up after your first full week.</div>';
+  } else {
+    META.contractHistory.slice().reverse().forEach(c => {
+      html += '<div class="filerow contractrow ' + (c.met ? 'met' : 'unmet') + '"><b>' + c.name + '</b> <span class="fileweek">· WEEK ' + c.week + ' · ' + (c.met ? 'MET' : 'not met') + '</span><br><span class="filenote">' + c.desc + '</span></div>';
+    });
+  }
+  html += '<h3>SAVED FILES</h3>';
+  if (!META.fileCabinet.length) {
+    html += '<div class="filenote">Empty so far. The building would prefer it stayed that way.</div>';
+  } else {
+    META.fileCabinet.slice().reverse().forEach(f => {
+      html += '<div class="filerow"><b>' + f.title + '</b> <span class="fileweek">· WEEK ' + f.week + '</span><br><span class="filenote">' + f.note + '</span></div>';
+    });
+  }
+  el.innerHTML = html;
+}
+$('cabinetbtn').onclick = () => { renderCabinet(); $('cabinetoverlay').style.display = 'block'; };
+$('cabinetoverlay').onclick = (e) => { if (e.target.id === 'cabinetoverlay' || e.target.id === 'cabinetclose') $('cabinetoverlay').style.display = 'none'; };
+
+// ---------- save codes (export/import the employee record) ----------
+function exportSave() {
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify(META))));
+  prompt('Your employee record. Copy it somewhere safe. The building would prefer you didn\'t.', code);
+}
+function importSave() {
+  const code = prompt('Paste an employee record:');
+  if (!code) return;
+  try {
+    const m = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+    if (typeof m.week !== 'number' || typeof m.leverage !== 'number' || typeof m.up !== 'object') throw new Error('bad');
+    META.week = m.week; META.leverage = m.leverage; META.up = m.up || {};
+    META.life = m.life || { plant: 2, friend: 2, hobby: 2 };
+    META.ninaTrust = !!m.ninaTrust; META.presidentSeen = !!m.presidentSeen;
+    META.fileCabinet = m.fileCabinet || []; META.contractHistory = m.contractHistory || []; META.lastClaimLine = typeof m.lastClaimLine === 'number' ? m.lastClaimLine : -1;
+    saveMeta();
+    location.reload();
+  } catch (e) {
+    alert('That record is not recognized by this terminal. (Invalid or corrupted code.)');
+  }
+}
+
 // ---------- boot ----------
 function buildBootLines() {
-  const lines = [
-    'CORESTONE DYNAMICS — OPERATIONS TERMINAL 4B',
+  // a different arrival every week; the building never says the same thing twice in a row
+  const GREETS = [
     'EMPLOYEE VERIFIED. WELCOME BACK. YOU WERE MISSED, PROCEDURALLY.',
-    'WEEK ' + META.week + '. YOUR WORK IS IMPORTANT. YOUR WORK IS MYSTERIOUS.'
+    'EMPLOYEE VERIFIED. YOUR CHAIR HAS BEEN ADJUSTED. NOT BY YOU.',
+    'EMPLOYEE VERIFIED. THE WEEKEND HAS BEEN LOGGED AS "RESTORATIVE."',
+    'EMPLOYEE VERIFIED. YOU ARE THE FOURTH-EARLIEST ARRIVAL. THIS HAS BEEN SHARED.',
+    'EMPLOYEE VERIFIED. A DESK AUDIT OCCURRED IN YOUR ABSENCE. EVERYTHING IS WHERE IT WAS.',
+    'EMPLOYEE VERIFIED. YOUR LOGIN STREAK IS ADMIRABLE. STREAKS ARE MONITORED.',
+    'EMPLOYEE VERIFIED. THE LOBBY PLANT HAS BEEN REPLACED WITH AN IDENTICAL PLANT.',
+    'EMPLOYEE VERIFIED. SOMEONE SPOKE YOUR NAME IN A MEETING YOU WERE NOT IN.'
   ];
-  // Difficulty is announced, never hidden. The policy updates ARE the joke.
-  if (META.week >= 2) lines.push('POLICY UPDATE: EVENING AVAILABILITY IS NOW A CORE VALUE.');
-  if (META.week >= 3) lines.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. DIRECTOR MILLER HAS A REPUTATION TO MAINTAIN.');
-  if (META.week >= 4) lines.push('NOTICE: THE BUILDING HAS SETTLED. EVERYTHING COSTS SLIGHTLY MORE NOW.');
-  if (META.week >= 5) lines.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A SECOND SIGNATURE.');
+  const KNOWS = [
+    'THE BUILDING KNOWS WHAT YOU DO HERE. THAT MAKES ONE OF YOU.',
+    'THE ELEVATORS HAVE BEEN RECALIBRATED. DO NOT NOTICE THE DIFFERENCE.',
+    'BADGE READERS NOW READ FASTER. THERE IS NOTHING ELSE THEY READ. PROBABLY.',
+    'THE FOURTH FLOOR IS BEING "REIMAGINED." DO NOT ASK AS WHAT.',
+    'A NEW CORE VALUE HAS BEEN ADOPTED. IT WILL BE ANNOUNCED WHEN RELEVANT.',
+    'THE SUGGESTION BOX HAS BEEN EMPTIED. IT WAS NEVER FULL.',
+    'CONFERENCE ROOM B REMAINS OUT OF SERVICE. THE TABLE IS BEING STUDIED.',
+    'YOUR BADGE PHOTO HAS BEEN RETAKEN. YOU WERE NOT PRESENT FOR THIS.'
+  ];
+  const lines = [
+    'EVERWELL GROUP · OPERATIONS TERMINAL 4B',
+    GREETS[(META.week - 1) % GREETS.length],
+    'WEEK ' + META.week + '. ' + KNOWS[(META.week - 1) % KNOWS.length]
+  ];
+  // Difficulty is announced, never hidden, but it doesn't need to be read aloud
+  // every single week. It's collected here and offered as a notice, not force-fed.
+  const notices = [];
+  if (META.week >= 2) notices.push('POLICY UPDATE: EVENING AVAILABILITY IS NOW A CORE VALUE.');
+  if (META.week >= 3) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. DIRECTOR MILLER HAS A REPUTATION TO MAINTAIN.');
+  if (META.week >= 3) notices.push('NOTICE: THE BUILDING HAS SETTLED. EVERYTHING COSTS SLIGHTLY MORE NOW.');
+  if (META.week >= 5) notices.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A SECOND SIGNATURE.');
+  if (META.week >= 6) notices.push('NOTICE: THE BUILDING HAS SETTLED FURTHER. IT MAY SETTLE AGAIN.');
+  if (META.week >= 7) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE THREE (3) WINS. HE IS BEING CONSIDERED FOR SOMETHING.');
+  // the way out, acknowledged the way the building acknowledges everything
+  const escN = ['portfolio', 'network', 'savings'].filter(k => META.up[k]).length;
+  if (escN === 3) notices.push('FINAL NOTICE: THE LETTER IN YOUR BAG HAS BEEN NOTED. IT HAS ALWAYS BEEN NOTED.');
+  else if (escN > 0) notices.push('NOTE: OUTSIDE ACTIVITY DETECTED ON YOUR PROFILE (' + escN + ' OF 3). THIS IS NOT A THREAT. IT IS A COUNT.');
+  // this week's modifier, announced like everything else
+  notices.push(MOD.boot);
+  // new personnel files unlocked this week
+  const newFiles = Object.keys(CARD_UNLOCKS).filter(k => CARD_UNLOCKS[k] === META.week).length;
+  if (META.week > 1 && newFiles > 0) notices.push('PERSONNEL UPDATE: ' + newFiles + ' NEW FILE' + (newFiles > 1 ? 'S' : '') + ' ADDED TO YOUR ROTATION.');
   lines.push('REMINDER: THE FRIDAY MEETING IS AT 4:00 PM.');
   lines.push('IT HAS ALWAYS BEEN AT 4:00 PM.');
-  return lines;
+  return { lines, notices };
 }
-const BOOTLINES = buildBootLines();
+const BOOT_DATA = buildBootLines();
+const BOOTLINES = BOOT_DATA.lines;
+const POLICY_NOTICES = BOOT_DATA.notices;
 function boot() {
   const el = $('bootlines');
-  let li = 0, ci = 0, out = '';
+  let li = 0, ci = 0, out = '', done = false;
+  function finishTyping() {
+    if (done) return;
+    done = true;
+    el.textContent = BOOTLINES.join('\n');
+    el.classList.remove('cursor');
+    $('bootbtn').style.display = 'block';
+  }
   function type() {
-    if (li >= BOOTLINES.length) {
-      el.classList.remove('cursor');
-      $('bootbtn').style.display = 'block';
-      return;
-    }
+    if (done) return;
+    if (li >= BOOTLINES.length) return finishTyping();
     const line = BOOTLINES[li];
     if (ci < line.length) {
-      out += line[ci++];
+      const c = line[ci++];
+      out += c;
       el.textContent = out;
-      setTimeout(type, 18 + Math.random() * 20);
+      if (c !== ' ') sfx('type');
+      // slow, deliberate, and occasionally it hesitates, as if deciding what to tell you
+      let delay = 45 + Math.random() * 50;
+      if (Math.random() < 0.07) delay += 260 + Math.random() * 340;
+      setTimeout(type, delay);
     } else {
+      sfx('ding');
       out += '\n'; li++; ci = 0;
-      setTimeout(type, 320);
+      setTimeout(type, 720);
     }
   }
   type();
+  // a click anywhere skips the suspense for returning employees, and wakes the theme
+  $('boot').addEventListener('click', (e) => { startBootTheme(); if (e.target.tagName !== 'BUTTON') finishTyping(); });
   $('bootbtn').onclick = () => {
+    stopBootTheme(); // the melody ends; the drone, like the job, continues
     // apply owned upgrades to the fresh week
     S.maxTime = 10 + (META.up.coffee ? 1 : 0);
     S.pto = 2 + (META.up.pto ? 1 : 0);
@@ -1055,9 +2250,27 @@ function boot() {
     render();
     startDay();
   };
-  if (META.week > 1 || META.leverage > 0) {
+  if (POLICY_NOTICES.length) {
     $('boot').insertAdjacentHTML('beforeend',
-      '<div style="margin-top:26px;"><button id="wipebtn" style="background:none;border:1px dashed var(--ink-dim);color:var(--ink-dim);font-family:inherit;font-size:0.7em;letter-spacing:2px;padding:6px 14px;cursor:pointer;">ERASE EMPLOYEE RECORD (reset save)</button></div>');
+      '<div><button id="noticebtn">▸ POLICY NOTICES (' + POLICY_NOTICES.length + ') · CLICK TO REVIEW</button></div>');
+    $('noticebtn').onclick = () => {
+      $('noticecontent').innerHTML = POLICY_NOTICES.map(n => '<div class="noticerow">' + n + '</div>').join('');
+      $('noticeoverlay').style.display = 'block';
+    };
+  }
+  $('noticeoverlay').onclick = (e) => { if (e.target.id === 'noticeoverlay' || e.target.id === 'noticeclose') $('noticeoverlay').style.display = 'none'; };
+
+  let saveRow = '<div style="margin-top:26px;">' +
+    '<button class="savebtn" id="exportbtn">EXPORT RECORD</button>' +
+    '<button class="savebtn" id="importbtn">IMPORT RECORD</button>';
+  if (META.week > 1 || META.leverage > 0) {
+    saveRow += '<button class="savebtn" id="wipebtn">ERASE RECORD</button>';
+  }
+  saveRow += '</div>';
+  $('boot').insertAdjacentHTML('beforeend', saveRow);
+  $('exportbtn').onclick = exportSave;
+  $('importbtn').onclick = importSave;
+  if ($('wipebtn')) {
     $('wipebtn').onclick = () => {
       if (confirm('Erase all progress? The building will not remember you. Neither will the save file.')) {
         try { localStorage.removeItem(META_KEY); } catch (e) {}

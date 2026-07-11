@@ -1,6 +1,6 @@
 name: Deploy to GitHub Pages
 
-# The game is a single static file (index.html at the repo root) — no build step.
+# The game is a single static file (index.html at the repo root): no build step.
 # This just uploads the repo and publishes it to Pages.
 # One-time setup: repo Settings > Pages > Source: "GitHub Actions".
 
