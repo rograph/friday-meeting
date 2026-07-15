@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FRIDAY MEETING</title>
+<meta name="description" content="A roguelike about surviving the workweek. Grind procedurally generated workweeks as an Operations Manager, protect your credit from the boss, don't burn out.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23041219'/%3E%3Cpolyline points='1,9 4,9 6,3 9,13 11,9 15,9' fill='none' stroke='%2352e0d2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="alternate icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Friday Meeting">
+<meta property="og:description" content="A roguelike about surviving the workweek. Grind procedurally generated workweeks as an Operations Manager, protect your credit from the boss, don't burn out.">
+<meta property="og:image" content="https://rograph.github.io/friday-meeting/og-image.png">
+<meta property="og:url" content="https://rograph.github.io/friday-meeting/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #04121d;
@@ -22,7 +35,7 @@
   body {
     background: var(--bg);
     color: var(--ink);
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Share Tech Mono', 'Courier New', Courier, monospace;
     min-height: 100vh;
   }
   /* ---- CRT overlay ---- */
@@ -52,6 +65,7 @@
     margin: 0 auto;
     padding: 18px 20px 60px;
     position: relative;
+    transition: filter 1.2s ease;
   }
   /* ---- Header / stats ---- */
   header {
@@ -61,6 +75,12 @@
   }
   header h1 { font-size: 0.95em; letter-spacing: 4px; margin: 0; color: var(--accent); text-shadow: 0 0 8px rgba(82,224,210,0.4); }
   #daylabel { font-size: 0.8em; color: var(--ink-dim); letter-spacing: 2px; }
+  #daymap { display: block; margin: 2px auto 14px; max-width: 320px; width: 100%; }
+  .daynode { fill: var(--panel-2); stroke: var(--line); stroke-width: 1.5; transition: fill .5s, stroke .5s; }
+  .daynode.done { fill: var(--lock); stroke: var(--lock); }
+  .daynode.current { fill: var(--accent); stroke: var(--accent); animation: pulse 1.8s infinite; }
+  .daylbl { fill: var(--ink-dim); font-size: 9px; text-anchor: middle; font-family: inherit; }
+  .forkmark { fill: var(--warn); opacity: 0.85; }
   #stats {
     display: flex; gap: 10px; flex-wrap: wrap;
     margin-bottom: 16px; font-size: 0.78em;
@@ -74,6 +94,8 @@
     transition: border-color .3s;
   }
   .stat b { display: block; font-size: 1.25em; color: var(--accent); }
+  .stat-ic { display: inline-block; vertical-align: -2px; width: 13px; height: 13px; margin-right: 3px; color: var(--ink-dim); }
+  .stat-ic svg { width: 100%; height: 100%; display: block; }
   .stat.flash-down { animation: flashDown .6s; }
   .stat.flash-up { animation: flashUp .6s; }
   @keyframes flashDown { 0% { border-color: var(--danger); background: #2c1516; } 100% {} }
@@ -136,6 +158,8 @@
   button.choice .cost { color: var(--ink-dim); font-size: 0.85em; display: block; margin-top: 4px; }
   button.choice.pto { border-style: dashed; color: var(--warn); }
   button.choice.pto:hover { border-color: var(--warn); }
+  button.choice.chooser { border-left: 3px solid var(--accent); }
+  button.choice.chooser .cost { color: var(--accent); letter-spacing: 1px; }
   button.choice:disabled { opacity: .35; cursor: default; transform: none; }
   .event {
     background: #0b2030;
@@ -180,6 +204,13 @@
   @keyframes flashcut {
     0% { filter: brightness(3.6) grayscale(1); }
     100% { filter: brightness(1) grayscale(0); }
+  }
+
+  /* ---- The Friday Meeting, start to finish: the room itself tightens ---- */
+  body.confrontation #app { animation: confrontPulse 2.4s ease-in-out infinite; }
+  @keyframes confrontPulse {
+    0%, 100% { box-shadow: inset 0 0 60px rgba(224,121,106,0); }
+    50% { box-shadow: inset 0 0 110px rgba(224,121,106,0.4); }
   }
 
   /* ---- CRT power-off wipe between days ---- */
@@ -416,8 +447,8 @@
   <b>Time</b> resets each morning. Run out and you enter Crunch: sanity costs rise 50%.<br>
   <b>Credit</b> is what your work is worth. Every result you produce appears on the <b>At Risk tracker</b> (top bar, and in full at end of day).<br>
   <b>Paper Trails</b> lock an item so it cannot be claimed. Locks cost Time. Targets freeze at midnight Thursday.<br>
-  <b>Friday, 4:00 PM:</b> Director Miller reads the week aloud and claims your most valuable unlocked item. Later weeks, he claims more. Lock everything and he claims nothing.<br>
-  <b>Reputation</b> matters at the edges. Below 30, you may not decline evening "opportunities." At 70 or above, your standing shields your single best unlocked item from being claimed (he cannot publicly take the headline win of someone that visible).<br>
+  <b>Friday, 4:00 PM:</b> someone reads the week aloud and claims your most valuable unlocked item, usually AVP Miller, sometimes one of his directors covering for him. You won't know who until the slide goes up. Later weeks, they claim more. Lock everything and nobody claims anything.<br>
+  <b>Reputation</b> matters at the edges. Below 30, you may not decline evening "opportunities." At 70 or above, your standing shields your single best unlocked item from being claimed (he cannot publicly take the headline win of someone that visible). At 0, you're performance managed out, a run-ending outcome, same as Burnout.<br>
   <b>PTO</b> skips a card. Its use is noted.<br>
   <b>Leverage</b> is paid at week's end and spent on Saturdays, on the version of you that leaves. Three purchases make up the Escape Plan. Complete it.<br><br>
   This handbook is provided for your convenience. It is not a contract. Nothing is a contract.<br><br>
@@ -437,13 +468,23 @@
       <h1>FRIDAY MEETING</h1>
       <div id="daylabel">MONDAY</div>
     </header>
+    <svg id="daymap" viewBox="0 0 300 42" aria-hidden="true">
+      <line x1="20" y1="16" x2="280" y2="16" stroke="var(--line)" stroke-width="2"/>
+      <circle id="daycircle-0" class="daynode" cx="20" cy="16" r="8"/><text class="daylbl" x="20" y="36">MON</text>
+      <circle id="daycircle-1" class="daynode" cx="85" cy="16" r="8"/><text class="daylbl" x="85" y="36">TUE</text>
+      <rect class="forkmark" x="80.5" y="1" width="5" height="5" transform="rotate(45 83 3.5)"/>
+      <circle id="daycircle-2" class="daynode" cx="150" cy="16" r="8"/><text class="daylbl" x="150" y="36">WED</text>
+      <circle id="daycircle-3" class="daynode" cx="215" cy="16" r="8"/><text class="daylbl" x="215" y="36">THU</text>
+      <rect class="forkmark" x="210.5" y="1" width="5" height="5" transform="rotate(45 213 3.5)"/>
+      <circle id="daycircle-4" class="daynode" cx="280" cy="16" r="8"/><text class="daylbl" x="280" y="36">FRI</text>
+    </svg>
     <div id="stats">
-      <div class="stat" id="stat-sanity">Sanity <b id="s-sanity">100</b><div id="sanitybarwrap"><div id="sanitybar"></div></div></div>
-      <div class="stat" id="stat-time">Time <b id="s-time">10</b></div>
-      <div class="stat" id="stat-credit">Credit <b id="s-credit">0</b></div>
-      <div class="stat" id="stat-rep">Reputation <b id="s-rep">50</b></div>
-      <div class="stat" id="stat-pto">PTO <b id="s-pto">2</b></div>
-      <div class="stat" id="stat-risk">At Risk <b id="s-risk">none</b></div>
+      <div class="stat" id="stat-sanity"><span class="stat-ic"><svg viewBox="0 0 16 16"><polyline points="1,9 4,9 6,3 9,13 11,9 15,9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Sanity <b id="s-sanity">100</b><div id="sanitybarwrap"><div id="sanitybar"></div></div></div>
+      <div class="stat" id="stat-time"><span class="stat-ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="8" y1="8" x2="8" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="8" y1="8" x2="11" y2="9.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>Time <b id="s-time">10</b></div>
+      <div class="stat" id="stat-credit"><span class="stat-ic"><svg viewBox="0 0 16 16"><path d="M1 6 L1 1 L6 1 L14 9 L9 14 Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/><circle cx="4" cy="4" r="1" fill="currentColor"/></svg></span>Credit <b id="s-credit">0</b></div>
+      <div class="stat" id="stat-rep"><span class="stat-ic"><svg viewBox="0 0 16 16"><path d="M8 1 L14 3.2 V8 C14 12 11 14 8 15 C5 14 2 12 2 8 V3.2 Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span>Reputation <b id="s-rep">50</b></div>
+      <div class="stat" id="stat-pto"><span class="stat-ic"><svg viewBox="0 0 16 16"><path d="M8 15 C8 15 7 9 8 5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M8 6 C5 5 3 3 2 1 C5 1 8 3 8 7 Z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6 C11 5 13 3 14 1 C11 1 8 3 8 7 Z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>PTO <b id="s-pto">2</b></div>
+      <div class="stat" id="stat-risk"><span class="stat-ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="0.9" fill="currentColor"/></svg></span>At Risk <b id="s-risk">none</b></div>
       <div id="crunchtag">CRUNCH</div>
     </div>
     <div id="contractline"></div>
@@ -462,13 +503,13 @@
 // =============================================================
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
-const BOSS = 'Director Miller';
+const BOSS = 'AVP Miller';
 
 // ---------- meta-progression (persists across weeks via localStorage) ----------
 const META_KEY = 'fm_meta_v1';
 function loadMeta() {
   const def = { week: 1, leverage: 0, up: {}, life: { plant: 2, friend: 2, hobby: 2 }, ninaTrust: false, presidentSeen: false,
-    fileCabinet: [], contractHistory: [], lastClaimLine: -1 };
+    fileCabinet: [], contractHistory: [], lastClaimLine: -1, lastClaimLineByBoss: {}, trainingPending: false };
   try { return Object.assign(def, JSON.parse(localStorage.getItem(META_KEY)) || {}); }
   catch (e) { return def; }
 }
@@ -483,9 +524,10 @@ const STORE = [
   { id: 'templates',name: 'The Templates Folder',              cost: 10, desc: 'Paper trails cost 1 less Time. You\'ve done this before. You\'ll do it again.' },
   { id: 'lunch',    name: 'Standing Lunch with Chris',         cost: 10, desc: 'Start every week with Chris as an ally (one free lock per week).' },
   { id: 'pto',      name: 'Unused PTO, Actually Used',         cost: 8,  desc: '+1 PTO per week.' },
-  { id: 'portfolio',name: 'Portfolio Site, Built at Midnight', cost: 25, desc: 'ESCAPE PLAN 1/3: your work, with your name on it, on a domain they don\'t own.', escape: true },
-  { id: 'network',  name: 'The Network',                       cost: 25, desc: 'ESCAPE PLAN 2/3: old colleagues. The people you walked to parking lots.', escape: true },
-  { id: 'savings',  name: 'Six Months of Runway',              cost: 30, desc: 'ESCAPE PLAN 3/3: the number that changes the sound of your voice in meetings.', escape: true }
+  { id: 'decoy',    name: 'A Decoy Deliverable',               cost: 18, desc: 'Thursday night, name one unlocked item as the one he watches. He claims it first, ahead of whatever he\'d normally take. Doesn\'t change what he takes total, changes what he takes instead.', trinket: true },
+  { id: 'portfolio',name: 'Portfolio Site, Built at Midnight', cost: 40, desc: 'ESCAPE PLAN 1/3: your work, with your name on it, on a domain they don\'t own.', escape: true },
+  { id: 'network',  name: 'The Network',                       cost: 40, desc: 'ESCAPE PLAN 2/3: old colleagues. The people you walked to parking lots.', escape: true },
+  { id: 'savings',  name: 'Six Months of Runway',              cost: 45, desc: 'ESCAPE PLAN 3/3: the number that changes the sound of your voice in meetings.', escape: true }
 ];
 function escapeReady() { return META.up.portfolio && META.up.network && META.up.savings; }
 
@@ -499,10 +541,12 @@ const CONTRACTS = [
 ];
 
 // ---------- weekly modifiers (one policy per week, announced at boot) ----------
+// the quota checkpoint climbs with the rest of the ramp: 15 base, 18 from wk4, 20 from wk7
+function quotaTarget() { return 15 + (META.week >= 7 ? 5 : META.week >= 4 ? 3 : 0); }
 const MODIFIERS = [
   { id: 'calm',   boot: 'NO ADDITIONAL POLICY UPDATES THIS WEEK. THIS IS NOT REASSURING.' },
   { id: 'audit',  boot: 'POLICY UPDATE: AUDIT WEEK. DOCUMENTATION COSTS MORE, AND IS WORTH MORE.' },
-  { id: 'quota',  boot: 'POLICY UPDATE: A MID-WEEK CHECKPOINT HAS BEEN INTRODUCED. 15 CREDIT BY WEDNESDAY EOD.' },
+  { id: 'quota',  boot: 'POLICY UPDATE: A MID-WEEK CHECKPOINT HAS BEEN INTRODUCED. ' + quotaTarget() + ' CREDIT BY WEDNESDAY EOD.' },
   { id: 'vendor', boot: 'NOTICE: A VENDOR HAS BEEN GRANTED "STRATEGIC PARTNER" STATUS. THEY HAVE YOUR DIRECT LINE.' }
 ];
 const MOD = META.week === 1 ? MODIFIERS[0] : MODIFIERS[Math.floor(Math.random() * MODIFIERS.length)];
@@ -516,13 +560,121 @@ const CLAIM_LINES = [
   () => '"I\'m proud of the team on this," he says, meaning himself, in the plural he has used since his first promotion and never once revisited.',
   () => '"Big one," he says, tapping the slide twice like a man checking a watch that stopped years ago. "Glad I could help steer this home."'
 ];
-function pickClaimLine() {
-  let idx = Math.floor(Math.random() * CLAIM_LINES.length);
-  if (CLAIM_LINES.length > 1) {
-    while (idx === META.lastClaimLine) idx = Math.floor(Math.random() * CLAIM_LINES.length);
+const REED_CLAIM_LINES = [
+  () => '"Noted for the record," she says, and somehow that is the whole compliment. "Reassigning upward. Efficient." She does not smile. Smiling would be inefficient.',
+  () => '"This tracks with what I\'d expect from a well-run process," she says, as if the process ran itself, as if you were a rounding error the process produced.',
+  () => '"I\'ll take this one," she says, already initialing the slide with a pen that costs more than your monitor. "Consistency matters more than authorship."'
+];
+const BROOKS_CLAIM_LINES = [
+  () => '"Huge, HUGE win," Brooks says, standing though no one asked him to. "And I want to be clear, this was a team effort I personally spearheaded."',
+  () => '"I was JUST talking about this in the hallway," Brooks says, to a hallway that does not appear on the slide. "Great to see it land."',
+  () => '"This is exactly the energy I\'ve been trying to bring to the floor," Brooks says, gesturing at the floor, which was not consulted.'
+];
+const CALLOWAY_CLAIM_LINES = [
+  () => '"I just want to hold space for how proud I am of this," Calloway says, hand on heart, already reaching for the marker. "Reassigning with gratitude."',
+  () => '"This is such a growth moment for our whole team culture," Calloway says, culture meaning her, team meaning also her. "I\'m manifesting more of this."',
+  () => '"Let\'s normalize celebrating wins like this one," Calloway says, celebrating by writing her own name under it. "Self-care is claiming your seat at the table."'
+];
+
+// ---------- the four people who can run 4 PM (revealed only when the slide goes up) ----------
+const DIRECTORS = {
+  miller: {
+    key: 'miller', name: BOSS, pronoun: 'he', Pronoun: 'He', possessive: 'his', Possessive: 'His', object: 'him',
+    shieldBase: 70, claimsAdjust: 0, targeting: 'value', decoyWorks: true, hiddenSanityTax: 0,
+    absence: null, claimLines: CLAIM_LINES
+  },
+  reed: {
+    key: 'reed', name: 'Director Reed', pronoun: 'she', Pronoun: 'She', possessive: 'her', Possessive: 'Her', object: 'her',
+    shieldBase: 65, claimsAdjust: -1, targeting: 'noticedFirst', decoyWorks: false, hiddenSanityTax: 0,
+    absence: BOSS + ' is "aligning with Upstairs" this week. Director Reed is covering, personally, which nobody asked for and everybody understands.',
+    claimLines: REED_CLAIM_LINES
+  },
+  brooks: {
+    key: 'brooks', name: 'Director Brooks', pronoun: 'he', Pronoun: 'He', possessive: 'his', Possessive: 'His', object: 'him',
+    shieldBase: 55, claimsAdjust: -1, targeting: 'value', decoyWorks: true, hiddenSanityTax: 0,
+    absence: BOSS + ' is out. Director Brooks volunteered to run today\'s numbers, using the word "volunteered" generously.',
+    claimLines: BROOKS_CLAIM_LINES
+  },
+  calloway: {
+    key: 'calloway', name: 'Director Calloway', pronoun: 'she', Pronoun: 'She', possessive: 'her', Possessive: 'Her', object: 'her',
+    shieldBase: 45, claimsAdjust: -1, targeting: 'value', decoyWorks: true, hiddenSanityTax: 3,
+    absence: BOSS + ' is out. Director Calloway is covering "with love," a phrase now printed on the agenda.',
+    hiddenTaxLine: '<div class="event" style="border-left-color: var(--warn);">Midway through the slide, Calloway pauses the room to "share a rose and a thorn." You did not prepare either. You improvise one, out loud, in front of everyone. It costs you.</div>',
+    claimLines: CALLOWAY_CLAIM_LINES
   }
-  META.lastClaimLine = idx; saveMeta();
-  return CLAIM_LINES[idx];
+};
+function pickFridayBoss() {
+  if (META.week <= 2) return 'miller';
+  const r = Math.random();
+  if (r < 0.55) return 'miller';
+  if (r < 0.70) return 'reed';
+  if (r < 0.85) return 'brooks';
+  return 'calloway';
+}
+// ---------- pushing back further: the escalation gamble ----------
+// Only reachable if you already chose to push back once. A real risk, not a
+// free follow-up: winning quietly reduces what gets claimed this Friday,
+// losing costs more than staying quiet ever would have.
+const ESCALATION_OPEN = [
+  (boss) => '"That\'s an interesting read of it," ' + boss.name + ' says, not moving on yet.',
+  (boss) => '"I don\'t think that\'s fair," ' + boss.name + ' says, in the tone of someone who has never once had to prove it.',
+  (boss) => '"Let\'s not make this a whole thing," ' + boss.name + ' says, already making it a whole thing.'
+];
+const ESCALATION_WIN = [
+  (boss) => boss.name + ' looks for the follow-up and doesn\'t find one. "Fair," ' + boss.pronoun + ' says, and actually means it, for once. The room recalibrates around you, slightly.',
+  (boss) => 'You don\'t back down, and ' + boss.name + ' runs out of runway first. "Noted," ' + boss.pronoun + ' says, the word doing a lot less work than it usually does.',
+  (boss) => 'For four uncomfortable seconds, nobody says anything. Then ' + boss.name + ' moves on, visibly having decided this isn\'t the hill.'
+];
+const ESCALATION_LOSE = [
+  (boss) => boss.name + ' has an answer ready, the way people only do when they\'ve given this speech before. It lands. You feel it land.',
+  (boss) => '"I think we\'re getting off track," ' + boss.name + ' says, and somehow the room agrees with ' + boss.object + ', not you.',
+  (boss) => boss.name + ' doesn\'t even raise ' + boss.possessive + ' voice, which is somehow worse than if ' + boss.pronoun + ' had.'
+];
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function offerEscalation(boss) {
+  // odds favor you at high Reputation, worsen at high weeks, and Miller is
+  // deliberately the hardest person in the building to actually win this against
+  const chance = Math.max(0.15, Math.min(0.85,
+    0.5 + (S.rep - 50) / 200
+    - (META.week >= 7 ? 0.1 : META.week >= 3 ? 0.05 : 0)
+    - (boss.key === 'miller' ? 0.15 : 0)
+  ));
+  showCard({
+    title: boss.name + ' Doesn\'t Let It Go Either', tag: 'CONFERENCE ROOM C · STILL 3:59 PM', ptoAllowed: false,
+    flavor: '"' + pick(ESCALATION_OPEN)(boss) + '" The small talk in the room stops being small. You have one more second to decide whether that was the end of it.',
+    choices: [
+      { label: 'Hold your ground.', delta: {}, result: '',
+        after: (done) => resolveEscalation(boss, chance, done) },
+      { label: 'Let it drop. You already made your point.', delta: {},
+        result: 'You made it once. Making it twice would cost more than it\'s worth, and you both already know that.' }
+    ]
+  }, () => runMeeting(boss));
+}
+
+function resolveEscalation(boss, chance, done) {
+  const win = Math.random() < chance;
+  if (win) {
+    apply({ sanity: 2, rep: 2 });
+    S.escalationBonus = -1;
+    sfx('lock');
+    showResult(pick(ESCALATION_WIN)(boss), done);
+  } else {
+    apply({ sanity: 6, rep: -5 });
+    sfx('bad');
+    showResult(pick(ESCALATION_LOSE)(boss), done);
+  }
+}
+
+function pickClaimLine(boss) {
+  const lines = boss.claimLines;
+  META.lastClaimLineByBoss = META.lastClaimLineByBoss || {};
+  let idx = Math.floor(Math.random() * lines.length);
+  if (lines.length > 1) {
+    while (idx === META.lastClaimLineByBoss[boss.key]) idx = Math.floor(Math.random() * lines.length);
+  }
+  META.lastClaimLineByBoss[boss.key] = idx; saveMeta();
+  return lines[idx];
 }
 
 // ---------- the chairs (something is subtly, never-explained-ly different every Monday) ----------
@@ -556,22 +708,25 @@ const CARD_UNLOCKS = {
   replyAll: 1, dataRequest: 1, training: 1, theNumbers: 1, presidentDeck: 1, ninaCoffee: 1,
   realignment: 2, offboarding: 2, rumor: 2,
   clarification: 3, lineItem: 3, circleBack: 3, farewell: 3,
-  hrConsult: 4, facilitiesTicket: 4, headStart: 4,
+  hrConsult: 4, facilitiesTicket: 4, headStart: 4, brooksPattern: 5,
   upstream: 5, parallelTracker: 5, retrospective: 5, matcha: 5,
-  perReed: 6, procurement: 6,
+  perReed: 6, procurement: 6, calloway: 2,
   austerity: 7,
   thePriority: 2, theBookshelf: 3, theHandoff: 4,
   kudosChannel: 1, passwordReset: 1, postMeetingMeeting: 1, brokenPrinter: 1, sharedCalendar: 1,
-  theBackfill: 2, onboardingBuddy: 2, allStaffSurvey: 3
+  theBackfill: 2, onboardingBuddy: 2, allStaffSurvey: 3,
+  refresherModule: 2, crossFunctionalProject: 3, terrysOffice: 3, exitInterview: 3,
+  anniversaryEmail: 4, ninaOpportunity: 4, dougThirdTracker: 6, badgeReader: 8, reedAudit: 8
 };
 
 const S = {
   sanity: 100, time: 10, maxTime: 10, credit: 0, rep: 50, pto: 2,
   day: 0, items: [], ally: false, allyUsed: false,
-  queue: [], log: [], over: false, vendor: false,
-  drains: [], crunched: false, ptoUsed: false, contract: null, lifeDelta: 0,
+  queue: [], choicePool: null, log: [], over: false, vendor: false,
+  drains: [], repDrains: [], crunched: false, ptoUsed: false, contract: null, lifeDelta: 0,
   declines: 0, accepts: 0, rumorFestering: false, rumorSquashed: false,
-  hrFlagged: false, millerPleased: false, millerAnnoyed: false, cabinetPinned: false
+  hrFlagged: false, millerPleased: false, millerAnnoyed: false, cabinetPinned: false, lastEvening: null,
+  decoyPicked: false, fridayBoss: null
 };
 let CONTEXT = 'The morning';
 
@@ -602,9 +757,9 @@ function inCrunch() { return S.time <= 0; }
 
 function apply(d, opts) {
   opts = opts || {};
-  // sanity cost pipeline: base → settling surcharge (wk3 +1, wk6 +2) → therapy (-1) → crunch (×1.5)
+  // sanity cost pipeline: base → settling surcharge (+1 every week from wk2, capped at +5 by wk6) → therapy (-1) → crunch (×1.5)
   let sanityCost = d.sanity || 0;
-  if (sanityCost > 0) sanityCost += META.week >= 6 ? 2 : META.week >= 3 ? 1 : 0;
+  if (sanityCost > 0) sanityCost += Math.min(5, Math.max(0, META.week - 1));
   if (sanityCost > 0 && META.up.therapy) sanityCost = Math.max(1, sanityCost - 1);
   if (sanityCost > 0 && inCrunch()) sanityCost = Math.ceil(sanityCost * 1.5);
 
@@ -619,8 +774,11 @@ function apply(d, opts) {
     floatDelta($('stat-sanity'), '-' + sanityCost + ' SANITY' + (sanityCost !== (d.sanity||0) ? ' (CRUNCH)' : ''), false);
   }
   if (d.heal) {
-    S.sanity = clamp(S.sanity + d.heal, 0, 100);
-    floatDelta($('stat-sanity'), '+' + d.heal + ' SANITY', true);
+    // "wellness resources," optimized: recovery is quietly worth less as the weeks go on
+    let heal = META.week >= 8 ? Math.round(d.heal * 0.7) : META.week >= 4 ? Math.round(d.heal * 0.85) : d.heal;
+    heal = Math.max(1, heal);
+    S.sanity = clamp(S.sanity + heal, 0, 100);
+    floatDelta($('stat-sanity'), '+' + heal + ' SANITY', true);
   }
   if (d.credit) {
     S.credit += d.credit;
@@ -629,6 +787,7 @@ function apply(d, opts) {
   }
   if (d.rep) {
     S.rep = clamp(S.rep + d.rep, 0, 100);
+    if (d.rep < 0) S.repDrains.push({ src: (opts.src || CONTEXT), amt: -d.rep });
     floatDelta($('stat-rep'), (d.rep > 0 ? '+' : '') + d.rep + ' REP', d.rep > 0);
   }
   if (d.pto) {
@@ -637,6 +796,7 @@ function apply(d, opts) {
   }
   render();
   if (S.sanity <= 0 && !S.over) { burnout(); return false; }
+  if (S.rep <= 0 && !S.over) { firedForCause(); return false; }
   return true;
 }
 
@@ -711,6 +871,15 @@ function sfx(kind) {
       rg.gain.setValueAtTime(0.0001, t + 2.18);
       nb.connect(bp); bp.connect(rg); rg.connect(SFXC.destination);
       nb.start(t); nb.stop(t + 2.2);
+    } else if (kind === 'clash') {
+      // the moment you decide to hold your ground: two close frequencies beating against each other
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(340, t + 0.15);
+      g.gain.value = 0.055; g.gain.linearRampToValueAtTime(0, t + 0.35); o.start(t); o.stop(t + 0.35);
+      const o2 = SFXC.createOscillator(), g2 = SFXC.createGain();
+      o2.type = 'sawtooth'; o2.frequency.setValueAtTime(190, t); o2.frequency.exponentialRampToValueAtTime(325, t + 0.15);
+      g2.gain.value = 0.055; g2.gain.linearRampToValueAtTime(0, t + 0.35);
+      o2.connect(g2); g2.connect(SFXC.destination);
+      o2.start(t); o2.stop(t + 0.35);
     }
   } catch (e) {}
 }
@@ -742,6 +911,14 @@ function render() {
   $('s-rep').textContent = S.rep;
   $('s-pto').textContent = S.pto;
   $('daylabel').textContent = (DAYS[S.day] || '·') + ' · WEEK ' + META.week;
+  // the week map: filled nodes are done, the pulsing one is today
+  for (let i = 0; i < 5; i++) {
+    const node = $('daycircle-' + i);
+    if (!node) continue;
+    node.classList.remove('done', 'current');
+    if (i < S.day) node.classList.add('done');
+    else if (i === S.day) node.classList.add('current');
+  }
   const bar = $('sanitybar');
   bar.style.width = S.sanity + '%';
   bar.style.background = S.sanity > 60 ? 'var(--accent)' : S.sanity > 30 ? 'var(--warn)' : 'var(--danger)';
@@ -760,21 +937,31 @@ function render() {
   }
   $('log').innerHTML = S.log.slice(-8).map(l => '&raquo; ' + l).join('<br>');
   $('log').scrollTop = $('log').scrollHeight;
-  // the office darkens as your Time runs out
-  $('app').style.filter = 'brightness(' + (crunch ? 0.8 : S.time <= 2 ? 0.9 : 1) + ')';
+  // the office darkens as your Time runs out, and sickens as Sanity drains —
+  // continuous corruption, not just the one-shot Burnout glitch
+  const bright = crunch ? 0.8 : S.time <= 2 ? 0.9 : 1;
+  const rot = (100 - S.sanity) / 100; // 0 at full Sanity, 1 at zero
+  const sat = 1 - rot * 0.6;
+  const cst = 1 + rot * 0.3;
+  const hue = rot * 10;
+  $('app').style.filter = 'brightness(' + bright + ') saturate(' + sat + ') contrast(' + cst + ') hue-rotate(' + hue + 'deg)';
   updateMusicMood();
 }
 
 function log(t) { S.log.push(t); }
 
 // ---------- generic card UI ----------
-function costLabel(d) {
+function costLabel(d, life) {
   const p = [];
   if (d.time) p.push('-' + d.time + ' Time');
   if (d.sanity) p.push('-' + d.sanity + ' Sanity');
   if (d.heal) p.push('+' + d.heal + ' Sanity');
   if (d.credit) p.push('+' + d.credit + ' Credit');
   if (d.rep) p.push((d.rep > 0 ? '+' : '') + d.rep + ' Rep');
+  // life is tracked outside delta (it settles into the Life Outside tableau at
+  // week's end, not an immediate stat), but it has to show up here too, or a
+  // choice that trades it for Sanity looks like a free upgrade instead of a trade
+  if (life) p.push((life > 0 ? '+' : '') + life + ' Life Outside');
   return p.join(' · ') || 'no cost';
 }
 
@@ -805,12 +992,26 @@ function showCard(c, onDone) {
     html = '<div class="event" style="border-left-color: var(--warn);">INBOX · ' + VENDOR_PINGS[Math.floor(Math.random() * VENDOR_PINGS.length)] + '</div>' + html;
     setTimeout(() => { if (!S.over) { sfx('ping'); apply({ sanity: 2 }); log('The vendor circled back. Again.'); } }, 400);
   }
+  // Unreliable narrator: below 30 Sanity, the terminal occasionally misstates what a
+  // choice costs. The label on the button is untouched, it says what it always says.
+  // What actually happens when you click it, once in a while, doesn't match. Rare on
+  // purpose (one card in five while dissociating), Sanity-only, and never on a choice
+  // that skips the result screen (ch.after), so there's always somewhere for the
+  // discrepancy to surface.
+  let lieIndex = -1, lieExtra = 0;
+  if (dissoc && Math.random() < 0.2) {
+    const eligible = c.choices.map((ch, i) => i).filter(i => !(c.choices[i].decline && S.rep < 30) && !c.choices[i].after);
+    if (eligible.length) {
+      lieIndex = eligible[Math.floor(Math.random() * eligible.length)];
+      lieExtra = 2 + Math.floor(Math.random() * 4);
+    }
+  }
   html += c.choices.map((ch, i) => {
     // below 30 Reputation, declining is a privilege you no longer have
     if (ch.decline && S.rep < 30) {
       return '<button class="choice" disabled>' + ch.label + '<span class="cost">unavailable at your current standing</span></button>';
     }
-    return '<button class="choice" data-i="' + i + '">' + ch.label + '<span class="cost">' + costLabel(ch.delta) + '</span></button>';
+    return '<button class="choice" data-i="' + i + '">' + ch.label + '<span class="cost">' + costLabel(ch.delta, ch.life) + '</span></button>';
   }).join('');
   if (c.ptoAllowed && S.pto > 0) {
     html += '<button class="choice pto" data-i="pto">Use PTO: skip this entirely<span class="cost">-1 PTO · -3 Rep (its use is noted)</span></button>';
@@ -828,14 +1029,20 @@ function showCard(c, onDone) {
         showResult('You take the afternoon. Your badge logs the exact minute you leave.', onDone);
         return;
       }
-      const ch = c.choices[btn.dataset.i];
+      const idx = parseInt(btn.dataset.i, 10);
+      const ch = c.choices[idx];
       if (ch.life) S.lifeDelta += ch.life;
       if (ch.decline) S.declines++;
       if (ch.voluntold) S.accepts++;
-      const alive = apply(ch.delta);
+      const lied = idx === lieIndex;
+      const delta = lied ? Object.assign({}, ch.delta, { sanity: (ch.delta.sanity || 0) + lieExtra }) : ch.delta;
+      const alive = apply(delta);
       if (!alive) return;
       log(ch.log || ch.label);
-      if (ch.after) { ch.after(onDone); } else { showResult(ch.result, onDone); }
+      if (ch.after) { ch.after(onDone); } else {
+        const result = ch.result + (lied ? ' <span style="color:var(--danger)">That cost more than it said it would.</span>' : '');
+        showResult(result, onDone);
+      }
     };
   });
 }
@@ -939,8 +1146,8 @@ const CARDS = {
           }
           showResult('"Wonderful," he says. "Wonderful." The second one lands differently.', done);
         } },
-      { label: 'Deflect: describe your week in fog', delta: { time: 2, rep: -4 },
-        result: '"Processes," you say. "Throughput." He nods slowly. Somewhere, a note is made about your enthusiasm.' },
+      { label: 'Deflect: describe your week in fog', delta: { time: 2, heal: 3, rep: -4 },
+        result: '"Processes," you say. "Throughput." He nods slowly. Somewhere, a note is made about your enthusiasm. You gave him nothing, and it feels, privately, like getting away with something.' },
       { label: 'Redirect: praise your intern\'s growth instead', delta: { time: 2, rep: 2 },
         result: '"Mentorship," he says, tasting the word. "That\'s a leadership quality. Mine, historically."' },
       { label: 'Ask about your performance review', delta: { time: 1, rep: -2, heal: 2 },
@@ -990,8 +1197,8 @@ const CARDS = {
     choices: [
       { label: 'Close it. Full push.', delta: { time: 4, sanity: 10, credit: 20, creditItem: 'Partnership closed' },
         result: 'Signed. For one full minute, the work feels like the thing the mission statement claims it is. The minute passes. The tracker updates.' },
-      { label: 'Close it carefully: loop in witnesses from day one', delta: { time: 5, sanity: 12, credit: 17, creditItem: 'Partnership closed, witnessed' },
-        result: 'Signed, slower, in front of people. Three colleagues can now say the words "I watched them do it." Cheap insurance. Expensive week.' }
+      { label: 'Close it carefully: loop in witnesses from day one', delta: { time: 5, sanity: 10, credit: 14, creditItem: 'Partnership closed, witnessed', lockItem: true },
+        result: 'Signed, slower, in front of people. Three colleagues can now say the words "I watched them do it." Less credit on paper, but nobody can quietly take what a room full of witnesses already saw you do. <span class="secure">It arrives on the tracker already 🔒 SECURED.</span>' }
     ]
   }),
   replyAll: () => ({
@@ -1089,10 +1296,10 @@ const CARDS = {
     title: 'The Clarification', tag: 'UNPROMPTED · DOOR OPEN', ptoAllowed: false,
     flavor: BOSS + ' appears at your desk to clarify something you did not ask about. "Whatever you may have heard about me and someone in Marketing," he says, "nothing happened. And what did happen was entirely from her side." He waits, generously, for your relief. You had, until this exact moment, heard nothing. This is the same man who invents romances for other people, as a hobby.',
     choices: [
-      { label: 'Nod slowly until he leaves', delta: { time: 1, sanity: 3 },
-        result: 'He leaves satisfied, having successfully informed the one person in the building who didn\'t know. The story now has a witness: you. That was the errand. You were the errand.' },
-      { label: '"Noted." Then silence. Hold the silence.', delta: { time: 1, heal: 3 },
-        result: 'The silence stretches. He explains it again, with more detail, each version incriminating him slightly more. You say "noted" a second time. It is the most powerful word in the building, and it is free.' }
+      { label: 'Nod slowly until he leaves', delta: { time: 1, sanity: 3, rep: 2 },
+        result: 'He leaves satisfied, having successfully informed the one person in the building who didn\'t know. The story now has a witness: you. That was the errand. You were the errand. He remembers people who make errands easy.' },
+      { label: '"Noted." Then silence. Hold the silence.', delta: { time: 1, heal: 3, rep: -2 },
+        result: 'The silence stretches. He explains it again, with more detail, each version incriminating him slightly more. You say "noted" a second time. It is the most powerful word in the building, and it is free. He does not forget who made him fill a silence.' }
     ]
   }),
   lineItem: () => ({
@@ -1167,14 +1374,32 @@ const CARDS = {
         result: 'Brooks feels managerial. You feel nothing. The work continues at the exact speed it was already traveling. In Friday\'s status meeting, Brooks will describe this moment as "lighting a fire."' }
     ]
   }),
+  brooksPattern: () => ({
+    title: 'The Team Brooks Keeps Losing', tag: 'DIRECTOR BROOKS · HALLWAY, AGAIN', ptoAllowed: true,
+    flavor: 'Priya, two months into Brooks\' team, gets introduced at the all-hands as "our new mom-brain hire," a bit Brooks has now done to three different women and been surprised, every time, that it didn\'t land. He isn\'t cruel, exactly. He has just never once had to notice, because nobody with the standing to tell him has stayed long enough to bother. Priya laughs the correct amount, on schedule. She will hand in her notice in four weeks. Nobody knows that yet, including her.',
+    choices: [
+      { label: 'Say something, out loud, in the room, this time.', delta: { time: 1, rep: -3, heal: 5 },
+        result: '"Wow, tough crowd," Brooks says, to you specifically, and the meeting moves on exactly as scheduled. Nothing about Brooks changes. But Priya catches your eye afterward, just once, and that is not nothing.' },
+      { label: 'Say nothing. Add it to the ledger instead.', delta: { time: 1 },
+        result: 'Priya\'s name joins a list only you are keeping.',
+        after: (done) => {
+          META.leverage += 1;
+          META.fileCabinet.push({ title: 'Brooks\' Team, Fourth Departure', week: META.week, note: 'Priya. Not the first woman off that team in two years. Won\'t be the last. HR\'s file will say "cultural fit."' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The fourth departure this way, on your own list, the one nobody official is keeping.</div>');
+          log('Brooks\' team, fourth departure, logged. +1 Leverage.');
+          showResult('The ledger is for the system. It has never once been for Priya. You know that. You keep it anyway.', done);
+        } }
+    ]
+  }),
   upstream: () => ({
     title: 'The Escalation Path', tag: 'VP WALSH · STATUS: ACTIVE (ELSEWHERE)', ptoAllowed: true,
     flavor: 'The org chart says Miller reports to VP Walsh, so you bring Walsh a decision only he can make. His chat status is green. He is typing. He has been typing for hours, in a channel you can see but were never invited to, where he and four close friends conduct the true business of his day: soccer. A goal celebration GIF posts as you wait. It has 5 reactions in 11 seconds. Your email has been unread for two days.',
     choices: [
-      { label: 'Wait for a decision through official channels', delta: { time: 2, sanity: 4 },
-        result: '"Good flag," Walsh replies at 4:52 PM, between a penalty-kick debate and a hot take about the transfer window. No decision arrives. The flag remains flagged. It will be a flag forever.' },
-      { label: 'Make the decision yourself, cc him, phrase it as already decided', delta: { time: 2, credit: 7, creditItem: 'Decision made, upward, alone' },
-        result: 'He hearts your email eleven minutes after kickoff ends. "Sounds right." It is the only decision Walsh has ratified this quarter, and you made it. The group chat, sensing nothing, moves on to lineup predictions.' }
+      { label: 'Wait for a decision through official channels', delta: { time: 2, sanity: 2 },
+        result: '"Good flag," Walsh replies at 4:52 PM, between a penalty-kick debate and a hot take about the transfer window. No decision arrives. The flag remains flagged. It will be a flag forever. Nobody can say you overstepped, because you did nothing at all.' },
+      { label: 'Make the decision yourself, cc him, phrase it as already decided', delta: { time: 2, credit: 7, rep: -3, creditItem: 'Decision made, upward, alone' },
+        result: 'He hearts your email eleven minutes after kickoff ends. "Sounds right." It is the only decision Walsh has ratified this quarter, and you made it. The group chat, sensing nothing, moves on to lineup predictions. Somewhere, a version of this story is already being told about you making calls above your grade.' }
     ]
   }),
   parallelTracker: () => ({
@@ -1253,12 +1478,22 @@ const CARDS = {
   }),
   perReed: () => ({
     title: 'Per Director Reed', tag: 'DIRECTIVE · SOURCE: ONE FLOOR UP', ptoAllowed: true,
-    flavor: 'A new process arrives via Miller, prefaced with the four words that end all discussion: "Director Reed thinks we..." Nobody who works under Reed likes working under Reed; her own analysts send condolences in private channels. But Miller and the other two directors orbit her like she has tides, and whatever Reed thinks, Miller implements, with the devotion of a man who has never once been asked for his own opinion and hopes to keep it that way.',
+    flavor: 'A new process arrives via Miller, prefaced with the four words that end all discussion: "Director Reed thinks we..." Nobody who works under Reed likes working under Reed; her own analysts send condolences in private channels. But even Miller orbits her like she has tides, and whatever Reed thinks, Miller implements, with the devotion of a man who has never once been asked for his own opinion and hopes to keep it that way. The other directors learned this from watching him do it first.',
     choices: [
       { label: 'Comply, visibly', delta: { time: 2, sanity: 4, rep: 4 },
         result: 'The process adds four steps to a two-step task. Reed is told it is going great. Reed is always told it is going great. Somewhere below her, a floor of people quietly builds the workaround.' },
       { label: 'Build the quiet workaround with Reed\'s own team', delta: { time: 3, credit: 8, rep: -3, creditItem: 'Reed process, made survivable' },
         result: 'Her analysts bless you in a channel Reed cannot see. The official process remains officially followed, in the sense that a scarecrow officially farms.' }
+    ]
+  }),
+  calloway: () => ({
+    title: 'A Note From Director Calloway', tag: 'EVERWELL · CHECKING IN', ptoAllowed: true,
+    flavor: 'A direct message arrives from Director Calloway, all lowercase, three emoji deep: "hey!! loved the energy this week, would you mind dropping a quick win in #gratitude? no pressure at all, just want us celebrating each other more 💛" The pressure is load-bearing. #gratitude has one unspoken rule: everyone can see who hasn\'t posted.',
+    choices: [
+      { label: 'Post something in #gratitude. Make it sound easy.', delta: { time: 1, sanity: 3, rep: 4 },
+        result: 'You write three sentences about "leaning into collaboration." Calloway reacts with all six heart emoji within a minute; she was clearly waiting. Twelve people see it. Eleven of them are also waiting for their turn.' },
+      { label: 'Reply to her privately, honestly, and leave the channel alone.', delta: { time: 1, heal: 3, rep: -2 },
+        result: 'You tell her, kindly, that it\'s been a heavy week and you\'d rather not perform gratitude on command. "Totally hear you 💛" she writes back, and pins a reminder about #gratitude to the channel an hour later, addressed to no one in particular, meant for you.' }
     ]
   }),
   procurement: () => ({
@@ -1297,8 +1532,8 @@ const CARDS = {
       choices: [
         { label: 'Nod back', delta: { heal: 5 },
           result: 'The doors close on him alone. The display does not change floors. You feel seen. You are not sure by what. You take the stairs.' },
-        { label: 'Say "good morning"', delta: {},
-          result: '"It is," he says, and the doors close. You check the directory at lunch. The keyhole floor is not listed. Neither, you notice for the first time, is The President\'s office. On any floor. Anywhere.' }
+        { label: 'Say "good morning"', delta: { rep: 3 },
+          result: '"It is," he says, and the doors close. You check the directory at lunch. The keyhole floor is not listed. Neither, you notice for the first time, is The President\'s office. On any floor. Anywhere. Somehow, by Thursday, three people have mentioned hearing you were "seen talking to someone upstairs."' }
       ]
     };
   },
@@ -1406,8 +1641,8 @@ const CARDS = {
     title: 'The All-Staff Survey (Anonymous)', tag: 'SURVEY · RESPONSES: NOT ANONYMOUS', ptoAllowed: true,
     flavor: 'An anonymous engagement survey arrives. It asks how supported you feel, on a scale of one to five, and then, in the very next field, asks for your employee ID "for prize eligibility." The two facts sit next to each other, unbothered by each other\'s existence.',
     choices: [
-      { label: 'Answer honestly. Skip the prize.', delta: { time: 1, sanity: 3 },
-        result: 'You give it a three. A three is generous. A three is also, apparently, "an opportunity area," according to the summary email sent to your director two weeks later.' },
+      { label: 'Answer honestly. Skip the prize.', delta: { time: 1, heal: 2, rep: -2 },
+        result: 'You give it a three. A three is generous. A three is also, apparently, "an opportunity area," according to the summary email sent to your director two weeks later. It felt good to type, for about four minutes.' },
       { label: 'Answer with fives across the board', delta: { time: 1, rep: 3 },
         result: 'Fast, safe, forgettable. The survey\'s only true finding, every year, is that everyone learns this at the same rate.' }
     ]
@@ -1439,6 +1674,132 @@ const CARDS = {
           showResult('Nothing changes this quarter. But the emails exist, dated, boring, undeniable, and boring is exactly what makes them hard to argue with later.', done);
         } }
     ]
+  }),
+  refresherModule: () => ({
+    title: 'Mandatory Refresher: Data Handling & Conduct', tag: 'TRAINING · COMPLETION MONITORED · RECURRING', ptoAllowed: true,
+    flavor: 'IT sends the annual refresher again, "to keep everyone current." The slides are the same slides. The quiz has the same four questions, reordered. A progress bar tracks your completion down to the percent, as though completion were a fluid you could be topped up with.',
+    choices: [
+      { label: 'Complete it fully, click every box', delta: { time: 3, credit: 2, creditItem: 'Refresher training, completed' },
+        result: 'A certificate generates itself, dated today, valid until the system decides otherwise.',
+        after: (done) => {
+          META.trainingPending = true; saveMeta();
+          log('Refresher completed. A certificate exists now. Draw your own conclusions about what that\'s worth.');
+          showResult('A certificate generates itself, dated today, valid until the system decides otherwise.', done);
+        } },
+      { label: 'Speed through it while doing real work', delta: { time: 2, sanity: 3 },
+        result: 'You pass on vibes, same as always. The system logs "COMPLETE" either way. It has no field for how.',
+        after: (done) => {
+          META.trainingPending = true; saveMeta();
+          log('Refresher completed, technically. A certificate exists now regardless.');
+          showResult('You pass on vibes, same as always. The system logs "COMPLETE" either way. It has no field for how.', done);
+        } }
+    ]
+  }),
+  trainingNotCompleted: () => ({
+    title: 'IT: Your Refresher Shows Incomplete', tag: 'IT · COMPLIANCE · RE: LAST WEEK, APPARENTLY', ptoAllowed: false,
+    flavor: 'An email arrives before your coffee finishes brewing: the refresher you completed last week, the one with the certificate, the one dated and timestamped, shows as "NOT STARTED" in the system of record. IT is very sorry. IT does not know why. IT would like you to complete it again, at your earliest convenience, which is now.',
+    choices: [
+      { label: 'Redo the whole thing, again, from zero', delta: { time: 3, sanity: 5 },
+        result: 'Same slides. Same four questions. This time you notice question three has had a typo since at least last year.' },
+      { label: 'Reply with the certificate and refuse to redo it', delta: { time: 1, rep: -3 },
+        result: 'Nobody replies. Three days later the system quietly updates to "COMPLETE." Nobody explains what changed. You did not do anything the second time.',
+        after: (done) => {
+          META.leverage += 1;
+          META.fileCabinet.push({ title: 'The Certificate, Ignored', week: META.week, note: 'It fixed itself eventually. It always does. That is not the same as being fixed.' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The ledger grows.</div>');
+          log('Refused the redo. The record fixed itself three days later, unexplained. +1 Leverage.');
+          showResult('Nobody replies. Three days later the system quietly updates to "COMPLETE." Nobody explains what changed. You did not do anything the second time.', done);
+        } }
+    ]
+  }),
+  crossFunctionalProject: () => ({
+    title: 'The Cross-Functional Project', tag: 'PRESENTATION TODAY · TEAM: FOUR DEPARTMENTS, NOMINALLY', ptoAllowed: true,
+    flavor: 'Six weeks ago you were named lead of a project pulling people from four departments, none of whom report to you, all of whom said yes in a meeting they do not remember attending. Today is the presentation. Two people declined this morning. One never responded at all. One shows up for ninety seconds to say, sincerely, "let me know how I can help," and leaves before you can answer.',
+    choices: [
+      { label: 'Present it all yourself. Every slide.', delta: { time: 4, sanity: 8, credit: 12, creditItem: 'Cross-functional project, presented solo' },
+        result: 'It goes well. It goes so well that the phrase "great teamwork" is used, out loud, by someone who did not attend a single working session.' },
+      { label: 'Present only what you actually did, and say so', delta: { time: 2, sanity: 4, credit: 6, rep: -3, creditItem: 'Cross-functional project, presented honestly' },
+        result: 'The room goes quiet in the specific way rooms go quiet when something true was said out loud by mistake. Nobody disagrees. Nobody helps next time either.' }
+    ]
+  }),
+  dougThirdTracker: () => ({
+    title: 'Doug\'s Third Tracker', tag: 'DOUG · BUDGET · INITIATIVE, CONTINUED', ptoAllowed: true,
+    flavor: 'Doug has built a third spreadsheet. It tracks the second spreadsheet, which tracks the first spreadsheet, which tracks the budget. Doug calls this "visibility." Somewhere beneath all three, the actual budget continues to exist, untouched, indifferent, like bedrock under landfill.',
+    choices: [
+      { label: 'Fill in your cells on all three, dutifully', delta: { time: 3, sanity: 4, rep: 3 },
+        result: 'Doug is thrilled. Leadership sees three dashboards now, which reads as three times the diligence.' },
+      { label: 'Automate all three off your real spreadsheet, same as before', delta: { time: 3, credit: 7, creditItem: 'Doug\'s trackers, all three, secretly automated' },
+        result: 'Doug now manages a self-sustaining ecosystem of trackers that require no human input, including his own. He has never been more productive, by his own account.' }
+    ]
+  }),
+  anniversaryEmail: () => ({
+    title: 'Your Work Anniversary', tag: 'HR · MASS EMAIL · CC: THE WHOLE DIRECTORY', ptoAllowed: true,
+    flavor: 'An email goes out to the entire company: today marks your anniversary at Everwell. It includes a gif of confetti, a form link for a branded item (a mug, or, if the mug is out of stock, a slightly smaller mug), and a line about how far you\'ve come. The email does not mention the raise conversation that was supposed to happen this year. Nobody\'s does.',
+    choices: [
+      { label: 'Order the mug. Let it be nice for a second.', delta: { heal: 6 },
+        result: 'The mug arrives eleven days later, slightly smaller than advertised. You drink from it anyway. It holds coffee exactly as well as any other mug, which is, annoyingly, the whole point of a mug.' },
+      { label: 'Reply-all with a thank you, and quietly note the year', delta: { time: 1 },
+        result: 'Forty replies pile onto the thread within the hour, all cheerful. Miller does not reply. He is, at that exact moment, in a 1:1 you were not invited to.',
+        after: (done) => {
+          META.leverage += 1;
+          META.fileCabinet.push({ title: 'Anniversary Email', week: META.week, note: 'The mug was smaller than advertised. So, it turned out, was the raise.' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The ledger grows.</div>');
+          log('Noted the year, quietly. +1 Leverage.');
+          showResult('Forty replies pile onto the thread within the hour, all cheerful. Miller does not reply. He is, at that exact moment, in a 1:1 you were not invited to.', done);
+        } }
+    ]
+  }),
+  badgeReader: () => ({
+    title: 'The Badge Reader', tag: 'SECURITY · AMBIENT · FOR YOUR SAFETY', ptoAllowed: false,
+    flavor: 'Your badge reads green on the way in, the way it always does. On the way out, it reads green twice, half a second apart, for a single tap. Facilities says this is normal. Facilities says everything is normal. The light by the elevator you have never taken blinks once, unrelated, probably.',
+    choices: [
+      { label: 'Ask Facilities about it directly', delta: { time: 1, rep: -2, heal: 3 },
+        result: '"System\'s probably just logging you twice," they say, already looking at their phone. You do not ask which system. You are not sure you want the actual answer.' },
+      { label: 'Say nothing. Badge in tomorrow like normal.', delta: { sanity: 2 },
+        result: 'Tomorrow it reads green once, correctly, as if it heard you.' }
+    ]
+  }),
+  ninaOpportunity: () => ({
+    title: 'Coffee with Nina, Again', tag: 'ALLY · SOMETHING FROM OUTSIDE', ptoAllowed: false,
+    flavor: 'Nina catches you by the kitchen again. "My old manager," she says, "the one who left, she\'s hiring. Not for anything glamorous. But she remembers what a normal Tuesday feels like, and she says so out loud, in meetings, like it\'s allowed." She isn\'t pushing. She\'s just telling you it exists.' + (META.ninaTrust ? ' She already made the call, she reminds you. The number\'s still good.' : ''),
+    choices: [
+      { label: 'Ask her more about it, seriously', delta: { time: 2, heal: 6 },
+        result: 'Nina doesn\'t oversell it. "It\'s not perfect," she says. "It\'s just normal. I forgot normal was a place you could work." You write the name down somewhere that isn\'t the shared drive.' },
+      { label: 'Say maybe later. Today has enough in it.', delta: { heal: 3 },
+        result: '"It\'ll still be there," Nina says, and you believe her, mostly because she has never once told you something just to be nice.' }
+    ]
+  }),
+  reedAudit: () => ({
+    title: 'Director Reed\'s Audit', tag: 'AUDIT · SOURCE: ONE FLOOR UP · CC: MILLER', ptoAllowed: true,
+    flavor: 'Reed\'s team is auditing "process efficiency" across departments, which everyone understands to mean headcount, though nobody says headcount out loud. Miller, forwarding the request, adds only: "Let\'s make sure we look lean here!" The exclamation point is doing the same work his smile always does.',
+    choices: [
+      { label: 'Document your actual workload, in full, unflattering detail', delta: { time: 3, sanity: 5, credit: 6, creditItem: 'Workload, honestly audited' },
+        result: 'The numbers are worse than anyone above you assumed, and more honest than anyone below you would\'ve guessed you\'d admit. Reed\'s team says nothing. Silence, from that floor, is usually a good sign.' },
+      { label: 'Give the version that keeps everyone comfortable', delta: { time: 2, sanity: 2, rep: 4 },
+        result: 'Lean, efficient, thriving, on paper. The paper goes upstairs. The workload stays exactly where it was, now with documentation saying it\'s fine.' }
+    ]
+  }),
+  exitInterview: () => ({
+    title: 'An Exit Interview, Not Yours', tag: 'HR · DANA · RE: SOMEONE ELSE\'S LAST WEEK', ptoAllowed: true,
+    flavor: 'Dana asks you to sit in on a departing coworker\'s exit interview, "as a peer perspective." The questions are gentle and specific: was communication clear, did they feel supported, would they recommend the team. Dana writes quickly. You are fairly sure you know which answers make the summary and which don\'t.',
+    choices: [
+      { label: 'Answer everything honestly, on the record', life: 1, delta: { time: 2, rep: -3 },
+        result: 'Dana thanks you for your candor. The summary, when it is eventually read by anyone, will describe the departure as "amicable, personal reasons." You meant what you said anyway. Somewhere that still counts for something.' },
+      { label: 'Keep it kind and vague, protect everyone including yourself', life: -1, delta: { time: 1, heal: 3 },
+        result: 'Nothing you say will change the summary. You already knew that. You say the kind thing anyway, because the person leaving might actually read it. It costs you nothing here, which is its own small, quiet loss.' }
+    ]
+  }),
+  terrysOffice: () => ({
+    title: 'Terry\'s Office', tag: 'FACILITIES · LOCATION: UNCONFIRMED', ptoAllowed: true,
+    flavor: 'You need Terry to sign off on something, in person, "just this once." Nobody can tell you which floor Terry\'s office is on. The directory lists Terry under Facilities with no room number. You call the extension and hear it ring, faintly, somewhere in the building, through the phone and also, you\'re almost sure, through the wall.',
+    choices: [
+      { label: 'Keep looking until you find it', delta: { time: 3, sanity: 2, rep: 2 },
+        result: 'You find a door with Terry\'s name on a paper label, slightly crooked. It is locked. You slide the form underneath. By the time you\'re back at your desk, it is signed, dated an hour before you left. Someone mentions, admiringly, that you actually went and found it.' },
+      { label: 'Email it instead and let Terry come to you', delta: { time: 1, heal: 2 },
+        result: 'Terry replies within four minutes, cheerful, typo-free, from an email address that bounces the moment you try to reply to it.' }
+    ]
   })
 };
 
@@ -1447,8 +1808,8 @@ const EVENINGS = [
   { title: 'The Empty Train', flavor: 'The 6:40 is nearly empty. The city slides by, lit and indifferent, and belongs to no one\'s employer. For thirty-one minutes, neither do you.',
     choices: [ { label: 'Ride home. Just ride.', life: 1, delta: { heal: 10 }, result: 'You arrive home a person.' } ] },
   { title: 'Old Friend, Late Call', flavor: 'A friend from before, from the era when you had hobbies, calls. They\'re in town. They know a place. It has no Wi-Fi, allegedly on purpose.',
-    choices: [ { label: 'Go. Order the weird thing.', life: 1, delta: { heal: 12 }, result: 'You laugh at something unrelated to work for the first time in nine days. Your cheeks hurt. Good.' },
-      { label: 'Rain check, you\'re wiped', delta: { heal: 5 }, result: 'You watch forty minutes of a show you cannot describe. It helps, technically.' } ] },
+    choices: [ { label: 'Go. Order the weird thing.', life: 1, delta: { heal: 8 }, result: 'You laugh at something unrelated to work for the first time in nine days. Your cheeks hurt. Good.' },
+      { label: 'Rain check, you\'re wiped', life: -1, delta: { heal: 12 }, result: 'You watch forty minutes of a show you cannot describe. It helps, more than the friend would have, probably. That math should bother you more than it does.' } ] },
   { title: 'VOLUNTOLD: The Culture Cascade', flavor: 'An email at 5:58 PM: "Exciting! We need 3 energy champions for Saturday\'s Culture Cascade™. Attendance is voluntary." The word voluntary is in a font slightly smaller than the rest.',
     choices: [ { label: 'Volunteer (you were going to be voluntold anyway)', voluntold: true, life: -1, delta: { sanity: 10, rep: 5 }, result: 'Saturday dissolves. You hold a sign that says "SYNERGY IS A CHOICE." A photographer captures your joy for the newsletter.' },
       { label: 'Decline, citing "a commitment"', decline: true, life: 1, delta: { rep: META.up.boundary ? 0 : -5, heal: 6 }, result: META.up.boundary ? 'The commitment is sleep. You decline cleanly, without apology, the way the book taught you. Nothing happens. Nothing was ever going to happen. That was the book\'s whole point.' : 'The commitment is sleep. Your absence is noticed, catalogued, and filed under Enthusiasm, Lack Of.' } ] },
@@ -1465,7 +1826,7 @@ function topUnlocked() {
   return u.length ? u.reduce((a, b) => (b.value > a.value ? b : a)) : null;
 }
 function lockCost(item) {
-  let c = 2 + (item.noticed ? 1 : 0) + (META.week >= 5 ? 1 : 0) - (META.up.templates ? 1 : 0);
+  let c = 2 + (item.noticed ? 1 : 0) + (META.week >= 9 ? 2 : META.week >= 5 ? 1 : 0) - (META.up.templates ? 1 : 0);
   if (S.millerGone) c -= 1; // he left "for a thing." nobody is watching the filing cabinet.
   if (S.millerPleased) c -= 1; // he's still glowing about the portrait
   if (S.millerAnnoyed) c += 1; // he's still sore about the slow-walk
@@ -1503,6 +1864,7 @@ function atRiskScreen(onDone) {
   S.items.forEach((it, idx) => {
     const cls = it.locked ? 'riskitem locked' : (it === target ? 'riskitem target' : 'riskitem');
     html += '<div class="' + cls + '"><span>' + it.name + (it.noticed && !it.locked ? ' <span style="color:var(--warn)">[NOTICED]</span>' : '') +
+      (it.decoy && !it.locked ? ' <span style="color:var(--accent)">◎ DECOY SET</span>' : '') +
       (it.locked ? ' <span class="lockmark stampin">🔒 SECURED</span>' : '') + '</span><span class="val">+' + it.value + '</span></div>';
   });
   el.innerHTML = html;
@@ -1537,6 +1899,28 @@ function atRiskScreen(onDone) {
       };
     }
   }
+  // Thursday, once, if owned: name a decoy. He claims it first tomorrow, ahead
+  // of whatever he'd normally take, changing which item eats the claim, not how many.
+  if (isThu && META.up.decoy && !S.decoyPicked) {
+    const unlockedForDecoy = S.items.filter(i => !i.locked);
+    if (unlockedForDecoy.length >= 2) {
+      el.insertAdjacentHTML('beforeend', '<div class="tag" style="margin-top:14px;">A DECOY DELIVERABLE · NAME WHAT HE FINDS FIRST</div>');
+      unlockedForDecoy.forEach(it => {
+        el.insertAdjacentHTML('beforeend',
+          '<button class="choice" data-decoy="' + S.items.indexOf(it) + '">Let him find "' + it.name + '" first<span class="cost">he claims this instead of your actual top target, once</span></button>');
+      });
+      el.querySelectorAll('[data-decoy]').forEach(btn => {
+        btn.onclick = () => {
+          sfx('click');
+          const it = S.items[parseInt(btn.dataset.decoy, 10)];
+          it.decoy = true;
+          S.decoyPicked = true;
+          log('Decoy set: "' + it.name + '" is what he\'ll find first tomorrow.');
+          atRiskScreen(onDone);
+        };
+      });
+    }
+  }
   el.insertAdjacentHTML('beforeend', '<button class="choice" id="endday" style="margin-top:10px;">' + (t ? 'Leave the rest exposed, end the day' : 'Everything is secured. End the day.') + '</button>');
   $('endday').onclick = onDone;
 }
@@ -1548,6 +1932,10 @@ function buildWeek() {
   // deal only from unlocked personnel files; new files are added each week
   const pool = Object.keys(CARD_UNLOCKS).filter(k => CARD_UNLOCKS[k] <= META.week);
   weekDeck = shuffle(pool);
+  // who runs 4 PM this week. Weeks 1-2 are always Miller, so the player learns
+  // the baseline before the roster starts rotating. You don't find out who
+  // showed up until the slide goes up.
+  S.fridayBoss = pickFridayBoss();
   // one optional contract per week
   S.contract = CONTRACTS[Math.floor(Math.random() * CONTRACTS.length)];
   $('contractline').textContent = 'CONTRACT: ' + S.contract.name + ' (' + S.contract.desc + ') · +4 Leverage if met';
@@ -1567,7 +1955,19 @@ function dayPlan(day) {
 function startDay() {
   S.time = S.maxTime;
   S.millerPleased = false; S.millerAnnoyed = false;
-  S.queue = dayPlan(S.day);
+  const plan = dayPlan(S.day);
+  // Tue/Thu: the three free slots become a real choice instead of a fixed
+  // sequence. Build the actual card objects once, up front — some cards
+  // (oneOnOne's coin flip, elevator's one-time flag) have effects baked into
+  // invocation itself, so re-calling CARDS[key]() a second time to "preview"
+  // it would double those effects or re-roll them. Build once, reuse the object.
+  if (S.day === 1 || S.day === 3) {
+    S.choicePool = plan.map(key => ({ key, card: CARDS[key]() }));
+    S.queue = [];
+  } else {
+    S.choicePool = null;
+    S.queue = plan;
+  }
   // week 6+, once per save: the elevator is already open
   if (META.week >= 6 && !META.presidentSeen && S.day >= 1 && S.day <= 3 && Math.random() < 0.35) {
     S.queue.unshift('elevator');
@@ -1582,12 +1982,18 @@ function startDay() {
   }
   // quota modifier: the Thursday-morning reckoning
   if (MOD.id === 'quota' && S.day === 3) {
-    if (S.credit < 15) {
+    const target = quotaTarget();
+    if (S.credit < target) {
       apply({ rep: -8 });
-      log('CHECKPOINT MISSED: 15 Credit by Wednesday EOD. Your "trajectory" has been noted. -8 Reputation.');
+      log('CHECKPOINT MISSED: ' + target + ' Credit by Wednesday EOD. Your "trajectory" has been noted. -8 Reputation.');
     } else {
       log('Checkpoint met. No one mentions it. Meeting it was the baseline.');
     }
+  }
+  // week 8+, "year two": the training-compliance loop closes on someone.
+  if (META.week >= 2 && META.trainingPending && S.day === 0) {
+    S.queue.unshift('trainingNotCompleted');
+    META.trainingPending = false; saveMeta();
   }
   const subs = [
     'A NEW WEEK. THE BUILDING REMEMBERS YOU.',
@@ -1601,33 +2007,80 @@ function startDay() {
 
 function nextEncounter() {
   if (S.over) return;
-  if (S.queue.length === 0) {
-    if (S.day === 4) return fridayMeeting();
-    return atRiskScreen(() => eveningEvent());
+  // fixed injections (elevator, training-compliance) always play out first
+  if (S.queue.length > 0) {
+    const key = S.queue.shift();
+    if (key === 'fridayMorning') return fridayMorning();
+    return showCard(CARDS[key](), nextEncounter);
   }
-  const key = S.queue.shift();
-  if (key === 'fridayMorning') return fridayMorning();
-  showCard(CARDS[key](), nextEncounter);
+  if (S.choicePool && S.choicePool.length > 0) {
+    // one card left: no real choice left to make, it just happens
+    if (S.choicePool.length === 1) {
+      const item = S.choicePool.pop();
+      return showCard(item.card, nextEncounter);
+    }
+    return showChooser();
+  }
+  if (S.day === 4) return fridayMeeting();
+  return atRiskScreen(() => eveningEvent());
+}
+
+// Tue/Thu: face-up titles only, no flavor/choices spoiled. Picking one
+// resolves it now; the rest wait, shrinking the pool until one is left.
+function showChooser() {
+  const el = $('card');
+  CONTEXT = 'choosing';
+  el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  el.classList.remove('dissoc');
+  const n = S.choicePool.length;
+  const sub = n >= 3
+    ? 'THREE THINGS ARE WAITING. NONE OF THEM ANNOUNCE WHICH IS WORSE.'
+    : 'TWO THINGS REMAIN. THE OTHER ONE ISN\'T GOING ANYWHERE.';
+  let html = '<h2>' + DAYS[S.day] + '</h2><div class="tag">YOUR CALL · PICK WHAT YOU DO NEXT</div>' +
+    '<div class="flavor">' + sub + '</div>';
+  html += S.choicePool.map((item, i) =>
+    '<button class="choice chooser" data-i="' + i + '">' + item.card.title +
+    '<span class="cost">' + (item.card.tag || 'ENCOUNTER') + '</span></button>'
+  ).join('');
+  el.innerHTML = html;
+  el.querySelectorAll('button.chooser').forEach(btn => {
+    btn.onclick = () => {
+      sfx('click');
+      el.querySelectorAll('button.chooser').forEach(b => b.disabled = true);
+      const idx = parseInt(btn.dataset.i, 10);
+      const item = S.choicePool.splice(idx, 1)[0];
+      showCard(item.card, nextEncounter);
+    };
+  });
 }
 
 const APPRECIATION = {
   title: 'The Annual Appreciation Event', tag: 'MANDATORY GRATITUDE · FISCAL YEAR TOTAL',
   flavor: 'The year\'s appreciation arrives all at once, tonight: the team is bused to a driving-range entertainment complex for a few hours. There is a fajita bar. This is the appreciation. All of it. The entire year of it, served with tortillas, in lieu of... well. In lieu.',
   choices: [
-    { label: 'Swing at things. Eat the fajitas. Let it work.', delta: { heal: 10, rep: 3 },
-      result: 'And here is the cruelest part: it\'s fun. For two hours you have actual fun, and the company will spend the next twelve months pointing at those two hours. "This concludes Appreciation for the fiscal year," no one says out loud, because no one has to.' },
-    { label: 'Attend the minimum viable amount', delta: { heal: 5, rep: -3 },
-      result: 'You hold a skewer for the group photo and drift toward the exit. The newsletter finds you anyway, mid-chew, captioned "TEAM SPIRIT."' }
+    { label: 'Swing at things. Eat the fajitas. Let it work.', life: -1, delta: { heal: 10, rep: 3 },
+      result: 'And here is the cruelest part: it\'s fun. For two hours you have actual fun, and the company will spend the next twelve months pointing at those two hours. "This concludes Appreciation for the fiscal year," no one says out loud, because no one has to. The whole evening was theirs. It just didn\'t feel that way at the time.' },
+    { label: 'Attend the minimum viable amount', life: 1, delta: { heal: 5, rep: -3 },
+      result: 'You hold a skewer for the group photo and drift toward the exit. The newsletter finds you anyway, mid-chew, captioned "TEAM SPIRIT." Whatever is left of the night is actually yours.' }
   ]
 };
+
+// pick a random entry from `pool`, excluding whatever ran last night if
+// there's another option available (never show the identical evening twice running)
+function pickEvening(pool) {
+  const options = pool.filter(e => e !== S.lastEvening);
+  const from = options.length ? options : pool;
+  return from[Math.floor(Math.random() * from.length)];
+}
 
 function eveningEvent() {
   if (S.over) return;
   // Week 2+: evening availability is now a core value: voluntolds crowd out free time.
   let ev;
   if (S.day === 3) ev = APPRECIATION;
-  else if (META.week >= 2 && Math.random() < 0.6) ev = EVENINGS[2 + Math.floor(Math.random() * 2)];
-  else ev = EVENINGS[Math.floor(Math.random() * EVENINGS.length)];
+  else if (META.week >= 2 && Math.random() < 0.6) ev = pickEvening([EVENINGS[2], EVENINGS[3]]);
+  else ev = pickEvening(EVENINGS);
+  S.lastEvening = ev;
   showCard({ title: 'EVENING · ' + ev.title, tag: ev.tag || 'AFTER HOURS', flavor: ev.flavor, choices: ev.choices, ptoAllowed: false },
     () => { S.day++; startDay(); });
 }
@@ -1678,6 +2131,7 @@ function expenseReport(onDone) {
 }
 
 function fridayMorning() {
+  startFridayTension();
   expenseReport(() => showCard({
     title: 'The Quiet Morning', tag: 'FRIDAY · 9:00 AM', ptoAllowed: false,
     flavor: 'Friday mornings are gentle here, the way a waiting room is gentle. Everyone works softly. Everyone is listening for 4 PM. The tracker locked at midnight. What\'s secured is secured; what isn\'t, isn\'t.',
@@ -1712,24 +2166,60 @@ function fridayMeeting() {
 
 function meetingProper() {
   const el = $('card');
+  // who's actually running 4 PM this week — set Monday, unknown to the player until now
+  const boss = DIRECTORS[S.fridayBoss || 'miller'];
+  // the room stays visibly, audibly tense for the whole meeting, not just this
+  // one instant, cleared again in ending() no matter how the week resolves
+  S.escalationBonus = 0;
+  inBossFight = true;
+  document.body.classList.add('confrontation');
+  stopFridayTension(); // the waiting is over; the actual meeting music takes over from here
+  updateMusicMood();
   // the 4 PM flashback: the room goes white for half a second, like memory
   sfx('riser');
   document.body.classList.add('flashback');
   setTimeout(() => document.body.classList.remove('flashback'), 650);
   el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
-  const claims = META.week >= 7 ? 3 : META.week >= 3 ? 2 : 1;
+
+  // The room, before anyone's actually reading the slide yet: how do you sit
+  // through this one. Every Friday costs something just for being in the
+  // room now, on top of whatever gets claimed, this is the one moment you
+  // get to decide what it costs instead of having it decided for you.
+  const stanceSanity = 4;
+  showCard({
+    title: 'Before ' + boss.Pronoun + ' Starts Talking', tag: 'CONFERENCE ROOM C · 3:59 PM · YOUR MOVE', ptoAllowed: false,
+    flavor: 'The room fills in around you. ' + boss.name + ' hasn\'t started yet, just the small talk that precedes every execution. You have about ninety seconds to decide how you\'re going to sit through this one.',
+    choices: [
+      { label: 'Meet ' + boss.possessive + ' eyes. Push back, out loud, this time.', delta: { rep: -4, sanity: 0 },
+        result: '', after: (done) => {
+          showResult('You say something true, mid-meeting, in front of everyone. ' + boss.name + ' recovers in under two seconds, "noted," and keeps moving, but the room heard it, and so did you. That\'s worth something, even if it isn\'t worth Credit.', () => offerEscalation(boss));
+        } },
+      { label: 'Say nothing. Let it happen, like always.', delta: { sanity: stanceSanity },
+        result: 'You sit, and nod at the right moments, and let the meeting pass through you like weather. It costs exactly what silence always costs. You\'ll feel it later, on the drive home, for no reason you can point to.' }
+    ]
+  }, () => runMeeting(boss));
+}
+
+function runMeeting(boss) {
+  const el = $('card');
+  // substitutes claim one fewer than Miller would, at every tier, so he is always the worst Friday;
+  // holding your ground and winning the escalation gamble can knock one more off, on top of that
+  const claims = Math.max(0, (META.week >= 7 ? 3 : META.week >= 3 ? 2 : 1) + boss.claimsAdjust + (S.escalationBonus || 0));
 
   // The week's small, easy-to-forget choices echo here. None of this was ever hidden,
   // it just hadn't come due yet.
   let preamble = '';
   if (S.rumorSquashed) { preamble += '<div class="event" style="border-left-color: var(--lock);">The rumor never came back. People remember who put it down.</div>'; }
   if (S.rumorFestering) { preamble += '<div class="event">The rumor is still circulating, slightly mutated. Somehow your name is near it now, tangentially, unfairly.</div>'; }
-  if (S.hrFlagged) { preamble += '<div class="event">' + BOSS + ' mentions, apropos of nothing, that HR "flagged a great question" this week. He is smiling. He is always smiling.</div>'; }
-  if (S.declines >= 2) { preamble += '<div class="event">"Busy weekend?" ' + BOSS + ' asks, to the room, not to you specifically, which is worse.</div>'; }
-  else if (S.accepts >= 2 && S.declines === 0) { preamble += '<div class="event" style="border-left-color: var(--lock);">"Reliable," ' + BOSS + ' says, of you, to the room. It is meant as the highest compliment the building has.</div>'; }
+  if (S.hrFlagged) { preamble += '<div class="event">' + boss.name + ' mentions, apropos of nothing, that HR "flagged a great question" this week. ' + boss.Pronoun + ' is smiling. ' + boss.Pronoun + ' is always smiling.</div>'; }
+  if (S.declines >= 2) { preamble += '<div class="event">"Busy weekend?" ' + boss.name + ' asks, to the room, not to you specifically, which is worse.</div>'; }
+  else if (S.accepts >= 2 && S.declines === 0) { preamble += '<div class="event" style="border-left-color: var(--lock);">"Reliable," ' + boss.name + ' says, of you, to the room. It is meant as the highest compliment the building has.</div>'; }
 
-  el.innerHTML = '<h2>The Friday Meeting</h2><div class="tag">CONFERENCE ROOM C · 4:00 PM · MANDATORY' + (claims > 1 ? ' · <span style="color:var(--danger)">HE HAS A REPUTATION TO MAINTAIN NOW</span>' : '') + '</div>' +
-    '<div class="flavor" id="meetflavor">4:00 PM. Conference Room C. ' + BOSS + ' stands beside a slide titled <b>"OUR WINS."</b> The possessive pronoun is doing a lot of work.<br><br>He begins to read the week aloud.</div>' +
+  const absenceLine = boss.absence ? '<div class="event" style="border-left-color: var(--warn);">' + boss.absence + '</div>' : '';
+
+  el.innerHTML = '<h2>The Friday Meeting</h2><div class="tag">CONFERENCE ROOM C · 4:00 PM · MANDATORY' + (claims > 1 ? ' · <span style="color:var(--danger)">' + boss.Pronoun.toUpperCase() + ' HAS A REPUTATION TO MAINTAIN NOW</span>' : '') + '</div>' +
+    absenceLine +
+    '<div class="flavor" id="meetflavor">4:00 PM. Conference Room C. ' + boss.name + ' stands beside a slide titled <b>"OUR WINS."</b> The possessive pronoun is doing a lot of work.<br><br>' + boss.Pronoun + ' begins to read the week aloud.</div>' +
     preamble + '<div id="meetitems"></div><div id="meetverdict"></div>';
 
   // The same choices apply a quiet, delayed Reputation cost or credit, right here, before he even starts reading.
@@ -1738,16 +2228,33 @@ function meetingProper() {
   if (S.declines >= 2) apply({ rep: -4 });
   else if (S.accepts >= 2 && S.declines === 0) apply({ rep: 3 });
 
-  // Targets locked at Thursday midnight; locked = safe. Week 3+: he takes the top TWO unlocked.
-  // Reputation shields the single best unlocked item, normally at 70+. He cannot
-  // publicly claim the headline win of someone that visible, UNLESS the week's evenings
-  // made him wary of you (two or more declines raise the bar he judges you by).
-  const shieldThreshold = 70 + (S.declines >= 2 ? 10 : 0) - (S.accepts >= 2 && S.declines === 0 ? 5 : 0);
+  // Targets locked at Thursday midnight; locked = safe. Week 3+: they take the top TWO unlocked.
+  // Reputation shields the single best unlocked item, at a threshold that varies by who's
+  // running the room — Miller's is highest (70), so he's hardest to shield against even
+  // though the substitutes are otherwise weaker on every other axis. He cannot publicly
+  // claim the headline win of someone that visible, UNLESS the week's evenings made him
+  // wary of you (two or more declines raise the bar he judges you by).
+  const shieldThreshold = boss.shieldBase + (S.declines >= 2 ? 10 : 0) - (S.accepts >= 2 && S.declines === 0 ? 5 : 0);
   const unlockedSorted = S.items.filter(i => !i.locked).sort((a, b) => b.value - a.value);
   let pool = unlockedSorted, shielded = null;
   if (S.rep >= shieldThreshold && unlockedSorted.length > 1) {
     shielded = unlockedSorted[0];
     pool = unlockedSorted.slice(1);
+  }
+  // Reed doesn't chase value, she chases exposure — whatever's been NOTICED goes first,
+  // audit-minded, regardless of what it's actually worth.
+  if (boss.targeting === 'noticedFirst') {
+    pool = pool.slice().sort((a, b) => (b.noticed ? 1 : 0) - (a.noticed ? 1 : 0) || b.value - a.value);
+  }
+  // A Decoy Deliverable: whatever was named Thursday night gets found first,
+  // ahead of the natural sort. Doesn't reduce how much gets claimed, just
+  // which item eats the claim, so a cheap decoy can absorb a slot that would
+  // otherwise have gone to your actual top target. Reed sees through it; she
+  // doesn't work off the same tell everyone else does.
+  let decoyItem = null;
+  if (boss.decoyWorks) {
+    decoyItem = pool.find(i => i.decoy);
+    if (decoyItem) pool = [decoyItem, ...pool.filter(i => i !== decoyItem)];
   }
   const targets = pool.slice(0, claims);
   const items = S.items.slice();
@@ -1757,9 +2264,10 @@ function meetingProper() {
       const it = items[i++];
       const isTarget = targets.includes(it);
       const isShielded = (it === shielded);
+      const isDecoy = (it === decoyItem);
       $('meetitems').insertAdjacentHTML('beforeend',
         '<div class="riskitem ' + (it.locked ? 'locked' : '') + '" id="meetrow-' + (i - 1) + '" style="animation-duration:.5s">' +
-        '<span>' + it.name + (it.locked ? ' <span class="lockmark">🔒 SECURED</span>' : '') + (isShielded ? ' <span class="lockmark" style="color:var(--warn)">◈ STANDING</span>' : '') + '</span>' +
+        '<span>' + it.name + (it.locked ? ' <span class="lockmark">🔒 SECURED</span>' : '') + (isShielded ? ' <span class="lockmark" style="color:var(--warn)">◈ STANDING</span>' : '') + (isDecoy && isTarget ? ' <span class="lockmark" style="color:var(--accent)">◎ THE DECOY</span>' : '') + '</span>' +
         '<span class="val">+' + it.value + (isTarget ? ' <span class="reassigned stampin" style="margin-left:8px;">CLAIMING…</span>' : '') + '</span></div>');
       if (isTarget) sfx('stamp');
       setTimeout(revealNext, isTarget ? 1400 : 650);
@@ -1776,13 +2284,17 @@ function meetingProper() {
       if (row) row.classList.add('steal-anim');
     });
     if (shielded) {
-      v.insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--warn);">He pauses at "' + shielded.name + '." The room knows whose it is. Everyone knows whose it is. Your standing in this building makes it unclaimable, and his eyes slide off it like it\'s laminated.</div>');
+      v.insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--warn);">' + boss.Pronoun + ' pauses at "' + shielded.name + '." The room knows whose it is. Everyone knows whose it is. Your standing in this building makes it unclaimable, and ' + boss.possessive + ' eyes slide off it like it\'s laminated.</div>');
+    }
+    if (boss.hiddenSanityTax > 0) {
+      apply({ sanity: boss.hiddenSanityTax });
+      v.insertAdjacentHTML('beforeend', boss.hiddenTaxLine);
     }
     if (targets.length === 0) {
       // Malicious Compliance
-      v.innerHTML = '<div class="event" style="border-left-color: var(--lock);"><b>' + BOSS + ' reaches the end of the slide.</b><br><br>Every item is secured. Documented. Witnessed. Filed. There is nothing on the board with his hand-shaped absence on it.<br><br>"Well," he says. He says it again. The room has never heard him say a word twice.<br><br><span class="secure">NOTHING WAS REASSIGNED.</span></div>';
-      log('The Friday Meeting: ' + BOSS + ' claimed NOTHING.');
-      v.insertAdjacentHTML('beforeend', '<button class="choice" id="toend" style="margin-top:10px;">Watch him improvise a closing thought</button>');
+      v.innerHTML = '<div class="event" style="border-left-color: var(--lock);"><b>' + boss.name + ' reaches the end of the slide.</b><br><br>Every item is secured. Documented. Witnessed. Filed. There is nothing on the board with ' + boss.possessive + ' hand-shaped absence on it.<br><br>"Well," ' + boss.pronoun + ' says. ' + boss.Pronoun + ' says it again. The room has never heard ' + boss.object + ' say a word twice.<br><br><span class="secure">NOTHING WAS REASSIGNED.</span></div>';
+      log('The Friday Meeting: ' + boss.name + ' claimed NOTHING.');
+      v.insertAdjacentHTML('beforeend', '<button class="choice" id="toend" style="margin-top:10px;">Watch ' + boss.object + ' improvise a closing thought</button>');
       $('toend').onclick = () => ending('compliance');
     } else {
       let total = 0;
@@ -1790,14 +2302,17 @@ function meetingProper() {
       floatDelta($('stat-credit'), '-' + total + ' CREDIT', false);
       render();
       const t1 = targets[0], t2 = targets[1];
-      const claimLine = pickClaimLine();
-      let html = '<div class="event" style="border-left-color: var(--danger);"><b>He arrives at "' + t1.name + '."</b><br><br>' + claimLine() + '<br><br><span class="reassigned stampin">REASSIGNED → ' + BOSS.toUpperCase() + '</span>';
+      const claimLine = pickClaimLine(boss);
+      let html = '<div class="event" style="border-left-color: var(--danger);"><b>' + boss.Pronoun + ' arrives at "' + t1.name + '."</b><br><br>' + claimLine() + '<br><br><span class="reassigned stampin">REASSIGNED → ' + boss.name.toUpperCase() + '</span>';
       if (t2) {
-        html += '<br><br>"And," he adds, pluralizing without shame, "there\'s <i>' + t2.name + '</i> too. Team effort. My team."<br><br><span class="reassigned stampin">REASSIGNED → ' + BOSS.toUpperCase() + '</span>';
+        html += '<br><br>"And," ' + boss.pronoun + ' adds, pluralizing without shame, "there\'s <i>' + t2.name + '</i> too. Team effort. My team."<br><br><span class="reassigned stampin">REASSIGNED → ' + boss.name.toUpperCase() + '</span>';
       }
-      html += '<br><br>+' + total + ' Credit converts to his Raise Points. Next week he presents it Upstairs, to The President, whom you have never met, and who signs raises for whoever is standing nearest the work when it arrives. The slide advances. The week is over.</div>';
+      const creditFlowLine = boss.key === 'miller'
+        ? '+' + total + ' Credit converts to his Raise Points. Next week he presents it Upstairs, to The President, whom you have never met, and who signs raises for whoever is standing nearest the work when it arrives. The slide advances. The week is over.'
+        : '+' + total + ' Credit converts to ' + boss.possessive + ' Raise Points this week, on paper. On the org chart it rolls up to ' + BOSS + ' regardless, the way every number in this building eventually does. The slide advances. The week is over.';
+      html += '<br><br>' + creditFlowLine + '</div>';
       v.innerHTML = html;
-      log('The Friday Meeting: ' + BOSS + ' claimed ' + targets.map(t => '"' + t.name + '" (+' + t.value + ')').join(' and ') + '.');
+      log('The Friday Meeting: ' + boss.name + ' claimed ' + targets.map(t => '"' + t.name + '" (+' + t.value + ')').join(' and ') + '.');
       v.insertAdjacentHTML('beforeend', '<button class="choice" id="toend" style="margin-top:10px;">Gather your things</button>');
       $('toend').onclick = () => ending('survived');
     }
@@ -1808,6 +2323,7 @@ function meetingProper() {
 // ---------- endings & leverage ----------
 function leverageFor(kind, grade) {
   if (kind === 'burnout') return 3;
+  if (kind === 'firedForCause') return 2;
   const kept = S.items.filter(i => !i.stolen).reduce((a, b) => a + b.value, 0);
   const bonus = kind === 'compliance' ? 8 : grade === 'A' ? 6 : grade === 'B' ? 4 : grade === 'C' ? 2 : 1;
   return Math.round(kept / 5) + Math.round(S.sanity / 20) + bonus;
@@ -1815,10 +2331,11 @@ function leverageFor(kind, grade) {
 
 function awardLeverage(kind, grade) {
   let earned = leverageFor(kind, grade);
+  const noEndOfWeekBonus = kind === 'burnout' || kind === 'firedForCause';
   // audit week: every locked item pays out
-  if (MOD.id === 'audit' && kind !== 'burnout') earned += S.items.filter(i => i.locked).length;
+  if (MOD.id === 'audit' && !noEndOfWeekBonus) earned += S.items.filter(i => i.locked).length;
   // the weekly contract
-  if (S.contract && kind !== 'burnout' && S.contract.check()) { earned += 4; S.contractMet = true; }
+  if (S.contract && !noEndOfWeekBonus && S.contract.check()) { earned += 4; S.contractMet = true; }
   if (S.contract) {
     META.contractHistory.push({ name: S.contract.name, desc: S.contract.desc, week: META.week, met: !!S.contractMet });
   }
@@ -1832,7 +2349,15 @@ function awardLeverage(kind, grade) {
   return earned;
 }
 
+// the room stops being tense the moment the week actually ends, however it ends
+function endBossFight() {
+  inBossFight = false;
+  document.body.classList.remove('confrontation');
+  stopFridayTension(); // covers the rare case the week ends during Friday morning, before 4 PM
+}
+
 function burnout() {
+  endBossFight();
   S.over = true;
   sfx('bad');
   document.body.classList.add('burnout-fx');
@@ -1851,14 +2376,34 @@ function burnout() {
   }, 850);
 }
 
-function scoreBlock() {
+function firedForCause() {
+  endBossFight();
+  S.over = true;
+  sfx('bad');
+  document.body.classList.add('burnout-fx');
+  const earned = awardLeverage('firedForCause');
+  setTimeout(() => {
+    const el = $('card');
+    el.innerHTML = '<div class="endingtitle">PERFORMANCE MANAGED OUT</div>' +
+      '<div class="flavor">It doesn\'t happen in a room. It happens over email, subject line "Following Up," cc: Dana, sent at 4:47 PM on a day that started like any other.<br><br>' +
+      '"We\'ve decided to part ways, effective immediately, in the best interest of both parties," a sentence with two parties in it, only one of whom was consulted.<br><br>' +
+      'Security walks you to the lobby. Nobody carries your box. You carry it yourself. It is very light.</div>' +
+      scoreBlock() +
+      repDrainRecap() +
+      '<div class="event">+' + earned + ' LEVERAGE. Small mercy. The building kept the raise; it doesn\'t get to keep the lesson.</div>' +
+      '<button class="choice" id="toStore" style="margin-top:10px;">Go home. Nobody\'s waiting up.</button>';
+    $('toStore').onclick = storeScreen;
+  }, 850);
+}
+
+function scoreBlock(silentContract) {
   const kept = S.items.filter(i => !i.stolen).reduce((a, b) => a + b.value, 0);
   const stolen = S.items.filter(i => i.stolen).reduce((a, b) => a + b.value, 0);
   const col = (3.4 + 0.2 * (META.week - 1)).toFixed(1);
   return '<div class="scoregrid">' +
     'Week <b>' + META.week + '</b> · Credit kept: <b>' + kept + '</b> · Claimed by ' + BOSS + ': <b style="color:var(--danger)">' + stolen + '</b> · Sanity: <b>' + S.sanity + '</b> · Reputation: <b>' + S.rep + '</b> · Ally: <b>' + (S.ally ? 'Chris' : 'none') + '</b><br>' +
     'Projected annual raise: <b>3.0%</b> (capped) · Payable: <b>next July</b> · Cost-of-living increase since request: <b>' + col + '%</b>' +
-    (S.contract ? '<br>Contract: <b>' + S.contract.name + '</b> (' + S.contract.desc + ') · ' + (S.contractMet ? '<b class="secure">MET, +4 Leverage</b>' : '<span style="color:var(--danger)">not met</span>') : '') +
+    (S.contract ? '<br>Contract: <b>' + S.contract.name + '</b> (' + S.contract.desc + ') · ' + (S.contractMet ? ('<b class="secure">MET' + (silentContract ? '' : ', +4 Leverage') + '</b>') : '<span style="color:var(--danger)">not met</span>') : '') +
     '</div>';
 }
 
@@ -1873,16 +2418,33 @@ function drainRecap() {
     '</div>';
 }
 
+// what actually cost you Reputation this week, itemized, same idea as drainRecap
+function repDrainRecap() {
+  if (!S.repDrains.length) return '';
+  const bySrc = {};
+  S.repDrains.forEach(d => { bySrc[d.src] = (bySrc[d.src] || 0) + d.amt; });
+  const top = Object.entries(bySrc).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  return '<div class="event"><b>WHERE YOUR STANDING WENT:</b><br>' +
+    top.map(t => t[0] + ' · <b style="color:var(--danger)">-' + t[1] + '</b>').join('<br>') +
+    '</div>';
+}
+
 function ending(kind) {
+  endBossFight();
   S.over = true;
   const el = $('card');
   if (kind === 'quit') {
+    // this ending wipes the save immediately (new game, not "continue"), so there's no
+    // Leverage economy left to spend a contract bonus in, but the contract's pass/fail
+    // still needs to be evaluated here, or it always reads "not met" on the way out,
+    // since the normal check only ever runs inside awardLeverage(), which this skips.
+    if (S.contract && S.contract.check()) S.contractMet = true;
     el.innerHTML = '<div class="endingtitle">TWO WEEKS\' NOTICE</div>' +
       '<div class="flavor">You wait until he finishes the word "wins." Then you stand, cross Conference Room C, and set the letter beside his laptop. On the keyboard, actually, where it cannot be scrolled past.<br><br>' +
       'And here is the thing you will tell people for years: <b>he looks up.</b> For the first time in institutional memory, ' + BOSS + ' looks up from the screen at a human being who is leaving. The room watches him do it. Somebody\'s coffee goes cold in real time.<br><br>' +
       '"We\'d hate to lose you," he says, reaching for the phrases. "We were about to talk about your growth."<br><br>' +
       'The raise was capped at 3%. The exit never was. You walk out through the lobby, past the founder\'s portrait, out the doors, into the enormous, unmonitored afternoon.</div>' +
-      scoreBlock() +
+      scoreBlock(true) +
       '<div class="event" style="border-left-color: var(--lock);"><b>THE TRUE ENDING.</b> Built across ' + META.week + ' week' + (META.week > 1 ? 's' : '') + ': a portfolio, a network, a runway. None of it appeared on their tracker. That was the point.</div>' +
       '<button class="choice" id="newgame" style="margin-top:10px;">NEW GAME: someone else\'s first Monday</button>';
     $('newgame').onclick = () => { try { localStorage.removeItem(META_KEY); } catch (e) {} location.reload(); };
@@ -1953,7 +2515,7 @@ function storeScreen() {
         '<span>' + it.name + ' <span class="lockmark">✓ YOURS</span></span>' +
         '<span style="color:var(--ink-dim);font-size:0.88em;white-space:normal;margin-top:4px;">' + it.desc + '</span></div>';
     } else {
-      html += '<button class="choice" data-buy="' + it.id + '" ' + (afford ? '' : 'disabled') + '>' + (it.escape ? '⬒ ' : '') + it.name + ' · ' + cost + ' Leverage' +
+      html += '<button class="choice" data-buy="' + it.id + '" ' + (afford ? '' : 'disabled') + '>' + (it.escape ? '⬒ ' : it.trinket ? '◎ ' : '') + it.name + ' · ' + cost + ' Leverage' +
         (cost !== it.cost ? ' <span class="secure">(Nina made a call)</span>' : '') +
         '<span class="cost">' + it.desc + '</span></button>';
     }
@@ -2039,10 +2601,13 @@ function startMusic() {
 
 // The building sounds wrong when things are wrong. Sanity drives the dread
 // moment to moment; the week number raises the floor it can never drop below.
+// The Friday Meeting itself pushes it further still, on top of both, for as
+// long as you're actually in the room.
+let inBossFight = false;
 function updateMusicMood() {
   if (!musicNodes || !AC) return;
   try {
-    const dread = Math.min(1.3, (100 - S.sanity) / 100 + (Math.min(META.week, 8) - 1) * 0.06);
+    const dread = Math.min(1.3, (100 - S.sanity) / 100 + (Math.min(META.week, 8) - 1) * 0.06 + (inBossFight ? 0.35 : 0));
     const t = AC.currentTime;
     // beating widens from a slow shimmer (0.35 Hz) toward a nauseous wobble (~1.6 Hz)
     musicNodes.detuneOsc.frequency.setTargetAtTime(55.35 + dread * 1.25, t, 2.5);
@@ -2051,9 +2616,40 @@ function updateMusicMood() {
   } catch (e) {}
 }
 
+// ---------- EXPERIMENTAL: a faint high-pitch tone for Friday afternoon, before ----------
+// the meeting. Testing whether the "waiting for 4 PM" dread benefits from a
+// sustained near-tinnitus tone on top of the existing drone, or whether it's
+// just annoying. Gated behind the ambient toggle like the rest of the score;
+// mute kills it too. Easy to rip out (2 call sites) if it doesn't earn its
+// keep — see Design Doc Decisions Log for the verdict once it's been tested.
+let tensionTone = null;
+function startFridayTension() {
+  if (!musicOn || !musicNodes || !AC) return;
+  if (tensionTone) return;
+  try {
+    const o = AC.createOscillator(); o.type = 'sine'; o.frequency.value = 8400;
+    const g = AC.createGain();
+    g.gain.setValueAtTime(0.0001, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.011, AC.currentTime + 4);
+    o.connect(g); g.connect(musicNodes.master);
+    o.start();
+    tensionTone = { o, g };
+  } catch (e) {}
+}
+function stopFridayTension() {
+  if (!tensionTone) return;
+  const { o, g } = tensionTone;
+  tensionTone = null;
+  try {
+    g.gain.setTargetAtTime(0.0001, AC.currentTime, 0.35);
+    setTimeout(() => { try { o.stop(); } catch (e) {} }, 1200);
+  } catch (e) {}
+}
+
 function stopMusic() {
   if (!musicNodes) return;
   const n = musicNodes; musicNodes = null;
+  tensionTone = null; // rides on the same master gain node, which is going away
   clearInterval(n.timer);
   n.master.gain.linearRampToValueAtTime(0.0001, AC.currentTime + 0.8);
   setTimeout(() => { n.stoppables.forEach(o => { try { o.stop(); } catch (e) {} }); n.master.disconnect(); }, 1000);
@@ -2146,6 +2742,7 @@ function importSave() {
     META.life = m.life || { plant: 2, friend: 2, hobby: 2 };
     META.ninaTrust = !!m.ninaTrust; META.presidentSeen = !!m.presidentSeen;
     META.fileCabinet = m.fileCabinet || []; META.contractHistory = m.contractHistory || []; META.lastClaimLine = typeof m.lastClaimLine === 'number' ? m.lastClaimLine : -1;
+    META.lastClaimLineByBoss = m.lastClaimLineByBoss || {};
     saveMeta();
     location.reload();
   } catch (e) {
@@ -2185,11 +2782,15 @@ function buildBootLines() {
   // every single week. It's collected here and offered as a notice, not force-fed.
   const notices = [];
   if (META.week >= 2) notices.push('POLICY UPDATE: EVENING AVAILABILITY IS NOW A CORE VALUE.');
-  if (META.week >= 3) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. DIRECTOR MILLER HAS A REPUTATION TO MAINTAIN.');
-  if (META.week >= 3) notices.push('NOTICE: THE BUILDING HAS SETTLED. EVERYTHING COSTS SLIGHTLY MORE NOW.');
+  if (META.week >= 2) notices.push('NOTICE: THE BUILDING HAS BEGUN TO SETTLE. EVERYTHING COSTS SLIGHTLY MORE NOW, AND WILL KEEP COSTING MORE FOR A WHILE.');
+  if (META.week >= 3) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. AVP MILLER HAS A REPUTATION TO MAINTAIN, AND SO, BY EXTENSION, DOES WHOEVER IS COVERING FOR HIM.');
+  if (META.week >= 4) notices.push('POLICY UPDATE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED. RECOVERY IS SLIGHTLY LESS EFFECTIVE NOW.');
   if (META.week >= 5) notices.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A SECOND SIGNATURE.');
-  if (META.week >= 6) notices.push('NOTICE: THE BUILDING HAS SETTLED FURTHER. IT MAY SETTLE AGAIN.');
+  if (META.week >= 6) notices.push('NOTICE: THE BUILDING HAS FINISHED SETTLING. THIS IS APPARENTLY WHAT FOUNDATIONAL LOOKS LIKE.');
+  if (META.week >= 6) notices.push('POLICY UPDATE: PTO REQUESTS NOW REQUIRE DIRECTOR APPROVAL. PLAN AHEAD.');
   if (META.week >= 7) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE THREE (3) WINS. HE IS BEING CONSIDERED FOR SOMETHING.');
+  if (META.week >= 8) notices.push('NOTICE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED FURTHER. THIS IS PROGRESS.');
+  if (META.week >= 9) notices.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A THIRD SIGNATURE.');
   // the way out, acknowledged the way the building acknowledges everything
   const escN = ['portfolio', 'network', 'savings'].filter(k => META.up[k]).length;
   if (escN === 3) notices.push('FINAL NOTICE: THE LETTER IN YOUR BAG HAS BEEN NOTED. IT HAS ALWAYS BEEN NOTED.');
@@ -2242,7 +2843,7 @@ function boot() {
     stopBootTheme(); // the melody ends; the drone, like the job, continues
     // apply owned upgrades to the fresh week
     S.maxTime = 10 + (META.up.coffee ? 1 : 0);
-    S.pto = 2 + (META.up.pto ? 1 : 0);
+    S.pto = (META.week >= 6 ? 1 : 2) + (META.up.pto ? 1 : 0);
     if (META.up.lunch) { S.ally = true; log('Standing lunch with Chris: ally from day one.'); }
     $('boot').style.display = 'none';
     $('game').style.display = 'block';
