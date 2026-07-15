@@ -448,6 +448,7 @@
   <b>Credit</b> is what your work is worth. Every result you produce appears on the <b>At Risk tracker</b> (top bar, and in full at end of day).<br>
   <b>Paper Trails</b> lock an item so it cannot be claimed. Locks cost Time. Targets freeze at midnight Thursday.<br>
   <b>Friday, 4:00 PM:</b> someone reads the week aloud and claims your most valuable unlocked item, usually AVP Miller, sometimes one of his directors covering for him. You won't know who until the slide goes up. Later weeks, they claim more. Lock everything and nobody claims anything.<br>
+  <b>The Agenda:</b> before the slide, the meeting runs items of business. One at first, two from week 3, three from week 7. Each is a shot at you, in the host's own dialect. Deflecting is safe and costs Sanity, more every week. Countering risks Sanity and Reputation on a roll: Reputation helps, later weeks hurt, Miller is the hardest to beat, and your opening stance tilts the odds for the whole meeting. Win most of the agenda and one fewer item gets claimed. There is no way to skip the agenda.<br>
   <b>Reputation</b> matters at the edges. Below 30, you may not decline evening "opportunities." At 70 or above, your standing shields your single best unlocked item from being claimed (he cannot publicly take the headline win of someone that visible). At 0, you're performance managed out, a run-ending outcome, same as Burnout.<br>
   <b>PTO</b> skips a card. Its use is noted.<br>
   <b>Leverage</b> is paid at week's end and spent on Saturdays, on the version of you that leaves. Three purchases make up the Escape Plan. Complete it.<br><br>
@@ -611,59 +612,160 @@ function pickFridayBoss() {
   if (r < 0.85) return 'brooks';
   return 'calloway';
 }
-// ---------- pushing back further: the escalation gamble ----------
-// Only reachable if you already chose to push back once. A real risk, not a
-// free follow-up: winning quietly reduces what gets claimed this Friday,
-// losing costs more than staying quiet ever would have.
-const ESCALATION_OPEN = [
-  (boss) => '"That\'s an interesting read of it," ' + boss.name + ' says, not moving on yet.',
-  (boss) => '"I don\'t think that\'s fair," ' + boss.name + ' says, in the tone of someone who has never once had to prove it.',
-  (boss) => '"Let\'s not make this a whole thing," ' + boss.name + ' says, already making it a whole thing.'
-];
-const ESCALATION_WIN = [
-  (boss) => boss.name + ' looks for the follow-up and doesn\'t find one. "Fair," ' + boss.pronoun + ' says, and actually means it, for once. The room recalibrates around you, slightly.',
-  (boss) => 'You don\'t back down, and ' + boss.name + ' runs out of runway first. "Noted," ' + boss.pronoun + ' says, the word doing a lot less work than it usually does.',
-  (boss) => 'For four uncomfortable seconds, nobody says anything. Then ' + boss.name + ' moves on, visibly having decided this isn\'t the hill.'
-];
-const ESCALATION_LOSE = [
-  (boss) => boss.name + ' has an answer ready, the way people only do when they\'ve given this speech before. It lands. You feel it land.',
-  (boss) => '"I think we\'re getting off track," ' + boss.name + ' says, and somehow the room agrees with ' + boss.object + ', not you.',
-  (boss) => boss.name + ' doesn\'t even raise ' + boss.possessive + ' voice, which is somehow worse than if ' + boss.pronoun + ' had.'
-];
+// ---------- the agenda: the Friday Meeting as an actual fight ----------
+// The meeting now runs "items of business" before the slide goes up: one in
+// weeks 1-2, two from week 3, three from week 7. Each item is the boss taking
+// a shot in their own dialect. Deflecting is safe and costs Sanity (more every
+// week, and the settling surcharge and Crunch stack on top of it). Countering
+// is a roll: Reputation helps, the week hurts, Miller is deliberately the
+// worst person in the building to try it on, and your opening stance tilts
+// the odds for the whole meeting. Win most of the agenda and the meeting
+// claims one fewer item. There is no way to skip the agenda.
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-function offerEscalation(boss) {
-  // odds favor you at high Reputation, worsen at high weeks, and Miller is
-  // deliberately the hardest person in the building to actually win this against
-  const chance = Math.max(0.15, Math.min(0.85,
+function bossRoundCount() { return META.week >= 7 ? 3 : META.week >= 3 ? 2 : 1; }
+function deflectCost() { return 2 + Math.floor(META.week / 3); }
+function counterLossDelta() { return { sanity: 4 + Math.floor(META.week / 3), rep: 4 + Math.floor(META.week / 4) }; }
+function counterChance(boss) {
+  return Math.max(0.15, Math.min(0.85,
     0.5 + (S.rep - 50) / 200
-    - (META.week >= 7 ? 0.1 : META.week >= 3 ? 0.05 : 0)
+    - Math.min(0.16, 0.02 * (META.week - 1))
     - (boss.key === 'miller' ? 0.15 : 0)
+    + (S.fightFooting || 0)
   ));
-  showCard({
-    title: boss.name + ' Doesn\'t Let It Go Either', tag: 'CONFERENCE ROOM C · STILL 3:59 PM', ptoAllowed: false,
-    flavor: '"' + pick(ESCALATION_OPEN)(boss) + '" The small talk in the room stops being small. You have one more second to decide whether that was the end of it.',
-    choices: [
-      { label: 'Hold your ground.', delta: {}, result: '',
-        after: (done) => resolveEscalation(boss, chance, done) },
-      { label: 'Let it drop. You already made your point.', delta: {},
-        result: 'You made it once. Making it twice would cost more than it\'s worth, and you both already know that.' }
-    ]
-  }, () => runMeeting(boss));
 }
 
-function resolveEscalation(boss, chance, done) {
-  const win = Math.random() < chance;
-  if (win) {
-    apply({ sanity: 2, rep: 2 });
-    S.escalationBonus = -1;
-    sfx('lock');
-    showResult(pick(ESCALATION_WIN)(boss), done);
-  } else {
-    apply({ sanity: 6, rep: -5 });
-    sfx('bad');
-    showResult(pick(ESCALATION_LOSE)(boss), done);
-  }
+const BOSS_MOVES = {
+  miller: [
+    { title: 'The We',
+      flavor: 'Your number is on the screen with his name under it. "Proud of what we pulled off here," ' + BOSS + ' says, to the room, about the thing you did alone, at your desk, on a Tuesday he spent in a different building.',
+      counter: 'Say "I did that." Out loud. In the minutes.',
+      win: '"With support from leadership, of course," he adds, but it\'s too late. Somewhere a minute-taker types your name and does not delete it.',
+      lose: '"That\'s the spirit, it takes a village," he says, and somehow your sentence becomes evidence for his. The room nods. The village has one address.',
+      deflect: 'Let the pronoun stand.',
+      deflectLine: 'We. The cheapest word in the building. You swallow it and it sits there all weekend.' },
+    { title: 'The Timeline',
+      flavor: '"My only note," ' + BOSS + ' says, "is velocity." He implies, gently, in front of everyone, that your week-long deliverable took a week.',
+      counter: 'Recite the actual dates. From memory. Slowly.',
+      win: 'You name the day he added scope, the day approvals sat in his inbox, and the day it shipped anyway. "Fair context," he says, which is Miller for "stop."',
+      lose: '"Dates aside," he says, and the room agrees to set the dates aside, the way you\'d set aside a fire alarm.',
+      deflect: 'Nod. It shipped. Let velocity win.',
+      deflectLine: 'You nod along to a criticism of physics itself. Next week\'s timeline will be shorter, and this meeting will be the reason.' },
+    { title: 'The Growth Opportunity',
+      flavor: '"I want to be intentional about your development," ' + BOSS + ' says, unveiling a plan in which your work continues exactly as is, except described as a gift to you.',
+      counter: 'Ask, politely, what specifically you would be developing.',
+      win: 'He improvises three nouns, none of them skills. The room hears it. "Let\'s circle back offline," he says, which means never, which means you won.',
+      lose: '"That attitude is exactly what we\'re working on," he says, and your question becomes a data point in the plan.',
+      deflect: 'Receive the gift.',
+      deflectLine: 'You are being developed. Like film, in a dark room, by someone who keeps the prints.' }
+  ],
+  reed: [
+    { title: 'The Intake Question',
+      flavor: '"Point of order," Director Reed says. "Did this go through intake?" Nothing has ever gone through intake. Intake is a folder she made three years ago. It is beautiful and empty, like a model home.',
+      counter: 'Ask when her own department last used the form.',
+      win: 'A silence with a spreadsheet shape to it. "We can take that offline," Reed says, filing the loss under pending.',
+      lose: '"So that\'s a no," she says, writing it down. Somewhere a process is invented retroactively, and you are already out of compliance with it.',
+      deflect: 'Promise to file retroactively.',
+      deflectLine: 'You commit to documenting the thing you already did, for a folder no one reads, in an hour that does not exist.' },
+    { title: 'The Correction',
+      flavor: 'Reed fixes one number on your slide, out loud, with the confidence of an auditor. The correction is wrong. Your number was right. The room is already nodding at hers.',
+      counter: 'Correct the correction. Show the math.',
+      win: '"Same figure, different rounding," she declares, retreating in good order. Your number survives. The minutes will say "aligned."',
+      lose: 'Your math is right and it does not matter. "Let\'s not get into the weeds," she says, and the weeds close over your number like water.',
+      deflect: 'Let the wrong number live.',
+      deflectLine: 'The wrong number is in the minutes now. It will be quoted back to you in October by someone who was not in this room.' },
+    { title: 'The Precedent',
+      flavor: '"My concern," Reed says, "is precedent. If we recognize this, people will expect recognition." She lets the horror of that settle over the room.',
+      counter: '"Yes. That\'s the idea." Hold eye contact.',
+      win: 'Somebody laughs before they can stop it. Reed moves to the next item with the expression of a woman updating a risk register.',
+      lose: '"This is what I mean about culture," she says, and recognition itself is tabled, indefinitely, for everyone, because of you.',
+      deflect: 'Concede the danger to morale.',
+      deflectLine: 'You agree that acknowledging work is a slippery slope. The slope is dry. Nothing slides anywhere.' }
+  ],
+  brooks: [
+    { title: 'The Bit',
+      flavor: 'Director Brooks opens with a joke about you. It is the same joke as last time, with your weekend in it now. The room laughs on schedule, the way you\'d clap at an airplane landing.',
+      counter: 'Land a better one back, at his expense, timed right.',
+      win: 'The laugh you get is real, which is the one currency Brooks respects. He points at you like a game show host. You are, briefly, untouchable.',
+      lose: 'The joke dies in the air between you. "Tough crowd," Brooks says, and the room laughs at that, and the bit is now about your face.',
+      deflect: 'Laugh along. It\'s easier.',
+      deflectLine: 'You laugh at yourself so he doesn\'t have to do it alone. Your face does it automatically now. That is the part that costs.' },
+    { title: 'The Nickname',
+      flavor: 'Brooks has invented a nickname for you. He tests it on the room, twice, the way you\'d break in a shoe. If it survives this meeting, it will attend every meeting after.',
+      counter: 'A flat "no." No smile. Let it sit.',
+      win: 'The nickname dies at the table, on the record, witnessed. Brooks respects the kill more than he liked the name.',
+      lose: '"See, THAT\'S why," he says, delighted, and the nickname acquires an origin story with you in it.',
+      deflect: 'Answer to it.',
+      deflectLine: 'You respond to a name that is not yours. HR would call this adaptability. It is a small ongoing erasure with a laugh track.' },
+    { title: 'The Encore',
+      flavor: 'Brooks retells your mistake from three weeks ago. It is tighter now, road-tested, better paced. He has been performing it in other rooms. You can tell where the laughs usually go.',
+      counter: 'Tell the ending first. Ruin the set.',
+      win: 'You beat him to his own punchline, deadpan, with the correction attached. A bit only works if the room needs him to finish it. They don\'t anymore.',
+      lose: 'You stepped on the joke, and the room resents the interruption more than it ever resented the joke. He tells it anyway. Slower.',
+      deflect: 'Be the audience.',
+      deflectLine: 'You watch a man do stand-up about the worst Tuesday of your quarter. You know all the words. That is worse.' }
+  ],
+  calloway: [
+    { title: 'The Check-In',
+      flavor: 'Director Calloway pauses the agenda to ask how you are REALLY doing. In front of everyone. With a face full of clinical warmth. The question has a camera in it somewhere.',
+      counter: '"I\'m doing my job well." Full stop. Redirect to the slide.',
+      win: '"And we LOVE that," she says, thrown, having asked for a feeling and received a fact. The agenda resumes. Your interior remains yours.',
+      lose: '"It\'s okay to not be okay," she tells the room, about you, and now the meeting is holding space and you are the space.',
+      deflect: 'Perform fine-ness.',
+      deflectLine: 'You do the smile, the "busy but good!", the small laugh. A wellness data point is harvested. The crop is you.' },
+    { title: 'The Family',
+      flavor: '"We\'re a family here," Calloway says, in the direction of the unpaid Saturday on slide four. The word family does a lot of load-bearing work for a building with key cards.',
+      counter: '"Families don\'t track deliverables." Say it evenly.',
+      win: 'A beat. "A high-performing family," she amends, and the Saturday quietly falls off the slide somewhere between now and the minutes.',
+      lose: '"That hurts to hear," she says, wounded on behalf of the org chart, and now you have upset the family and the Saturday is still there.',
+      deflect: 'Smile at your relatives.',
+      deflectLine: 'You look around the table at your family. Cousin Quarterly Report. Uncle Action Items. You will see them more than your real one this month.' },
+    { title: 'The Space',
+      flavor: '"I want to hold space," Calloway says, "for some feedback about tone." The feedback is about your tone. The tone was you being right, audibly, on a Wednesday.',
+      counter: 'Ask for one concrete example. Then wait.',
+      win: 'The example does not come. "It\'s more of a felt sense," she offers. The felt sense is not actionable. The space closes at its scheduled time.',
+      lose: 'The room contributes examples. Enthusiastically. Apparently your tone has been a topic. The space came pre-furnished.',
+      deflect: 'Thank her for the feedback.',
+      deflectLine: 'You thank someone for an insult shaped like a hug. She writes "receptive" somewhere. That word will outlive you here.' }
+  ]
+};
+
+function runBossRounds(boss, done) {
+  const moves = BOSS_MOVES[boss.key].slice().sort(() => Math.random() - 0.5).slice(0, bossRoundCount());
+  S.roundsWon = 0;
+  S.roundsTotal = moves.length;
+  let i = 0;
+  const next = () => {
+    if (i >= moves.length) {
+      // win most of the agenda and the meeting claims one fewer item
+      if (S.roundsWon * 2 > S.roundsTotal) S.escalationBonus = -1;
+      done();
+      return;
+    }
+    const mv = moves[i]; i++;
+    const chance = counterChance(boss);
+    showCard({
+      title: mv.title, tag: 'CONFERENCE ROOM C · ITEM ' + i + ' OF ' + moves.length, ptoAllowed: false,
+      flavor: mv.flavor,
+      choices: [
+        { label: mv.counter, delta: {}, result: '',
+          after: (cont) => {
+            if (Math.random() < chance) {
+              S.roundsWon++;
+              apply({ rep: 2 });
+              sfx('lock');
+              showResult(mv.win, cont);
+            } else {
+              const d = counterLossDelta();
+              if (!apply({ sanity: d.sanity, rep: -d.rep })) return; // the run can end right here, mid-meeting
+              sfx('bad');
+              showResult(mv.lose, cont);
+            }
+          } },
+        { label: mv.deflect, delta: { sanity: deflectCost() }, result: mv.deflectLine }
+      ]
+    }, next);
+  };
+  next();
 }
 
 function pickClaimLine(boss) {
@@ -937,7 +1039,7 @@ function render() {
   }
   $('log').innerHTML = S.log.slice(-8).map(l => '&raquo; ' + l).join('<br>');
   $('log').scrollTop = $('log').scrollHeight;
-  // the office darkens as your Time runs out, and sickens as Sanity drains —
+  // the office darkens as your Time runs out, and sickens as Sanity drains:
   // continuous corruption, not just the one-shot Burnout glitch
   const bright = crunch ? 0.8 : S.time <= 2 ? 0.9 : 1;
   const rot = (100 - S.sanity) / 100; // 0 at full Sanity, 1 at zero
@@ -1957,7 +2059,7 @@ function startDay() {
   S.millerPleased = false; S.millerAnnoyed = false;
   const plan = dayPlan(S.day);
   // Tue/Thu: the three free slots become a real choice instead of a fixed
-  // sequence. Build the actual card objects once, up front — some cards
+  // sequence. Build the actual card objects once, up front, since some cards
   // (oneOnOne's coin flip, elevator's one-time flag) have effects baked into
   // invocation itself, so re-calling CARDS[key]() a second time to "preview"
   // it would double those effects or re-roll them. Build once, reuse the object.
@@ -2166,11 +2268,13 @@ function fridayMeeting() {
 
 function meetingProper() {
   const el = $('card');
-  // who's actually running 4 PM this week — set Monday, unknown to the player until now
+  // who's actually running 4 PM this week: set Monday, unknown to the player until now
   const boss = DIRECTORS[S.fridayBoss || 'miller'];
   // the room stays visibly, audibly tense for the whole meeting, not just this
   // one instant, cleared again in ending() no matter how the week resolves
   S.escalationBonus = 0;
+  S.fightFooting = 0;
+  S.roundsWon = 0;
   inBossFight = true;
   document.body.classList.add('confrontation');
   stopFridayTension(); // the waiting is over; the actual meeting music takes over from here
@@ -2186,24 +2290,29 @@ function meetingProper() {
   // room now, on top of whatever gets claimed, this is the one moment you
   // get to decide what it costs instead of having it decided for you.
   const stanceSanity = 4;
+  const rounds = bossRoundCount();
   showCard({
-    title: 'Before ' + boss.Pronoun + ' Starts Talking', tag: 'CONFERENCE ROOM C · 3:59 PM · YOUR MOVE', ptoAllowed: false,
-    flavor: 'The room fills in around you. ' + boss.name + ' hasn\'t started yet, just the small talk that precedes every execution. You have about ninety seconds to decide how you\'re going to sit through this one.',
+    title: 'Before ' + boss.Pronoun + ' Starts Talking', tag: 'CONFERENCE ROOM C · 3:59 PM · ' + rounds + ' ITEM' + (rounds > 1 ? 'S' : '') + ' OF BUSINESS', ptoAllowed: false,
+    flavor: 'The room fills in around you. ' + boss.name + ' hasn\'t started yet, just the small talk that precedes every execution. There is an agenda today, printed, which is new, and your name is somewhere in it. You have about ninety seconds to decide how you\'re going to sit through this one.',
     choices: [
       { label: 'Meet ' + boss.possessive + ' eyes. Push back, out loud, this time.', delta: { rep: -4, sanity: 0 },
         result: '', after: (done) => {
-          showResult('You say something true, mid-meeting, in front of everyone. ' + boss.name + ' recovers in under two seconds, "noted," and keeps moving, but the room heard it, and so did you. That\'s worth something, even if it isn\'t worth Credit.', () => offerEscalation(boss));
+          S.fightFooting = 0.08;
+          showResult('You say something true, mid-meeting, in front of everyone. ' + boss.name + ' recovers in under two seconds, "noted," and reaches for the agenda anyway. But the room heard it, and for the rest of this meeting the room is slightly yours.', done);
         } },
       { label: 'Say nothing. Let it happen, like always.', delta: { sanity: stanceSanity },
-        result: 'You sit, and nod at the right moments, and let the meeting pass through you like weather. It costs exactly what silence always costs. You\'ll feel it later, on the drive home, for no reason you can point to.' }
+        result: '', after: (done) => {
+          S.fightFooting = -0.08;
+          showResult('You sit, and nod at the right moments, and let the opening pass through you like weather. ' + boss.name + ' registers the silence as agreement. The agenda comes for you either way. It comes a little more confidently now.', done);
+        } }
     ]
-  }, () => runMeeting(boss));
+  }, () => runBossRounds(boss, () => runMeeting(boss)));
 }
 
 function runMeeting(boss) {
   const el = $('card');
   // substitutes claim one fewer than Miller would, at every tier, so he is always the worst Friday;
-  // holding your ground and winning the escalation gamble can knock one more off, on top of that
+  // winning most of the agenda's items of business knocks one more off, on top of that
   const claims = Math.max(0, (META.week >= 7 ? 3 : META.week >= 3 ? 2 : 1) + boss.claimsAdjust + (S.escalationBonus || 0));
 
   // The week's small, easy-to-forget choices echo here. None of this was ever hidden,
@@ -2214,6 +2323,7 @@ function runMeeting(boss) {
   if (S.hrFlagged) { preamble += '<div class="event">' + boss.name + ' mentions, apropos of nothing, that HR "flagged a great question" this week. ' + boss.Pronoun + ' is smiling. ' + boss.Pronoun + ' is always smiling.</div>'; }
   if (S.declines >= 2) { preamble += '<div class="event">"Busy weekend?" ' + boss.name + ' asks, to the room, not to you specifically, which is worse.</div>'; }
   else if (S.accepts >= 2 && S.declines === 0) { preamble += '<div class="event" style="border-left-color: var(--lock);">"Reliable," ' + boss.name + ' says, of you, to the room. It is meant as the highest compliment the building has.</div>'; }
+  if (S.escalationBonus === -1) { preamble += '<div class="event" style="border-left-color: var(--lock);">You held the room through the agenda. One line item quietly stops being interesting to ' + boss.object + '. It never appears on any tracker. It happened anyway.</div>'; }
 
   const absenceLine = boss.absence ? '<div class="event" style="border-left-color: var(--warn);">' + boss.absence + '</div>' : '';
 
@@ -2230,7 +2340,7 @@ function runMeeting(boss) {
 
   // Targets locked at Thursday midnight; locked = safe. Week 3+: they take the top TWO unlocked.
   // Reputation shields the single best unlocked item, at a threshold that varies by who's
-  // running the room — Miller's is highest (70), so he's hardest to shield against even
+  // running the room. Miller's is highest (70), so he's hardest to shield against even
   // though the substitutes are otherwise weaker on every other axis. He cannot publicly
   // claim the headline win of someone that visible, UNLESS the week's evenings made him
   // wary of you (two or more declines raise the bar he judges you by).
@@ -2241,7 +2351,7 @@ function runMeeting(boss) {
     shielded = unlockedSorted[0];
     pool = unlockedSorted.slice(1);
   }
-  // Reed doesn't chase value, she chases exposure — whatever's been NOTICED goes first,
+  // Reed doesn't chase value, she chases exposure: whatever's been NOTICED goes first,
   // audit-minded, regardless of what it's actually worth.
   if (boss.targeting === 'noticedFirst') {
     pool = pool.slice().sort((a, b) => (b.noticed ? 1 : 0) - (a.noticed ? 1 : 0) || b.value - a.value);
@@ -2621,7 +2731,7 @@ function updateMusicMood() {
 // sustained near-tinnitus tone on top of the existing drone, or whether it's
 // just annoying. Gated behind the ambient toggle like the rest of the score;
 // mute kills it too. Easy to rip out (2 call sites) if it doesn't earn its
-// keep — see Design Doc Decisions Log for the verdict once it's been tested.
+// keep. See Design Doc Decisions Log for the verdict once it's been tested.
 let tensionTone = null;
 function startFridayTension() {
   if (!musicOn || !musicNodes || !AC) return;
@@ -2784,11 +2894,13 @@ function buildBootLines() {
   if (META.week >= 2) notices.push('POLICY UPDATE: EVENING AVAILABILITY IS NOW A CORE VALUE.');
   if (META.week >= 2) notices.push('NOTICE: THE BUILDING HAS BEGUN TO SETTLE. EVERYTHING COSTS SLIGHTLY MORE NOW, AND WILL KEEP COSTING MORE FOR A WHILE.');
   if (META.week >= 3) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. AVP MILLER HAS A REPUTATION TO MAINTAIN, AND SO, BY EXTENSION, DOES WHOEVER IS COVERING FOR HIM.');
+  if (META.week >= 3) notices.push('POLICY UPDATE: THE FRIDAY MEETING AGENDA HAS BEEN EXPANDED TO TWO (2) ITEMS OF BUSINESS. ATTENDANCE OF YOUR WHOLE SELF IS EXPECTED.');
   if (META.week >= 4) notices.push('POLICY UPDATE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED. RECOVERY IS SLIGHTLY LESS EFFECTIVE NOW.');
   if (META.week >= 5) notices.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A SECOND SIGNATURE.');
   if (META.week >= 6) notices.push('NOTICE: THE BUILDING HAS FINISHED SETTLING. THIS IS APPARENTLY WHAT FOUNDATIONAL LOOKS LIKE.');
   if (META.week >= 6) notices.push('POLICY UPDATE: PTO REQUESTS NOW REQUIRE DIRECTOR APPROVAL. PLAN AHEAD.');
   if (META.week >= 7) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE THREE (3) WINS. HE IS BEING CONSIDERED FOR SOMETHING.');
+  if (META.week >= 7) notices.push('POLICY UPDATE: THE FRIDAY MEETING AGENDA NOW RUNS THREE (3) ITEMS OF BUSINESS. THE MEETING IS GROWING. NOTHING ELSE IS.');
   if (META.week >= 8) notices.push('NOTICE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED FURTHER. THIS IS PROGRESS.');
   if (META.week >= 9) notices.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A THIRD SIGNATURE.');
   // the way out, acknowledged the way the building acknowledges everything
