@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.22 · 2026-07-15 "A New Badge"
+Rodolfo lost for the first time (Burnout, week 3, v0.21 working as intended) and immediately found the structural hole: the game offered him week 4 anyway. Losing had no consequence beyond a smaller payout.
+- **Termination protocol: losing now actually ends the run.** Burnout or Performance Managed Out resets you to week 1. The week counter, the deck unlocks, the boss rotation, the difficulty ramps: all start over, because they are all keyed to the week.
+- **The file survives; the employment does not.** Store upgrades (coffee, therapy, the monitor, all of it) and every commendation persist across the firing, roguelike-style. The three Escape Plan items do not: the runway gets spent on being unemployed, the portfolio goes stale, the network cools. Each loss is narrated on the Saturday screen under EXIT PAPERWORK PROCESSED.
+- **The Saturday screen after a loss ends in "CLOCK IN · WEEK 1 · A NEW BADGE"** instead of the next week number. The reset is written to disk the moment the run ends, so closing the tab mid-store still boots a fresh hire, not a resurrected week.
+- Handbook gained a Termination entry so the stakes are stated up front.
+- Verified via `node --check`, a clean dominance-audit re-run, and a new headless sim (`tools/sim-v022.js`): burnout at week 5 resets to week 1 and strips exactly the owned escape items while keeping upgrades and commendations; the survived path still increments normally; clock-in after termination lands on week 1.
+
+## v0.21 · 2026-07-15 "The Personnel File"
+Rodolfo beat week 7 on v0.20 with no losses, so the agreed next lever fires: week-wide pressure, plus a reason for the store to exist, plus fixes from a full code scan.
+- **Emotional overhead is now billed at cost: every Sanity cost is multiplied by 1.5 (rounded up) before the settling surcharge, therapy, and Crunch apply.** A base-4 choice at week 7 now costs 11, not 9. Announced as a standing policy notice, per the announced-difficulty rule.
+- **Recognition recalibrated: Reputation gains land at 70% of face value (rounded, never below 1); losses land in full.** Holding the 70 shield, winning agenda counters, and staying above the PMO floor all got real. Also announced at boot.
+- **PERSONNEL FILE: a commendations board.** Twelve deadpan corporate awards tracked across runs (STILL HERE, EXCEEDS EXPECTATIONS, NOTHING WAS REASSIGNED, THE FILING SYSTEM, MINUTES REFLECT DISSENT, NOTED FIVE TIMES, THE DOOR WAS OPEN, A DEDICATED EMPLOYEE, NOT A CULTURE FIT, FULL COVERAGE, TENURE, FULLY VESTED). Each pays a one-time Leverage bonus, awarded on the Saturday screen; the full list, including unearned terms, is always visible in the store so every run has a goal.
+- **Three commendation-gated store items**: A Second Monitor (+1 max Time, requires EXCEEDS EXPECTATIONS), The Old Rolodex (Monday boot names Friday's host, requires FULL COVERAGE), An Ergonomic Assessment (first Sanity cost each day lands 2 softer, requires TENURE). FULLY VESTED requires owning every non-escape item including these, closing the loop.
+- **Bug fixes from a full-code scan**: Reputation hitting 0 during the Friday preamble no longer lets the meeting keep rendering over the ending screen (was an uncaught TypeError); the PTO Rep cost and Calloway's hidden Sanity tax are now guarded the same way; the Realignment log line no longer hardcodes "9/day" when upgrades change max Time.
+- New Game+ selected as a direction but explicitly deferred to next session: its balance depends on this difficulty pass settling first.
+- Verified via `node --check`, a clean dominance-audit re-run, and an extended headless simulation (new cost/rep math, commendation awarding on every ending type, store gating, all three item effects, mid-preamble PMO cleanup).
+
 ## v0.20 · 2026-07-15 "Items of Business"
 The Friday Meeting becomes a real multi-round fight that scales every week, in direct response to "still too easy, never lost" plus "make the boss fight more dynamic."
 - **The meeting now runs an agenda of items of business before the slide goes up**: one round in weeks 1-2, two from week 3, three from week 7, announced at boot as policy updates like every other escalation. There is no way to skip the agenda; Friday costs something every single week no matter how well you prepared.

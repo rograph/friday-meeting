@@ -443,14 +443,15 @@
 </div></div>
 <div id="helpoverlay"><div class="inner">
   <h2>EMPLOYEE HANDBOOK (ABRIDGED)</h2>
-  <b>Sanity</b> is your health. At zero, you burn out and the run ends.<br>
+  <b>Sanity</b> is your health. At zero, you burn out and the run ends. Emotional overhead is billed at cost: everything hurts one and a half times as much as the button implies, before the building settles further on top.<br>
   <b>Time</b> resets each morning. Run out and you enter Crunch: sanity costs rise 50%.<br>
   <b>Credit</b> is what your work is worth. Every result you produce appears on the <b>At Risk tracker</b> (top bar, and in full at end of day).<br>
   <b>Paper Trails</b> lock an item so it cannot be claimed. Locks cost Time. Targets freeze at midnight Thursday.<br>
   <b>Friday, 4:00 PM:</b> someone reads the week aloud and claims your most valuable unlocked item, usually AVP Miller, sometimes one of his directors covering for him. You won't know who until the slide goes up. Later weeks, they claim more. Lock everything and nobody claims anything.<br>
   <b>The Agenda:</b> before the slide, the meeting runs items of business. One at first, two from week 3, three from week 7. Each is a shot at you, in the host's own dialect. Deflecting is safe and costs Sanity, more every week. Countering risks Sanity and Reputation on a roll: Reputation helps, later weeks hurt, Miller is the hardest to beat, and your opening stance tilts the odds for the whole meeting. Win most of the agenda and one fewer item gets claimed. There is no way to skip the agenda.<br>
-  <b>Reputation</b> matters at the edges. Below 30, you may not decline evening "opportunities." At 70 or above, your standing shields your single best unlocked item from being claimed (he cannot publicly take the headline win of someone that visible). At 0, you're performance managed out, a run-ending outcome, same as Burnout.<br>
+  <b>Reputation</b> matters at the edges, and it accrues at a recalibrated rate: gains land at 70% of face value, losses land in full. The building keeps the difference. Below 30, you may not decline evening "opportunities." At 70 or above, your standing shields your single best unlocked item from being claimed (he cannot publicly take the headline win of someone that visible). At 0, you're performance managed out, a run-ending outcome, same as Burnout.<br>
   <b>PTO</b> skips a card. Its use is noted.<br>
+  <b>Termination</b> (Burnout, or Performance Managed Out at 0 Reputation) ends more than the week: you restart at week 1. Upgrades and commendations survive; the Escape Plan does not survive unemployment. The building rehires. The building always rehires.<br>
   <b>Leverage</b> is paid at week's end and spent on Saturdays, on the version of you that leaves. Three purchases make up the Escape Plan. Complete it.<br><br>
   This handbook is provided for your convenience. It is not a contract. Nothing is a contract.<br><br>
   <button class="choice" id="helpclose">Return to work</button>
@@ -510,7 +511,8 @@ const BOSS = 'AVP Miller';
 const META_KEY = 'fm_meta_v1';
 function loadMeta() {
   const def = { week: 1, leverage: 0, up: {}, life: { plant: 2, friend: 2, hobby: 2 }, ninaTrust: false, presidentSeen: false,
-    fileCabinet: [], contractHistory: [], lastClaimLine: -1, lastClaimLineByBoss: {}, trainingPending: false };
+    fileCabinet: [], contractHistory: [], lastClaimLine: -1, lastClaimLineByBoss: {}, trainingPending: false,
+    comms: {}, stats: { pushbacks: 0, agendaSweeps: 0, bossesSeen: {} } };
   try { return Object.assign(def, JSON.parse(localStorage.getItem(META_KEY)) || {}); }
   catch (e) { return def; }
 }
@@ -526,11 +528,62 @@ const STORE = [
   { id: 'lunch',    name: 'Standing Lunch with Chris',         cost: 10, desc: 'Start every week with Chris as an ally (one free lock per week).' },
   { id: 'pto',      name: 'Unused PTO, Actually Used',         cost: 8,  desc: '+1 PTO per week.' },
   { id: 'decoy',    name: 'A Decoy Deliverable',               cost: 18, desc: 'Thursday night, name one unlocked item as the one he watches. He claims it first, ahead of whatever he\'d normally take. Doesn\'t change what he takes total, changes what he takes instead.', trinket: true },
+  { id: 'monitor',  name: 'A Second Monitor (From Home)',      cost: 20, desc: '+1 max Time, again. The IT ticket for one at the office enters its second fiscal year.', requires: 'aGrade' },
+  { id: 'rolodex',  name: 'The Old Rolodex',                   cost: 20, desc: 'Monday boot names who is running the Friday Meeting. Somebody who used to work here still answers your calls.', requires: 'coverage' },
+  { id: 'ergo',     name: 'An Ergonomic Assessment (Self-Funded)', cost: 15, desc: 'The first Sanity cost each day is reduced by 2, never below 1. The chair was available all along.', requires: 'tenure' },
   { id: 'portfolio',name: 'Portfolio Site, Built at Midnight', cost: 40, desc: 'ESCAPE PLAN 1/3: your work, with your name on it, on a domain they don\'t own.', escape: true },
   { id: 'network',  name: 'The Network',                       cost: 40, desc: 'ESCAPE PLAN 2/3: old colleagues. The people you walked to parking lots.', escape: true },
   { id: 'savings',  name: 'Six Months of Runway',              cost: 45, desc: 'ESCAPE PLAN 3/3: the number that changes the sound of your voice in meetings.', escape: true }
 ];
 function escapeReady() { return META.up.portfolio && META.up.network && META.up.savings; }
+
+// ---------- the personnel file: commendations (v0.21) ----------
+// Deadpan corporate awards, tracked across runs, each paying a one-time
+// Leverage bonus. They exist to give every run, and every store purchase,
+// a goal beyond the Escape Plan. Checked at every week's end and after
+// every store purchase; some are gates for store items.
+const COMMENDATIONS = [
+  { id: 'stillHere', name: 'STILL HERE', desc: 'Complete a week without burning out, resigning, or being walked to the lobby.', bonus: 5,
+    check: (kind) => kind === 'survived' || kind === 'compliance' },
+  { id: 'aGrade', name: 'EXCEEDS EXPECTATIONS', desc: 'Finish a week graded A. The bar will be adjusted accordingly.', bonus: 10,
+    check: (kind, grade) => kind === 'survived' && grade === 'A' },
+  { id: 'cleanDesk', name: 'NOTHING WAS REASSIGNED', desc: 'Reach 4 PM on Friday with every single item secured.', bonus: 12,
+    check: (kind) => kind === 'compliance' },
+  { id: 'filing', name: 'THE FILING SYSTEM', desc: 'Hold five or more Paper Trails at the end of one week.', bonus: 8,
+    check: () => S.items.filter(i => i.locked).length >= 5 },
+  { id: 'sweep', name: 'MINUTES REFLECT DISSENT', desc: 'Win every item of business in a Friday agenda of two or more.', bonus: 10,
+    check: () => (META.stats.agendaSweeps || 0) >= 1 },
+  { id: 'noted', name: 'NOTED, FIVE TIMES', desc: 'Push back at 3:59 PM in five different Friday Meetings.', bonus: 8,
+    check: () => (META.stats.pushbacks || 0) >= 5 },
+  { id: 'door', name: 'THE DOOR WAS OPEN', desc: 'Leave on your own terms. Filed under attrition, voluntary.', bonus: 15,
+    check: (kind) => kind === 'quit' },
+  { id: 'floor', name: 'A DEDICATED EMPLOYEE', desc: 'Burn out. Your sacrifice will be mentioned at the next all-hands, briefly, without your name.', bonus: 5,
+    check: (kind) => kind === 'burnout' },
+  { id: 'fit', name: 'NOT A CULTURE FIT', desc: 'Be performance managed out. The culture remains unexamined.', bonus: 5,
+    check: (kind) => kind === 'firedForCause' },
+  { id: 'coverage', name: 'FULL COVERAGE', desc: 'Sit across all four possible hosts of the Friday Meeting.', bonus: 10,
+    check: () => Object.keys((META.stats && META.stats.bossesSeen) || {}).length >= 4 },
+  { id: 'tenure', name: 'TENURE', desc: 'Reach week 8. Nobody reaches week 8 on purpose.', bonus: 10,
+    check: () => META.week >= 8 },
+  { id: 'vested', name: 'FULLY VESTED', desc: 'Own everything in the store that is not a way out.', bonus: 15,
+    check: () => STORE.filter(it => !it.escape).every(it => META.up[it.id]) }
+];
+let NEW_COMMS = [];
+function checkCommendations(kind, grade) {
+  if (!META.comms) META.comms = {};
+  if (!META.stats) META.stats = { pushbacks: 0, agendaSweeps: 0, bossesSeen: {} };
+  COMMENDATIONS.forEach(c => {
+    if (META.comms[c.id]) return;
+    let ok = false;
+    try { ok = !!c.check(kind, grade); } catch (e) {}
+    if (ok) {
+      META.comms[c.id] = META.week;
+      META.leverage += c.bonus;
+      NEW_COMMS.push(c);
+    }
+  });
+  saveMeta();
+}
 
 // ---------- weekly contracts (optional Monday objectives) ----------
 const CONTRACTS = [
@@ -604,6 +657,9 @@ const DIRECTORS = {
     claimLines: CALLOWAY_CLAIM_LINES
   }
 };
+// the Rolodex tips the week's host at boot, before buildWeek() runs; the
+// pre-pick is consumed there so the tip and the actual meeting always agree
+let PREPICKED_BOSS = null;
 function pickFridayBoss() {
   if (META.week <= 2) return 'miller';
   const r = Math.random();
@@ -738,6 +794,7 @@ function runBossRounds(boss, done) {
     if (i >= moves.length) {
       // win most of the agenda and the meeting claims one fewer item
       if (S.roundsWon * 2 > S.roundsTotal) S.escalationBonus = -1;
+      if (S.roundsTotal >= 2 && S.roundsWon === S.roundsTotal) META.stats.agendaSweeps = (META.stats.agendaSweeps || 0) + 1;
       done();
       return;
     }
@@ -859,11 +916,14 @@ function inCrunch() { return S.time <= 0; }
 
 function apply(d, opts) {
   opts = opts || {};
-  // sanity cost pipeline: base → settling surcharge (+1 every week from wk2, capped at +5 by wk6) → therapy (-1) → crunch (×1.5)
+  // sanity cost pipeline: base → emotional overhead (×1.5, v0.21) → settling surcharge (+1 every week from wk2, capped at +5 by wk6) → therapy (-1) → crunch (×1.5)
   let sanityCost = d.sanity || 0;
+  if (sanityCost > 0) sanityCost = Math.ceil(sanityCost * 1.5);
   if (sanityCost > 0) sanityCost += Math.min(5, Math.max(0, META.week - 1));
   if (sanityCost > 0 && META.up.therapy) sanityCost = Math.max(1, sanityCost - 1);
   if (sanityCost > 0 && inCrunch()) sanityCost = Math.ceil(sanityCost * 1.5);
+  // the ergonomic assessment: the first hit of each day lands softer (v0.21)
+  if (sanityCost > 0 && META.up.ergo && !S.ergoUsedToday) { sanityCost = Math.max(1, sanityCost - 2); S.ergoUsedToday = true; }
 
   if (d.time) {
     S.time = clamp(S.time - d.time, 0, 99);
@@ -888,9 +948,12 @@ function apply(d, opts) {
     if (d.creditItem) S.items.push({ name: d.creditItem, value: d.credit, locked: !!d.lockItem, noticed: !!d.noticeItem, day: S.day });
   }
   if (d.rep) {
-    S.rep = clamp(S.rep + d.rep, 0, 100);
-    if (d.rep < 0) S.repDrains.push({ src: (opts.src || CONTEXT), amt: -d.rep });
-    floatDelta($('stat-rep'), (d.rep > 0 ? '+' : '') + d.rep + ' REP', d.rep > 0);
+    // recognition recalibrated (v0.21): gains land at 70%, never below 1; losses land in full
+    let repDelta = d.rep;
+    if (repDelta > 0) repDelta = Math.max(1, Math.round(repDelta * 0.7));
+    S.rep = clamp(S.rep + repDelta, 0, 100);
+    if (repDelta < 0) S.repDrains.push({ src: (opts.src || CONTEXT), amt: -repDelta });
+    floatDelta($('stat-rep'), (repDelta > 0 ? '+' : '') + repDelta + ' REP', repDelta > 0);
   }
   if (d.pto) {
     S.pto = clamp(S.pto - d.pto, 0, 9);
@@ -1126,7 +1189,7 @@ function showCard(c, onDone) {
       el.querySelectorAll('button.choice').forEach(b => b.disabled = true);
       if (btn.dataset.i === 'pto') {
         S.ptoUsed = true;
-        apply({ pto: 1, rep: -3 });
+        if (!apply({ pto: 1, rep: -3 })) return; // -3 Rep can end the run; don't render the result over the ending
         log('PTO used on "' + c.title + '." A form appears in your inbox: "We support your rest."');
         showResult('You take the afternoon. Your badge logs the exact minute you leave.', onDone);
         return;
@@ -1357,7 +1420,7 @@ const CARDS = {
         after: (done) => {
           S.maxTime -= 1;
           $('card').insertAdjacentHTML('beforeend', '<div class="event"><b>SCOPE ABSORBED.</b> Your Time is now <b>' + S.maxTime + '/day</b> for the rest of the week. Your salary is now exactly what it was.</div>');
-          log('Finance absorbed. Max Time reduced to 9/day. Compensation unchanged, permanently.');
+          log('Finance absorbed. Max Time reduced to ' + S.maxTime + '/day. Compensation unchanged, permanently.');
           showResult('Leadership calls you "a utility player." You look up whether utility players get paid more. They do. Elsewhere.', done);
         } },
       { label: 'Ask, in writing, about a compensation adjustment', delta: { rep: -4, sanity: 4 },
@@ -2037,7 +2100,8 @@ function buildWeek() {
   // who runs 4 PM this week. Weeks 1-2 are always Miller, so the player learns
   // the baseline before the roster starts rotating. You don't find out who
   // showed up until the slide goes up.
-  S.fridayBoss = pickFridayBoss();
+  S.fridayBoss = PREPICKED_BOSS || pickFridayBoss();
+  PREPICKED_BOSS = null;
   // one optional contract per week
   S.contract = CONTRACTS[Math.floor(Math.random() * CONTRACTS.length)];
   $('contractline').textContent = 'CONTRACT: ' + S.contract.name + ' (' + S.contract.desc + ') · +4 Leverage if met';
@@ -2056,6 +2120,7 @@ function dayPlan(day) {
 
 function startDay() {
   S.time = S.maxTime;
+  S.ergoUsedToday = false;
   S.millerPleased = false; S.millerAnnoyed = false;
   const plan = dayPlan(S.day);
   // Tue/Thu: the three free slots become a real choice instead of a fixed
@@ -2270,6 +2335,8 @@ function meetingProper() {
   const el = $('card');
   // who's actually running 4 PM this week: set Monday, unknown to the player until now
   const boss = DIRECTORS[S.fridayBoss || 'miller'];
+  META.stats.bossesSeen = META.stats.bossesSeen || {};
+  META.stats.bossesSeen[boss.key] = true;
   // the room stays visibly, audibly tense for the whole meeting, not just this
   // one instant, cleared again in ending() no matter how the week resolves
   S.escalationBonus = 0;
@@ -2298,6 +2365,7 @@ function meetingProper() {
       { label: 'Meet ' + boss.possessive + ' eyes. Push back, out loud, this time.', delta: { rep: -4, sanity: 0 },
         result: '', after: (done) => {
           S.fightFooting = 0.08;
+          META.stats.pushbacks = (META.stats.pushbacks || 0) + 1;
           showResult('You say something true, mid-meeting, in front of everyone. ' + boss.name + ' recovers in under two seconds, "noted," and reaches for the agenda anyway. But the room heard it, and for the rest of this meeting the room is slightly yours.', done);
         } },
       { label: 'Say nothing. Let it happen, like always.', delta: { sanity: stanceSanity },
@@ -2333,10 +2401,12 @@ function runMeeting(boss) {
     preamble + '<div id="meetitems"></div><div id="meetverdict"></div>';
 
   // The same choices apply a quiet, delayed Reputation cost or credit, right here, before he even starts reading.
-  if (S.rumorSquashed) apply({ rep: 2 });
-  if (S.rumorFestering) apply({ rep: -3 });
-  if (S.declines >= 2) apply({ rep: -4 });
-  else if (S.accepts >= 2 && S.declines === 0) apply({ rep: 3 });
+  // Any of these can end the run at 0 Rep; if one does, stop cold so the ending
+  // screen isn't clobbered by the rest of the meeting still rendering (scan finding, v0.21).
+  if (S.rumorSquashed && !apply({ rep: 2 })) return;
+  if (S.rumorFestering && !apply({ rep: -3 })) return;
+  if (S.declines >= 2) { if (!apply({ rep: -4 })) return; }
+  else if (S.accepts >= 2 && S.declines === 0) { if (!apply({ rep: 3 })) return; }
 
   // Targets locked at Thursday midnight; locked = safe. Week 3+: they take the top TWO unlocked.
   // Reputation shields the single best unlocked item, at a threshold that varies by who's
@@ -2397,7 +2467,7 @@ function runMeeting(boss) {
       v.insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--warn);">' + boss.Pronoun + ' pauses at "' + shielded.name + '." The room knows whose it is. Everyone knows whose it is. Your standing in this building makes it unclaimable, and ' + boss.possessive + ' eyes slide off it like it\'s laminated.</div>');
     }
     if (boss.hiddenSanityTax > 0) {
-      apply({ sanity: boss.hiddenSanityTax });
+      if (!apply({ sanity: boss.hiddenSanityTax })) return; // Calloway's tax can be the thing that ends you
       v.insertAdjacentHTML('beforeend', boss.hiddenTaxLine);
     }
     if (targets.length === 0) {
@@ -2450,11 +2520,26 @@ function awardLeverage(kind, grade) {
     META.contractHistory.push({ name: S.contract.name, desc: S.contract.desc, week: META.week, met: !!S.contractMet });
   }
   META.leverage += earned;
+  // the personnel file reviews the week (commendation bonuses are added to
+  // META.leverage directly, surfaced on the Saturday screen, not folded into
+  // the week's own payout line)
+  checkCommendations(kind, grade);
   // Life Outside: the week's evenings settle into the long term
   let d = S.lifeDelta;
   const aspects = ['plant', 'friend', 'hobby'];
   while (d > 0) { const a = aspects[Math.floor(Math.random() * 3)]; META.life[a] = Math.min(4, META.life[a] + 1); d--; }
   while (d < 0) { const a = aspects[Math.floor(Math.random() * 3)]; META.life[a] = Math.max(0, META.life[a] - 1); d++; }
+  // termination protocol (v0.22): a lost run ends the employment, not the file.
+  // Week resets to 1 immediately (so a closed tab still boots a fresh hire),
+  // QoL purchases and commendations persist, and the Escape Plan does not
+  // survive a stretch of unemployment. The Saturday screen reads S.terminated
+  // and S.escapeLost this page-life only.
+  if (noEndOfWeekBonus) {
+    S.terminated = true;
+    S.escapeLost = [];
+    META.week = 1;
+    ['portfolio', 'network', 'savings'].forEach(k => { if (META.up[k]) { delete META.up[k]; S.escapeLost.push(k); } });
+  }
   saveMeta();
   return earned;
 }
@@ -2598,6 +2683,17 @@ function storeScreen() {
   let html = '<h2>Saturday, 9:04 AM</h2><div class="tag">YOUR TIME · NO BADGE · NOT MONITORED (PROBABLY)</div>' +
     '<div class="flavor">The week paid you in the only currency the building can\'t claim. Spend it on the version of you that leaves.</div>' +
     '<div class="scoregrid">LEVERAGE: <b>' + META.leverage + '</b> · ESCAPE PLAN: <b>' + escapeCount + '/3</b>' + (escapeReady() ? ' · <span class="secure">READY. The letter is in your bag</span>' : '') + '</div>';
+  // termination: the run is over, the file is not
+  if (S.terminated) {
+    const LOST_LINES = {
+      portfolio: 'The portfolio went stale within the month. The work it showed belongs to a person with a job.',
+      network: 'The Network cooled. People answer slower when you need them to answer faster.',
+      savings: 'Six Months of Runway got spent on being unemployed. That is what it was for. It hurts anyway.'
+    };
+    html += '<div class="event" style="border-left-color: var(--danger);">EXIT PAPERWORK PROCESSED. Your badge stopped working before you reached the lobby.' +
+      (S.escapeLost || []).map(k => '<br><br>' + LOST_LINES[k]).join('') +
+      '<br><br>Monday, there is a new badge with your face on it. Week one. The tracker starts at zero, as if none of this happened. The Personnel File remembers. Nothing else here does.</div>';
+  }
   // Life Outside: what the week's evenings did to the rest of you
   const LIFE_WORDS = {
     plant: ['dead', 'wilting', 'surviving', 'green', 'thriving'],
@@ -2608,6 +2704,10 @@ function storeScreen() {
     'The plant: <b>' + LIFE_WORDS.plant[META.life.plant] + '</b> · ' +
     'The friend: <b>' + LIFE_WORDS.friend[META.life.friend] + '</b> · ' +
     'The hobby: <b>' + LIFE_WORDS.hobby[META.life.hobby] + '</b></div>';
+  // commendations awarded this week, read aloud to an empty room
+  NEW_COMMS.forEach(c => {
+    html += '<div class="event" style="border-left-color: var(--lock);">COMMENDATION AWARDED: <b>' + c.name + '</b> · +' + c.bonus + ' LEVERAGE<br><span style="color:var(--ink-dim);font-size:0.9em;">' + c.desc + '</span></div>';
+  });
   // File one of this week's items away, unofficially, for free. Once a week.
   if (S.items.length && !S.cabinetPinned) {
     html += '<div class="tag" style="margin-top:14px;">FILE SOMETHING AWAY · ONE FREE PICK THIS WEEK</div>';
@@ -2620,6 +2720,14 @@ function storeScreen() {
     // Nina made a call: the Network is cheaper if she trusts you
     const cost = (it.id === 'network' && META.ninaTrust) ? it.cost - 10 : it.cost;
     const afford = META.leverage >= cost;
+    // commendation-gated items show what they need, greyed, until earned
+    if (!has && it.requires && !(META.comms || {})[it.requires]) {
+      const req = COMMENDATIONS.find(c => c.id === it.requires);
+      html += '<div class="riskitem" style="flex-direction:column;align-items:flex-start;opacity:0.55;">' +
+        '<span>▢ ' + it.name + ' · ' + it.cost + ' Leverage</span>' +
+        '<span style="color:var(--ink-dim);font-size:0.88em;white-space:normal;margin-top:4px;">Requires commendation: <b>' + req.name + '</b>. ' + req.desc + '</span></div>';
+      return;
+    }
     if (has) {
       html += '<div class="riskitem locked" style="flex-direction:column;align-items:flex-start;">' +
         '<span>' + it.name + ' <span class="lockmark">✓ YOURS</span></span>' +
@@ -2630,7 +2738,18 @@ function storeScreen() {
         '<span class="cost">' + it.desc + '</span></button>';
     }
   });
-  html += '<button class="choice" id="nextweek" style="margin-top:14px; border-color: var(--accent); color: var(--accent);">CLOCK IN · WEEK ' + (META.week + 1) + '<span class="cost">Monday always comes. But you are not the same shape you were.</span></button>';
+  // the personnel file: every commendation, earned or waiting, with its terms visible
+  const commCount = Object.keys(META.comms || {}).length;
+  html += '<div class="tag" style="margin-top:14px;">PERSONNEL FILE · COMMENDATIONS · ' + commCount + ' OF ' + COMMENDATIONS.length + '</div>';
+  COMMENDATIONS.forEach(c => {
+    const got = (META.comms || {})[c.id];
+    html += '<div class="riskitem' + (got ? ' locked' : '') + '" style="flex-direction:column;align-items:flex-start;' + (got ? '' : 'opacity:0.6;') + '">' +
+      '<span>' + (got ? '✓ ' : '· ') + c.name + (got ? ' <span class="lockmark">WEEK ' + got + '</span>' : '') + '</span>' +
+      '<span style="color:var(--ink-dim);font-size:0.88em;white-space:normal;margin-top:4px;">' + c.desc + (got ? '' : ' (+' + c.bonus + ' Leverage)') + '</span></div>';
+  });
+  html += S.terminated
+    ? '<button class="choice" id="nextweek" style="margin-top:14px; border-color: var(--danger); color: var(--danger);">CLOCK IN · WEEK 1 · A NEW BADGE<span class="cost">Everwell is hiring. Everwell is always hiring.</span></button>'
+    : '<button class="choice" id="nextweek" style="margin-top:14px; border-color: var(--accent); color: var(--accent);">CLOCK IN · WEEK ' + (META.week + 1) + '<span class="cost">Monday always comes. But you are not the same shape you were.</span></button>';
   el.innerHTML = html;
   el.querySelectorAll('[data-pin]').forEach(btn => {
     btn.onclick = () => {
@@ -2648,16 +2767,18 @@ function storeScreen() {
     btn.onclick = () => {
       const it = STORE.find(x => x.id === btn.dataset.buy);
       if (!it) return;
+      if (it.requires && !(META.comms || {})[it.requires]) return;
       const cost = (it.id === 'network' && META.ninaTrust) ? it.cost - 10 : it.cost;
       if (META.up[it.id] || META.leverage < cost) return;
       sfx('buy');
       META.leverage -= cost;
       META.up[it.id] = true;
       saveMeta();
+      checkCommendations(); // FULLY VESTED can land on the purchase itself
       storeScreen();
     };
   });
-  $('nextweek').onclick = () => { META.week += 1; saveMeta(); location.reload(); };
+  $('nextweek').onclick = () => { if (!S.terminated) META.week += 1; saveMeta(); location.reload(); }; // a terminated week is already reset to 1
 }
 
 // ---------- ambient music (procedural Web Audio, no assets, no licensing) ----------
@@ -2891,6 +3012,8 @@ function buildBootLines() {
   // Difficulty is announced, never hidden, but it doesn't need to be read aloud
   // every single week. It's collected here and offered as a notice, not force-fed.
   const notices = [];
+  notices.push('POLICY UPDATE: EMOTIONAL OVERHEAD IS NOW BILLED AT COST. ALL SANITY EXPENDITURES ARE ASSESSED AT 150% OF STICKER.');
+  notices.push('POLICY UPDATE: RECOGNITION HAS BEEN RECALIBRATED. REPUTATION GAINS NOW LAND AT 70% OF FACE VALUE. LOSSES ARE UNAFFECTED. THE BUILDING THANKS YOU IN ADVANCE.');
   if (META.week >= 2) notices.push('POLICY UPDATE: EVENING AVAILABILITY IS NOW A CORE VALUE.');
   if (META.week >= 2) notices.push('NOTICE: THE BUILDING HAS BEGUN TO SETTLE. EVERYTHING COSTS SLIGHTLY MORE NOW, AND WILL KEEP COSTING MORE FOR A WHILE.');
   if (META.week >= 3) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. AVP MILLER HAS A REPUTATION TO MAINTAIN, AND SO, BY EXTENSION, DOES WHOEVER IS COVERING FOR HIM.');
@@ -2903,6 +3026,11 @@ function buildBootLines() {
   if (META.week >= 7) notices.push('POLICY UPDATE: THE FRIDAY MEETING AGENDA NOW RUNS THREE (3) ITEMS OF BUSINESS. THE MEETING IS GROWING. NOTHING ELSE IS.');
   if (META.week >= 8) notices.push('NOTICE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED FURTHER. THIS IS PROGRESS.');
   if (META.week >= 9) notices.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A THIRD SIGNATURE.');
+  // the Old Rolodex: somebody who used to work here already knows who has the room
+  if (META.up.rolodex) {
+    PREPICKED_BOSS = PREPICKED_BOSS || pickFridayBoss();
+    notices.push('UNOFFICIAL: THE ROLODEX SAYS ' + DIRECTORS[PREPICKED_BOSS].name.toUpperCase() + ' HAS CONFERENCE ROOM C ON FRIDAY. PLAN ACCORDINGLY. YOU DID NOT HEAR THIS FROM ANYONE.');
+  }
   // the way out, acknowledged the way the building acknowledges everything
   const escN = ['portfolio', 'network', 'savings'].filter(k => META.up[k]).length;
   if (escN === 3) notices.push('FINAL NOTICE: THE LETTER IN YOUR BAG HAS BEEN NOTED. IT HAS ALWAYS BEEN NOTED.');
@@ -2954,7 +3082,7 @@ function boot() {
   $('bootbtn').onclick = () => {
     stopBootTheme(); // the melody ends; the drone, like the job, continues
     // apply owned upgrades to the fresh week
-    S.maxTime = 10 + (META.up.coffee ? 1 : 0);
+    S.maxTime = 10 + (META.up.coffee ? 1 : 0) + (META.up.monitor ? 1 : 0);
     S.pto = (META.week >= 6 ? 1 : 2) + (META.up.pto ? 1 : 0);
     if (META.up.lunch) { S.ally = true; log('Standing lunch with Chris: ally from day one.'); }
     $('boot').style.display = 'none';
