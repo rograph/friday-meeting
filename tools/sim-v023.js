@@ -81,16 +81,22 @@ function drain(w, cap) {
   check('S.lunchDone true after lunch shown', ev(w, 'S.lunchDone') === true);
 }
 
-// --- 4. the weekly clock advances across a day's beats and resets at day start ---
+// --- 4. the weekly stopwatch: real elapsed time, formatted, persisted across weeks ---
 {
   const w = fresh();
-  ev(w, "META.week = 1; S.day = 0; S.beatIndex = 3; DAY_BEATS[0]");
-  const label = ev(w, 'clockLabel()');
-  check('clock label format looks like a time', /^\d{1,2}:\d{2} (AM|PM)$/.test(label), label);
-  const late = ev(w, 'S.beatIndex = 4; clockLabel()');
-  check('clock reads 4:00 PM at day end (Mon-Thu, 4 beats)', late === '4:00 PM', late);
-  const reset = ev(w, 'S.beatIndex = 0; clockLabel()');
-  check('clock reads 9:00 AM at day start', reset === '9:00 AM', reset);
+  check('formatStopwatch(0) = 0:00', ev(w, 'formatStopwatch(0)') === '0:00');
+  check('formatStopwatch(65000) = 1:05', ev(w, 'formatStopwatch(65000)') === '1:05');
+  check('formatStopwatch(3661000) = 1:01:01 (hour rollover)', ev(w, 'formatStopwatch(3661000)') === '1:01:01');
+  // updateStopwatch reads from S.weekStartMs and writes into #weekclock
+  ev(w, "S.weekStartMs = Date.now() - 5000; updateStopwatch();");
+  const label = ev(w, "document.getElementById('weekclock').textContent");
+  check('weekclock shows "CLOCKED IN · 0:05" for a 5s-old week', label === 'CLOCKED IN · 0:05', label);
+  // week-end accumulates into META.totalPlayMs (mirrors the nextweek button handler)
+  ev(w, "META.totalPlayMs = 10000; S.weekStartMs = Date.now() - 3000; " +
+    "META.totalPlayMs = (META.totalPlayMs || 0) + (Date.now() - (S.weekStartMs || Date.now())); saveMeta();");
+  const total = ev(w, 'META.totalPlayMs');
+  check('totalPlayMs accumulates across weeks (~13000ms)', total >= 12900 && total <= 13300, total);
+  check('totalPlayMs persisted to localStorage', ev(w, "JSON.parse(localStorage.getItem('fm_meta_v1')).totalPlayMs") === ev(w, 'META.totalPlayMs'));
 }
 
 // --- 5. balloon vendor: risky choice sets a pending flag, resolves ~2 weeks later ---

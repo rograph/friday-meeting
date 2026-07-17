@@ -83,8 +83,9 @@
   .forkmark { fill: var(--warn); opacity: 0.85; }
   #weekclock {
     text-align: center; font-size: 0.72em; letter-spacing: 2px; color: var(--ink-dim);
-    margin: -8px 0 12px; font-variant-numeric: tabular-nums;
+    margin: -8px 0 12px; font-variant-numeric: tabular-nums; transition: color .4s;
   }
+  body.crunch #weekclock { color: var(--danger); animation: pulse 1.2s infinite; }
   #stats {
     display: flex; gap: 10px; flex-wrap: wrap;
     margin-bottom: 16px; font-size: 0.78em;
@@ -457,6 +458,7 @@
   <b>PTO</b> skips a card. Its use is noted.<br>
   <b>Termination</b> (Burnout, or Performance Managed Out at 0 Reputation) ends more than the week: you restart at week 1. Upgrades and commendations survive; the Escape Plan does not survive unemployment. The building rehires. The building always rehires.<br>
   <b>Leverage</b> is paid at week's end and spent on Saturdays, on the version of you that leaves. Three purchases make up the Escape Plan. Complete it.<br><br>
+  <b>The clock</b> at the top is real. It starts the moment you clock in and runs the whole week, in actual seconds. Nothing in the building stops for it, and it does not stop for you.<br><br>
   This handbook is provided for your convenience. It is not a contract. Nothing is a contract.<br><br>
   <button class="choice" id="helpclose">Return to work</button>
 </div></div>
@@ -484,7 +486,7 @@
       <rect class="forkmark" x="210.5" y="1" width="5" height="5" transform="rotate(45 213 3.5)"/>
       <circle id="daycircle-4" class="daynode" cx="280" cy="16" r="8"/><text class="daylbl" x="280" y="36">FRI</text>
     </svg>
-    <div id="weekclock">MONDAY · 9:00 AM</div>
+    <div id="weekclock">CLOCKED IN · 0:00</div>
     <div id="stats">
       <div class="stat" id="stat-sanity"><span class="stat-ic"><svg viewBox="0 0 16 16"><polyline points="1,9 4,9 6,3 9,13 11,9 15,9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Sanity <b id="s-sanity">100</b><div id="sanitybarwrap"><div id="sanitybar"></div></div></div>
       <div class="stat" id="stat-time"><span class="stat-ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="8" y1="8" x2="8" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="8" y1="8" x2="11" y2="9.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>Time <b id="s-time">10</b></div>
@@ -517,7 +519,7 @@ const META_KEY = 'fm_meta_v1';
 function loadMeta() {
   const def = { week: 1, leverage: 0, up: {}, life: { plant: 2, friend: 2, hobby: 2 }, ninaTrust: false, presidentSeen: false,
     fileCabinet: [], contractHistory: [], lastClaimLine: -1, lastClaimLineByBoss: {}, trainingPending: false,
-    balloonVendorPending: false, balloonVendorWeek: 0, surveyFlagged: false, surveyFlaggedWeek: 0,
+    balloonVendorPending: false, balloonVendorWeek: 0, surveyFlagged: false, surveyFlaggedWeek: 0, totalPlayMs: 0,
     comms: {}, stats: { pushbacks: 0, agendaSweeps: 0, bossesSeen: {} } };
   try { return Object.assign(def, JSON.parse(localStorage.getItem(META_KEY)) || {}); }
   catch (e) { return def; }
@@ -1097,19 +1099,26 @@ function noiseBuffer() {
   return _noiseBuf;
 }
 
-// the weekly clock (v0.23): 9 AM to 4 PM, per day, driven by how many of the
-// day's beats (cards/lunch) are done. Purely cosmetic today; it's also the
-// hook point for a future speed-completion achievement (real elapsed time is
-// a separate, not-yet-built measurement, deliberately not conflated with this).
-function clockLabel() {
-  const total = DAY_BEATS[S.day] || 1;
-  const frac = clamp((S.beatIndex || 0) / total, 0, 1);
-  const mins = Math.round(frac * 7 * 60); // 9:00 AM -> 4:00 PM window
-  let h = 9 + Math.floor(mins / 60);
-  const m = mins % 60;
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h > 12 ? h - 12 : h;
-  return h12 + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+// the weekly stopwatch (v0.23.1): a real elapsed-time timer, not an in-fiction
+// clock. Starts the instant "BEGIN WEEK" is clicked (S.weekStartMs, set in
+// boot()'s bootbtn handler) and runs continuously, real seconds, until the
+// week ends and the page reloads. Recomputed from Date.now() on every tick
+// rather than incremented, so background-tab throttling (a known issue in
+// this codebase, see the boot typewriter) never causes drift, only a choppier
+// display while the tab is hidden that self-corrects the instant it fires again.
+function formatStopwatch(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const ss = (s < 10 ? '0' : '') + s;
+  if (h > 0) return h + ':' + (m < 10 ? '0' : '') + m + ':' + ss;
+  return m + ':' + ss;
+}
+function updateStopwatch() {
+  const el = $('weekclock');
+  if (!el || !S.weekStartMs) return;
+  el.textContent = 'CLOCKED IN · ' + formatStopwatch(Date.now() - S.weekStartMs);
 }
 
 function render() {
@@ -1119,8 +1128,7 @@ function render() {
   $('s-rep').textContent = S.rep;
   $('s-pto').textContent = S.pto;
   $('daylabel').textContent = (DAYS[S.day] || '·') + ' · WEEK ' + META.week;
-  const clockEl = $('weekclock');
-  if (clockEl) clockEl.textContent = (DAYS[S.day] || '') + ' · ' + clockLabel();
+  updateStopwatch();
   // the week map: filled nodes are done, the pulsing one is today
   for (let i = 0; i < 5; i++) {
     const node = $('daycircle-' + i);
@@ -2285,19 +2293,12 @@ function dayPlan(day) {
   if (day === 3) return [weekDeck[7], weekDeck[8], weekDeck[9]];
   return ['fridayMorning'];
 }
-// the weekly clock (v0.23): how many "beats" make up each day, for the 9 AM-4 PM
-// clock face in the header. Mon-Thu = 3 work cards + lunch; Fri = the quiet morning
-// card + the meeting itself (the meeting's own internal rounds don't tick the clock,
-// it has its own pacing already). This is also the hook point for a future
-// speed-completion achievement, not built yet, just don't break the counting.
-const DAY_BEATS = [4, 4, 4, 4, 2];
 
 function startDay() {
   S.time = S.maxTime;
   S.ergoUsedToday = false;
   S.millerPleased = false; S.millerAnnoyed = false;
   S.lunchDone = false;
-  S.beatIndex = 0; S.dayJustStarted = true;
   const plan = dayPlan(S.day);
   // Tue/Thu: the three free slots become a real choice instead of a fixed
   // sequence. Build the actual card objects once, up front, since some cards
@@ -2360,11 +2361,6 @@ function startDay() {
 
 function nextEncounter() {
   if (S.over) return;
-  // the weekly clock ticks one beat per call, except the very first call of
-  // the day (that's "the day beginning," not "a beat completed")
-  if (S.dayJustStarted) { S.dayJustStarted = false; }
-  else { S.beatIndex = Math.min(DAY_BEATS[S.day] || 1, (S.beatIndex || 0) + 1); }
-  render();
   // fixed injections (elevator, training-compliance) always play out first
   if (S.queue.length > 0) {
     const key = S.queue.shift();
@@ -2836,6 +2832,9 @@ function ending(kind) {
     // still needs to be evaluated here, or it always reads "not met" on the way out,
     // since the normal check only ever runs inside awardLeverage(), which this skips.
     if (S.contract && S.contract.check()) S.contractMet = true;
+    // the actual speedrun stat: total real time clocked in across the whole save, this week included
+    const finalMs = (META.totalPlayMs || 0) + (Date.now() - (S.weekStartMs || Date.now()));
+    META.totalPlayMs = finalMs; saveMeta();
     el.innerHTML = '<div class="endingtitle">TWO WEEKS\' NOTICE</div>' +
       '<div class="flavor">You wait until he finishes the word "wins." Then you stand, cross Conference Room C, and set the letter beside his laptop. On the keyboard, actually, where it cannot be scrolled past.<br><br>' +
       'And here is the thing you will tell people for years: <b>he looks up.</b> For the first time in institutional memory, ' + BOSS + ' looks up from the screen at a human being who is leaving. The room watches him do it. Somebody\'s coffee goes cold in real time.<br><br>' +
@@ -2843,6 +2842,7 @@ function ending(kind) {
       'The raise was capped at 3%. The exit never was. You walk out through the lobby, past the founder\'s portrait, out the doors, into the enormous, unmonitored afternoon.</div>' +
       scoreBlock(true) +
       '<div class="event" style="border-left-color: var(--lock);"><b>THE TRUE ENDING.</b> Built across ' + META.week + ' week' + (META.week > 1 ? 's' : '') + ': a portfolio, a network, a runway. None of it appeared on their tracker. That was the point.</div>' +
+      '<div class="event">TIME CLOCKED, START TO DOOR: <b>' + formatStopwatch(finalMs) + '</b></div>' +
       '<button class="choice" id="newgame" style="margin-top:10px;">NEW GAME: someone else\'s first Monday</button>';
     $('newgame').onclick = () => { try { localStorage.removeItem(META_KEY); } catch (e) {} location.reload(); };
     return;
@@ -2882,9 +2882,13 @@ function storeScreen() {
   el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
   const owned = STORE.filter(it => META.up[it.id]).length;
   const escapeCount = ['portfolio', 'network', 'savings'].filter(k => META.up[k]).length;
+  // real elapsed time, this week plus everything banked before it
+  const weekMs = Date.now() - (S.weekStartMs || Date.now());
+  const totalMs = (META.totalPlayMs || 0) + weekMs;
   let html = '<h2>Saturday, 9:04 AM</h2><div class="tag">YOUR TIME · NO BADGE · NOT MONITORED (PROBABLY)</div>' +
     '<div class="flavor">The week paid you in the only currency the building can\'t claim. Spend it on the version of you that leaves.</div>' +
-    '<div class="scoregrid">LEVERAGE: <b>' + META.leverage + '</b> · ESCAPE PLAN: <b>' + escapeCount + '/3</b>' + (escapeReady() ? ' · <span class="secure">READY. The letter is in your bag</span>' : '') + '</div>';
+    '<div class="scoregrid">LEVERAGE: <b>' + META.leverage + '</b> · ESCAPE PLAN: <b>' + escapeCount + '/3</b>' + (escapeReady() ? ' · <span class="secure">READY. The letter is in your bag</span>' : '') + '</div>' +
+    '<div class="scoregrid" style="color:var(--ink-dim);">THIS WEEK: <b>' + formatStopwatch(weekMs) + '</b> · TOTAL CLOCKED: <b>' + formatStopwatch(totalMs) + '</b></div>';
   // termination: the run is over, the file is not
   if (S.terminated) {
     const LOST_LINES = {
@@ -2985,7 +2989,13 @@ function storeScreen() {
       storeScreen();
     };
   });
-  $('nextweek').onclick = () => { if (!S.terminated) META.week += 1; saveMeta(); location.reload(); }; // a terminated week is already reset to 1
+  $('nextweek').onclick = () => {
+    // a terminated week is already reset to 1
+    if (!S.terminated) META.week += 1;
+    META.totalPlayMs = (META.totalPlayMs || 0) + (Date.now() - (S.weekStartMs || Date.now()));
+    saveMeta();
+    location.reload();
+  };
 }
 
 // ---------- ambient music (procedural Web Audio, no assets, no licensing) ----------
@@ -3297,6 +3307,11 @@ function boot() {
     if (META.up.lunch) { S.ally = true; log('Standing lunch with Chris: ally from day one.'); }
     $('boot').style.display = 'none';
     $('game').style.display = 'block';
+    // the stopwatch starts the instant you clock in, not at page load, so
+    // reading policy notices on the boot screen doesn't cost you time
+    S.weekStartMs = Date.now();
+    if (S.stopwatchTimer) clearInterval(S.stopwatchTimer);
+    S.stopwatchTimer = setInterval(updateStopwatch, 1000);
     buildWeek();
     render();
     startDay();
