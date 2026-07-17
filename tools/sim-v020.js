@@ -40,7 +40,8 @@ function clickCont(w) {
   const w = fresh();
   const rc = wk => ev(w, `META.week = ${wk}; bossRoundCount()`);
   check('rounds wk1 = 1', rc(1) === 1, rc(1));
-  check('rounds wk2 = 1', rc(2) === 1);
+  // v0.23: 2 rounds now starts week 2, not week 3 (early-week hardening)
+  check('rounds wk2 = 2', rc(2) === 2);
   check('rounds wk3 = 2', rc(3) === 2);
   check('rounds wk6 = 2', rc(6) === 2);
   check('rounds wk7 = 3', rc(7) === 3);

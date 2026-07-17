@@ -21,9 +21,9 @@ function ev(w, code) { return w.eval(code); }
 // --- 1. sanity pipeline: x1.5 ceil, then surcharge ---
 {
   const w = fresh();
-  // wk1: base 4 -> ceil(6)=6 +0 surcharge
+  // wk1: base 4 -> ceil(6)=6 +1 surcharge (v0.23: week 1 floor, was 0 before)
   ev(w, 'META.week = 1; S.sanity = 100; S.time = 10; apply({ sanity: 4 });');
-  check('wk1 base4 costs 6', ev(w, 'S.sanity') === 94, ev(w, 'S.sanity'));
+  check('wk1 base4 costs 7', ev(w, 'S.sanity') === 93, ev(w, 'S.sanity'));
   // wk7: base 4 -> 6 +5 = 11
   ev(w, 'META.week = 7; S.sanity = 100; apply({ sanity: 4 });');
   check('wk7 base4 costs 11', ev(w, 'S.sanity') === 89, ev(w, 'S.sanity'));
@@ -31,9 +31,9 @@ function ev(w, code) { return w.eval(code); }
   ev(w, 'META.up.therapy = true; S.sanity = 100; apply({ sanity: 4 });');
   check('wk7 base4 + therapy costs 10', ev(w, 'S.sanity') === 90, ev(w, 'S.sanity'));
   ev(w, 'META.up.therapy = false;');
-  // crunch: wk1 base4 -> 6 * 1.5 = 9
+  // crunch: wk1 base4 -> (6+1) * 1.5 = 10.5 -> ceil 11 (v0.23: week 1 surcharge floor)
   ev(w, 'META.week = 1; S.sanity = 100; S.time = 0; S.crunched = true; apply({ sanity: 4 });');
-  check('wk1 base4 in crunch costs 9', ev(w, 'S.sanity') === 91, ev(w, 'S.sanity'));
+  check('wk1 base4 in crunch costs 11', ev(w, 'S.sanity') === 89, ev(w, 'S.sanity'));
 }
 
 // --- 2. rep pipeline: gains x0.7 round min 1, losses full ---
@@ -108,12 +108,12 @@ function ev(w, code) { return w.eval(code); }
   ev(w, 'META.up.coffee = true; META.up.monitor = true;');
   ev(w, 'S.maxTime = 10 + (META.up.coffee ? 1 : 0) + (META.up.monitor ? 1 : 0);');
   check('maxTime 12 with coffee + monitor', ev(w, 'S.maxTime') === 12);
-  // ergo: wk1 base 4 -> 6, first of day -2 = 4; second full 6
+  // ergo: wk1 base 4 -> 6 +1 surcharge (v0.23 floor) = 7, first of day -2 = 5; second full 7
   ev(w, 'META.week = 1; META.up.ergo = true; S.ergoUsedToday = false; S.sanity = 100; S.time = 10; S.crunched = false;');
   ev(w, 'apply({ sanity: 4 });');
-  check('ergo softens first hit (6->4)', ev(w, 'S.sanity') === 96, ev(w, 'S.sanity'));
+  check('ergo softens first hit (7->5)', ev(w, 'S.sanity') === 95, ev(w, 'S.sanity'));
   ev(w, 'apply({ sanity: 4 });');
-  check('second hit lands full (6)', ev(w, 'S.sanity') === 90, ev(w, 'S.sanity'));
+  check('second hit lands full (7)', ev(w, 'S.sanity') === 88, ev(w, 'S.sanity'));
 }
 
 // --- 7. rolodex pre-pick consumed by buildWeek ---

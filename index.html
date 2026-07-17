@@ -81,6 +81,10 @@
   .daynode.current { fill: var(--accent); stroke: var(--accent); animation: pulse 1.8s infinite; }
   .daylbl { fill: var(--ink-dim); font-size: 9px; text-anchor: middle; font-family: inherit; }
   .forkmark { fill: var(--warn); opacity: 0.85; }
+  #weekclock {
+    text-align: center; font-size: 0.72em; letter-spacing: 2px; color: var(--ink-dim);
+    margin: -8px 0 12px; font-variant-numeric: tabular-nums;
+  }
   #stats {
     display: flex; gap: 10px; flex-wrap: wrap;
     margin-bottom: 16px; font-size: 0.78em;
@@ -448,7 +452,7 @@
   <b>Credit</b> is what your work is worth. Every result you produce appears on the <b>At Risk tracker</b> (top bar, and in full at end of day).<br>
   <b>Paper Trails</b> lock an item so it cannot be claimed. Locks cost Time. Targets freeze at midnight Thursday.<br>
   <b>Friday, 4:00 PM:</b> someone reads the week aloud and claims your most valuable unlocked item, usually AVP Miller, sometimes one of his directors covering for him. You won't know who until the slide goes up. Later weeks, they claim more. Lock everything and nobody claims anything.<br>
-  <b>The Agenda:</b> before the slide, the meeting runs items of business. One at first, two from week 3, three from week 7. Each is a shot at you, in the host's own dialect. Deflecting is safe and costs Sanity, more every week. Countering risks Sanity and Reputation on a roll: Reputation helps, later weeks hurt, Miller is the hardest to beat, and your opening stance tilts the odds for the whole meeting. Win most of the agenda and one fewer item gets claimed. There is no way to skip the agenda.<br>
+  <b>The Agenda:</b> before the slide, the meeting runs items of business. One in week 1, two from week 2, three from week 7. Each is a shot at you, in the host's own dialect. Deflecting is safe and costs Sanity, more every week. Countering risks Sanity and Reputation on a roll: Reputation helps, later weeks hurt, Miller is the hardest to beat, and your opening stance tilts the odds for the whole meeting. Win most of the agenda and one fewer item gets claimed. There is no way to skip the agenda.<br>
   <b>Reputation</b> matters at the edges, and it accrues at a recalibrated rate: gains land at 70% of face value, losses land in full. The building keeps the difference. Below 30, you may not decline evening "opportunities." At 70 or above, your standing shields your single best unlocked item from being claimed (he cannot publicly take the headline win of someone that visible). At 0, you're performance managed out, a run-ending outcome, same as Burnout.<br>
   <b>PTO</b> skips a card. Its use is noted.<br>
   <b>Termination</b> (Burnout, or Performance Managed Out at 0 Reputation) ends more than the week: you restart at week 1. Upgrades and commendations survive; the Escape Plan does not survive unemployment. The building rehires. The building always rehires.<br>
@@ -480,6 +484,7 @@
       <rect class="forkmark" x="210.5" y="1" width="5" height="5" transform="rotate(45 213 3.5)"/>
       <circle id="daycircle-4" class="daynode" cx="280" cy="16" r="8"/><text class="daylbl" x="280" y="36">FRI</text>
     </svg>
+    <div id="weekclock">MONDAY · 9:00 AM</div>
     <div id="stats">
       <div class="stat" id="stat-sanity"><span class="stat-ic"><svg viewBox="0 0 16 16"><polyline points="1,9 4,9 6,3 9,13 11,9 15,9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Sanity <b id="s-sanity">100</b><div id="sanitybarwrap"><div id="sanitybar"></div></div></div>
       <div class="stat" id="stat-time"><span class="stat-ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="8" y1="8" x2="8" y2="4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="8" y1="8" x2="11" y2="9.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>Time <b id="s-time">10</b></div>
@@ -512,6 +517,7 @@ const META_KEY = 'fm_meta_v1';
 function loadMeta() {
   const def = { week: 1, leverage: 0, up: {}, life: { plant: 2, friend: 2, hobby: 2 }, ninaTrust: false, presidentSeen: false,
     fileCabinet: [], contractHistory: [], lastClaimLine: -1, lastClaimLineByBoss: {}, trainingPending: false,
+    balloonVendorPending: false, balloonVendorWeek: 0, surveyFlagged: false, surveyFlaggedWeek: 0,
     comms: {}, stats: { pushbacks: 0, agendaSweeps: 0, bossesSeen: {} } };
   try { return Object.assign(def, JSON.parse(localStorage.getItem(META_KEY)) || {}); }
   catch (e) { return def; }
@@ -520,20 +526,34 @@ const META = loadMeta();
 function saveMeta() { try { localStorage.setItem(META_KEY, JSON.stringify(META)); } catch (e) {} }
 
 // The store is the OUTSIDE world. The company caps what it gives; this doesn't.
+// v0.23: reorganized into 3 categories (Sanity & Time / Career & Leverage / Escape
+// Plan) and cut from 13 to 12. Only one clean cut was actually safe: "A Real Coffee
+// Setup" (flat +1 max Time) was strictly weaker Leverage-for-value than The Templates
+// Folder once that existed (cheaper, and it protects Credit too, not just Time), so
+// it's gone; the raw +1 max Time lever now lives only behind the Second Monitor's
+// A-grade gate. Nothing else got cut: the 3 Escape items are the meta-goal, the 3
+// commendation-gated items (monitor/rolodex/ergo) are load-bearing for the Personnel
+// File and FULLY VESTED per Decision 36, and Decoy is the design review's favorite
+// mechanic. Cutting further would have meant gutting one of those on-purpose systems
+// just to hit a smaller number, not actually removing dead weight.
 const STORE = [
-  { id: 'coffee',   name: 'A Real Coffee Setup (Home)',        cost: 15, desc: '+1 max Time every day. The office machine remains "upgraded."' },
-  { id: 'therapy',  name: 'Therapy, Out of Pocket',            cost: 20, desc: 'All Sanity costs reduced by 1. Insurance covers none of it. Worth it anyway.' },
-  { id: 'boundary', name: 'Boundaries (a book, read twice)',   cost: 12, desc: 'Declining a voluntold evening no longer costs Reputation.' },
-  { id: 'templates',name: 'The Templates Folder',              cost: 10, desc: 'Paper trails cost 1 less Time. You\'ve done this before. You\'ll do it again.' },
-  { id: 'lunch',    name: 'Standing Lunch with Chris',         cost: 10, desc: 'Start every week with Chris as an ally (one free lock per week).' },
-  { id: 'pto',      name: 'Unused PTO, Actually Used',         cost: 8,  desc: '+1 PTO per week.' },
-  { id: 'decoy',    name: 'A Decoy Deliverable',               cost: 18, desc: 'Thursday night, name one unlocked item as the one he watches. He claims it first, ahead of whatever he\'d normally take. Doesn\'t change what he takes total, changes what he takes instead.', trinket: true },
-  { id: 'monitor',  name: 'A Second Monitor (From Home)',      cost: 20, desc: '+1 max Time, again. The IT ticket for one at the office enters its second fiscal year.', requires: 'aGrade' },
-  { id: 'rolodex',  name: 'The Old Rolodex',                   cost: 20, desc: 'Monday boot names who is running the Friday Meeting. Somebody who used to work here still answers your calls.', requires: 'coverage' },
-  { id: 'ergo',     name: 'An Ergonomic Assessment (Self-Funded)', cost: 15, desc: 'The first Sanity cost each day is reduced by 2, never below 1. The chair was available all along.', requires: 'tenure' },
-  { id: 'portfolio',name: 'Portfolio Site, Built at Midnight', cost: 40, desc: 'ESCAPE PLAN 1/3: your work, with your name on it, on a domain they don\'t own.', escape: true },
-  { id: 'network',  name: 'The Network',                       cost: 40, desc: 'ESCAPE PLAN 2/3: old colleagues. The people you walked to parking lots.', escape: true },
-  { id: 'savings',  name: 'Six Months of Runway',              cost: 45, desc: 'ESCAPE PLAN 3/3: the number that changes the sound of your voice in meetings.', escape: true }
+  { id: 'therapy',  name: 'Therapy, Out of Pocket',            cost: 20, desc: 'All Sanity costs reduced by 1. Insurance covers none of it. Worth it anyway.', cat: 'time' },
+  { id: 'boundary', name: 'Boundaries (a book, read twice)',   cost: 12, desc: 'Declining a voluntold evening no longer costs Reputation.', cat: 'time' },
+  { id: 'pto',      name: 'Unused PTO, Actually Used',         cost: 8,  desc: '+1 PTO per week.', cat: 'time' },
+  { id: 'ergo',     name: 'An Ergonomic Assessment (Self-Funded)', cost: 15, desc: 'The first Sanity cost each day is reduced by 2, never below 1. The chair was available all along.', requires: 'tenure', cat: 'time' },
+  { id: 'monitor',  name: 'A Second Monitor (From Home)',      cost: 20, desc: '+1 max Time. The IT ticket for one at the office enters its second fiscal year.', requires: 'aGrade', cat: 'time' },
+  { id: 'templates',name: 'The Templates Folder',              cost: 10, desc: 'Paper trails cost 1 less Time. You\'ve done this before. You\'ll do it again.', cat: 'career' },
+  { id: 'lunch',    name: 'Standing Lunch with Chris',         cost: 10, desc: 'Start every week with Chris as an ally (one free lock per week). Also unlocks a better daily lunch option.', cat: 'career' },
+  { id: 'decoy',    name: 'A Decoy Deliverable',               cost: 18, desc: 'Thursday night, name one unlocked item as the one he watches. He claims it first, ahead of whatever he\'d normally take. Doesn\'t change what he takes total, changes what he takes instead.', trinket: true, cat: 'career' },
+  { id: 'rolodex',  name: 'The Old Rolodex',                   cost: 20, desc: 'Monday boot names who is running the Friday Meeting. Somebody who used to work here still answers your calls.', requires: 'coverage', cat: 'career' },
+  { id: 'portfolio',name: 'Portfolio Site, Built at Midnight', cost: 40, desc: 'ESCAPE PLAN 1/3: your work, with your name on it, on a domain they don\'t own.', escape: true, cat: 'escape' },
+  { id: 'network',  name: 'The Network',                       cost: 40, desc: 'ESCAPE PLAN 2/3: old colleagues. The people you walked to parking lots.', escape: true, cat: 'escape' },
+  { id: 'savings',  name: 'Six Months of Runway',              cost: 45, desc: 'ESCAPE PLAN 3/3: the number that changes the sound of your voice in meetings.', escape: true, cat: 'escape' }
+];
+const STORE_CATS = [
+  { id: 'time',   label: 'SANITY & TIME' },
+  { id: 'career', label: 'CAREER & LEVERAGE' },
+  { id: 'escape', label: 'ESCAPE PLAN' }
 ];
 function escapeReady() { return META.up.portfolio && META.up.network && META.up.savings; }
 
@@ -670,7 +690,7 @@ function pickFridayBoss() {
 }
 // ---------- the agenda: the Friday Meeting as an actual fight ----------
 // The meeting now runs "items of business" before the slide goes up: one in
-// weeks 1-2, two from week 3, three from week 7. Each item is the boss taking
+// week 1, two from week 2, three from week 7. Each item is the boss taking
 // a shot in their own dialect. Deflecting is safe and costs Sanity (more every
 // week, and the settling surcharge and Crunch stack on top of it). Countering
 // is a roll: Reputation helps, the week hurts, Miller is deliberately the
@@ -678,7 +698,10 @@ function pickFridayBoss() {
 // the odds for the whole meeting. Win most of the agenda and the meeting
 // claims one fewer item. There is no way to skip the agenda.
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function bossRoundCount() { return META.week >= 7 ? 3 : META.week >= 3 ? 2 : 1; }
+// v0.23: the week1->week2 jump used to be the softest transition in the game
+// (still 1 round, still 1 claim, zero surcharge, full heals). Pulled forward
+// by a week so week1 alone is the tutorial, not weeks 1-2 together.
+function bossRoundCount() { return META.week >= 7 ? 3 : META.week >= 2 ? 2 : 1; }
 function deflectCost() { return 2 + Math.floor(META.week / 3); }
 function counterLossDelta() { return { sanity: 4 + Math.floor(META.week / 3), rep: 4 + Math.floor(META.week / 4) }; }
 function counterChance(boss) {
@@ -875,7 +898,8 @@ const CARD_UNLOCKS = {
   kudosChannel: 1, passwordReset: 1, postMeetingMeeting: 1, brokenPrinter: 1, sharedCalendar: 1,
   theBackfill: 2, onboardingBuddy: 2, allStaffSurvey: 3,
   refresherModule: 2, crossFunctionalProject: 3, terrysOffice: 3, exitInterview: 3,
-  anniversaryEmail: 4, ninaOpportunity: 4, dougThirdTracker: 6, badgeReader: 8, reedAudit: 8
+  anniversaryEmail: 4, ninaOpportunity: 4, dougThirdTracker: 6, badgeReader: 8, reedAudit: 8,
+  bossEmail: 1, minifridge: 1, balloonArch: 2, anonSurvey: 2, standingMeeting: 3, deskPlantDirective: 4
 };
 
 const S = {
@@ -919,7 +943,9 @@ function apply(d, opts) {
   // sanity cost pipeline: base → emotional overhead (×1.5, v0.21) → settling surcharge (+1 every week from wk2, capped at +5 by wk6) → therapy (-1) → crunch (×1.5)
   let sanityCost = d.sanity || 0;
   if (sanityCost > 0) sanityCost = Math.ceil(sanityCost * 1.5);
-  if (sanityCost > 0) sanityCost += Math.min(5, Math.max(0, META.week - 1));
+  // v0.23: week 1 used to be the only truly free week (surcharge 0); now it
+  // carries the same +1 week 2 always had. Weeks 2-6+ ramp unchanged.
+  if (sanityCost > 0) sanityCost += Math.min(5, Math.max(1, META.week - 1));
   if (sanityCost > 0 && META.up.therapy) sanityCost = Math.max(1, sanityCost - 1);
   if (sanityCost > 0 && inCrunch()) sanityCost = Math.ceil(sanityCost * 1.5);
   // the ergonomic assessment: the first hit of each day lands softer (v0.21)
@@ -937,7 +963,9 @@ function apply(d, opts) {
   }
   if (d.heal) {
     // "wellness resources," optimized: recovery is quietly worth less as the weeks go on
-    let heal = META.week >= 8 ? Math.round(d.heal * 0.7) : META.week >= 4 ? Math.round(d.heal * 0.85) : d.heal;
+    // v0.23: added a week2-3 taper ahead of the existing wk4/wk8 tiers, so
+    // recovery stops being at full strength for the entire early game.
+    let heal = META.week >= 8 ? Math.round(d.heal * 0.7) : META.week >= 4 ? Math.round(d.heal * 0.85) : META.week >= 2 ? Math.round(d.heal * 0.92) : d.heal;
     heal = Math.max(1, heal);
     S.sanity = clamp(S.sanity + heal, 0, 100);
     floatDelta($('stat-sanity'), '+' + heal + ' SANITY', true);
@@ -1069,6 +1097,21 @@ function noiseBuffer() {
   return _noiseBuf;
 }
 
+// the weekly clock (v0.23): 9 AM to 4 PM, per day, driven by how many of the
+// day's beats (cards/lunch) are done. Purely cosmetic today; it's also the
+// hook point for a future speed-completion achievement (real elapsed time is
+// a separate, not-yet-built measurement, deliberately not conflated with this).
+function clockLabel() {
+  const total = DAY_BEATS[S.day] || 1;
+  const frac = clamp((S.beatIndex || 0) / total, 0, 1);
+  const mins = Math.round(frac * 7 * 60); // 9:00 AM -> 4:00 PM window
+  let h = 9 + Math.floor(mins / 60);
+  const m = mins % 60;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h > 12 ? h - 12 : h;
+  return h12 + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+}
+
 function render() {
   $('s-sanity').textContent = S.sanity;
   $('s-time').textContent = S.time;
@@ -1076,6 +1119,8 @@ function render() {
   $('s-rep').textContent = S.rep;
   $('s-pto').textContent = S.pto;
   $('daylabel').textContent = (DAYS[S.day] || '·') + ' · WEEK ' + META.week;
+  const clockEl = $('weekclock');
+  if (clockEl) clockEl.textContent = (DAYS[S.day] || '') + ' · ' + clockLabel();
   // the week map: filled nodes are done, the pulsing one is today
   for (let i = 0; i < 5; i++) {
     const node = $('daycircle-' + i);
@@ -1965,6 +2010,129 @@ const CARDS = {
       { label: 'Email it instead and let Terry come to you', delta: { time: 1, heal: 2 },
         result: 'Terry replies within four minutes, cheerful, typo-free, from an email address that bounces the moment you try to reply to it.' }
     ]
+  }),
+
+  // ---------- new material (v0.23): ChatGPT-tell email, the minifridge, the balloon vendor saga,
+  // the "anonymous" survey, and two more standalone cards. Two of these chain into a follow-up
+  // via a META flag consumed on a later Monday, the same pattern trainingNotCompleted established.
+  bossEmail: () => ({
+    title: 'An Email From ' + BOSS, tag: 'INBOX · 11:58 PM · RE: RE: EXCITING UPDATES 🎉', ptoAllowed: true,
+    flavor: 'The email arrives at 11:58 PM, timestamped like it matters. "Hi team! 🎉 I wanted to take a moment — genuinely — to reflect on where we\'ve been and where we\'re going. This isn\'t just a project — it\'s a *journey* — and I couldn\'t be prouder of the incredible synergy we\'ve built together. Let\'s circle back and align on next steps — together — because that\'s what great teams do! 🚀✨" It is signed "Best, ' + BOSS + '," under four paragraphs that use the word "journey" three times and an em dash count that would embarrass a debate coach. Nobody mentions it. Everybody has noticed it.',
+    choices: [
+      { label: 'Reply "Sounds good!" and move on', delta: {},
+        result: 'You have now replied to an email you did not read using the only two words that satisfy every email. This is a skill. It is not one you are proud of.' },
+      { label: 'Actually parse it. There is one real ask in paragraph three.', delta: { time: 2, sanity: 2, credit: 4, creditItem: 'The ask buried in the ChatGPT email, found and done' },
+        result: 'Paragraph three, sentence two, contains an actual deadline. You find it the way you\'d find a tick. You do the thing. Nobody will ever know you found it, including, possibly, him.' },
+      { label: 'Forward it to Chris, no comment', delta: { heal: 4, rep: -1 },
+        result: 'Chris replies in nine seconds: three crying-laughing emojis and nothing else. It is, this week, the most honest communication that has happened in the building.' }
+    ]
+  }),
+  minifridge: () => ({
+    title: 'The Minifridge', tag: 'KITCHEN · KEYS: ' + BOSS + ' + TWO DIRECTORS ONLY', ptoAllowed: true,
+    flavor: 'The minifridge in the kitchen is full, visibly, through the glass door, of the good sodas, the ones that vanished from the vending machine budget two reorgs ago. It is locked. ' + BOSS + ' has the only key that matters; two directors have the other two, for reasons nobody has ever needed to ask about out loud. The handbook does not mention a minifridge policy. The lock is the policy. "All you have to do is ask," he told you once, meaning it as a kindness.',
+    choices: [
+      { label: 'Ask him directly for a Coke, like he said to', delta: { sanity: 3, heal: 1 },
+        result: '"All you have to do is ask," he says, unlocking it like a magic trick, like the lock was never really the point. You say thank you. You mean it, which is somehow the worst part. The soda is not that good.' },
+      { label: 'Walk to the vending machine by the loading dock instead', delta: { time: 2, heal: 2 },
+        result: 'It takes four minutes there and back and the soda costs a dollar seventy-five and belongs, unambiguously, to you. This feels, for four minutes, like enough.' }
+    ]
+  }),
+  balloonArch: () => ({
+    title: 'The Career Fair Arch', tag: 'CAREER FAIR · FACILITIES REQUEST · DUE: TOMORROW', ptoAllowed: false,
+    flavor: BOSS + ' wants a full balloon arch for tomorrow\'s career fair, decided today, at 4:45 PM. Facilities\' approved vendor can\'t turn it around in time. There\'s another vendor who can, a guy a friend used once, not on the approved list, but ' + BOSS + ' says "just get it done, I\'ll handle the paperwork later," in the specific tone that means the paperwork will not, in fact, be handled by him, later or otherwise.',
+    choices: [
+      { label: 'Book the fast vendor. Full arch by morning.', delta: { time: 2, credit: 5, creditItem: 'Career fair balloon arch, delivered on time' },
+        result: 'The arch is enormous, genuinely impressive, photographed for the newsletter within the hour. ' + BOSS + ' stands under it for the photo. Nobody asks who booked it. Somebody, eventually, will ask who is paying for it.',
+        after: (done) => { META.balloonVendorPending = true; META.balloonVendorWeek = META.week; saveMeta();
+          showResult('The arch is enormous, genuinely impressive, photographed for the newsletter within the hour. ' + BOSS + ' stands under it for the photo. Nobody asks who booked it. Somebody, eventually, will ask who is paying for it.', done); } },
+      { label: 'Use the pre-approved vendor. Smaller, no drama.', delta: { time: 1, credit: 2, creditItem: 'Career fair balloons, modest, approved' },
+        result: 'Six balloons, not an arch, tied to a table leg by 9 AM. It photographs fine, cropped tight. Nothing about it will ever require an explanation.' }
+    ]
+  }),
+  balloonInvoice: () => ({
+    title: 'The Invoice, Still', tag: 'ACCOUNTS PAYABLE · RE: RE: RE: CAREER FAIR VENDOR · UNRESOLVED', ptoAllowed: false,
+    flavor: 'Procurement finally noticed the balloon vendor was never approved. The invoice has nowhere to go: not in the system, not under any budget code that exists, not signed off by anyone who will admit to remembering the words "just get it done." Accounts Payable forwards it to you, "for visibility," which in this building has only ever meant "for blame."',
+    choices: [
+      { label: 'Walk it through procurement properly. Get it approved, retroactively.', delta: { time: 3, sanity: 4 },
+        result: 'It takes three forms, two meetings, and a signature from someone who insists they never approved the vendor and is, on paper now, the person who approved the vendor. It is fixed. It will be fixed again next quarter when someone reopens the file to ask what happened.',
+        after: (done) => { META.leverage += 1;
+          META.fileCabinet.push({ title: 'The Balloon Invoice, Closed', week: META.week, note: 'Retroactively approved by someone who insists they didn\'t. Filed. Actually filed. One balloon, once, is apparently a year of paperwork.' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The ledger grows.</div>');
+          log('The balloon invoice, closed after a year. +1 Leverage.');
+          showResult('It takes three forms, two meetings, and a signature from someone who insists they never approved the vendor and is, on paper now, the person who approved the vendor. It is fixed. It will be fixed again next quarter when someone reopens the file to ask what happened.', done); } },
+      { label: 'Reply "will look into it!" and let it ride', delta: { time: 1 },
+        result: '"Will look into it!" turns out to buy about a year. The vendor does not go away. The vendor, it turns out, never really does.',
+        after: (done) => { S.vendor = true; log('The balloon vendor joins the ledger of things that will never stop pinging you.');
+          showResult('"Will look into it!" turns out to buy about a year. The vendor does not go away. The vendor, it turns out, never really does.', done); } }
+    ]
+  }),
+  anonSurvey: () => ({
+    title: 'The "Anonymous" Pulse Survey', tag: 'HR · DANA · YOUR RESPONSE IS ANONYMOUS AND CONFIDENTIAL', ptoAllowed: true,
+    flavor: 'A pulse survey arrives, three questions, "completely anonymous," Dana\'s name in the from field. The link opens pre-logged into your badge account. Nobody mentions that part. The first question asks how supported you feel by leadership. The cursor blinks in the box like it has all the time in the world, which, unlike you, it does not.',
+    choices: [
+      { label: 'Answer honestly. It is anonymous. Probably.', delta: { time: 1, sanity: 2, credit: 2, creditItem: 'Honest survey feedback, submitted' },
+        result: 'You write two honest sentences about workload and one about ' + BOSS + ', worded carefully, worded anyway. The submit button says "Thank you for your feedback!" in a font that has never once meant it.',
+        after: (done) => { META.surveyFlagged = true; META.surveyFlaggedWeek = META.week; saveMeta();
+          showResult('You write two honest sentences about workload and one about ' + BOSS + ', worded carefully, worded anyway. The submit button says "Thank you for your feedback!" in a font that has never once meant it.', done); } },
+      { label: 'Give the safe answer. Four out of five, everything is fine.', delta: { time: 1, heal: 1 },
+        result: 'Four out of five. Everything is fine. It takes eleven seconds and changes nothing, including how you feel, which was the point of both options equally.' }
+    ]
+  }),
+  surveyFollowup: () => ({
+    title: 'A Note About Your Survey Response', tag: 'HR · DANA · FOLLOW-UP · NOT FOR YOUR FILE', ptoAllowed: false,
+    flavor: 'Dana stops by, warm, careful. "So, this isn\'t about anything specific," she says, opening a laptop with your name already in the search bar, "but a few themes came up in the pulse survey, and I wanted to check in, informally." The survey was anonymous. She did not say which theme. She did not have to.',
+    choices: [
+      { label: 'Stay vague. Talk about "team dynamics" in general.', delta: { time: 2, rep: 2 },
+        result: 'Dana nods, satisfied, and closes the laptop before you can see what tab was open. "Good talk," she says, and it goes in a file that is absolutely, definitely not your file.' },
+      { label: 'Ask directly whether this is about your response', life: 1, delta: { time: 2, sanity: 3 },
+        result: '"Everything in the survey is anonymous," Dana says, which is not an answer, and both of you know it, and the conversation ends there, professionally, the way conversations end when one person has already gotten what they came for.',
+        after: (done) => { META.leverage += 1;
+          META.fileCabinet.push({ title: 'Asked Directly, On Record', week: META.week, note: '"Everything is anonymous." It was not an answer. It is on the record that you noticed.' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The ledger grows.</div>');
+          log('Asked directly. Got a non-answer, on the record. +1 Leverage.');
+          showResult('"Everything in the survey is anonymous," Dana says, which is not an answer, and both of you know it, and the conversation ends there, professionally, the way conversations end when one person has already gotten what they came for.', done); } }
+    ]
+  }),
+  standingMeeting: () => ({
+    title: 'The Standing Meeting With No Agenda', tag: 'CALENDAR · RECURRING · ORIGIN: UNKNOWN', ptoAllowed: true,
+    flavor: 'A 30-minute meeting appears on your calendar, every week, forever, with a title nobody remembers writing and an organizer who left the company fourteen months ago. Nobody has ever cancelled it. Nobody has ever needed anything from it. It simply recurs, the way weather recurs, indifferent to whether you attend.',
+    choices: [
+      { label: 'Attend fully, camera on, present the whole time', delta: { time: 2, rep: 2 },
+        result: 'You contribute two thoughtful comments to a meeting about nothing. Someone thanks you for "keeping the energy up." The energy required for this will not be reimbursed.' },
+      { label: 'Join, mute, camera off, do real work in the background', delta: { time: 1, sanity: 2, credit: 3, creditItem: 'Real work, done during a meeting about nothing' },
+        result: 'You clear two real tasks while a black square with your name on it nods, occasionally, on cue. Nobody has ever once asked the black square a direct question. Today is not the day that changes.' }
+    ]
+  }),
+  deskPlantDirective: () => ({
+    title: 'The Desk Plant Directive', tag: 'FACILITIES · WELLNESS INITIATIVE · MANDATORY', ptoAllowed: true,
+    flavor: 'Facilities emails a "desk wellness initiative": every workstation gets a standardized plant, delivered this afternoon, "to improve mood and air quality." The plants are plastic. This is not mentioned in the email. It does not need to be; everyone already knows, the same way everyone already knows about the conference room plants, which have needed watering for three years and never once looked thirsty.',
+    choices: [
+      { label: 'Accept the standardized plant. Put your real one in a drawer.', life: -1, delta: { rep: 2 },
+        result: 'The plastic plant matches everyone else\'s plastic plant. The email thread thanking Facilities gets forty replies, all reply-all, all enthusiastic. Your actual plant spends the week in a drawer, which it does not enjoy and cannot tell you so.' },
+      { label: 'Keep your real plant on the desk. Decline politely.', life: 1, delta: { rep: -1, heal: 2 },
+        result: 'You say your desk is "already at capacity," which is a lie the plant helps you tell convincingly. Nobody follows up. The real plant gets real light for one more week, which is the whole and entire point of keeping it.' }
+    ]
+  }),
+  lunch: () => ({
+    title: 'Lunch', tag: 'MIDDAY · WHENEVER YOU CAN ACTUALLY GET TO IT', ptoAllowed: false,
+    flavor: (META.up.lunch
+      ? 'It is somewhere between 12 and 2, nominally an hour, actually whatever survives contact with the calendar. Chris is already up, waiting by the elevator, standing lunch, same as every week.'
+      : 'It is somewhere between 12 and 2, nominally an hour, actually whatever survives contact with the calendar. The building does not stop for it. It just gets quieter, slightly, the way a room gets quieter when half the people in it have decided not to mention they\'re hungry.'),
+    choices: (function () {
+      const c = [
+        { label: 'Eat at your desk. Keep working through it.', delta: { sanity: 4, credit: 2 },
+          result: 'Crumbs in the keyboard by 1:15. You answer four emails you didn\'t have to answer yet. The hour is gone and technically nothing happened during it, which is its own kind of accomplishment.' },
+        { label: 'Actually leave. Walk outside, away from the building.', delta: { time: 2, heal: 6 },
+          result: 'Fifteen real minutes of not being looked at by anything with a badge reader in it. You come back able to finish the day. The building was still there when you got back. It always is.' }
+      ];
+      if (META.up.lunch) {
+        c.push({ label: 'Standing lunch with Chris. Same table, same complaints, out loud.', delta: { time: 1, heal: 8, rep: 2 },
+          result: 'Forty-five minutes where the sentence "can you believe this place" gets said out loud, by both of you, and neither of you has to explain the joke. You come back lighter than the hour should account for.' });
+      }
+      return c;
+    })()
   })
 };
 
@@ -2117,11 +2285,19 @@ function dayPlan(day) {
   if (day === 3) return [weekDeck[7], weekDeck[8], weekDeck[9]];
   return ['fridayMorning'];
 }
+// the weekly clock (v0.23): how many "beats" make up each day, for the 9 AM-4 PM
+// clock face in the header. Mon-Thu = 3 work cards + lunch; Fri = the quiet morning
+// card + the meeting itself (the meeting's own internal rounds don't tick the clock,
+// it has its own pacing already). This is also the hook point for a future
+// speed-completion achievement, not built yet, just don't break the counting.
+const DAY_BEATS = [4, 4, 4, 4, 2];
 
 function startDay() {
   S.time = S.maxTime;
   S.ergoUsedToday = false;
   S.millerPleased = false; S.millerAnnoyed = false;
+  S.lunchDone = false;
+  S.beatIndex = 0; S.dayJustStarted = true;
   const plan = dayPlan(S.day);
   // Tue/Thu: the three free slots become a real choice instead of a fixed
   // sequence. Build the actual card objects once, up front, since some cards
@@ -2162,6 +2338,16 @@ function startDay() {
     S.queue.unshift('trainingNotCompleted');
     META.trainingPending = false; saveMeta();
   }
+  // the balloon vendor, unresolved for about two weeks, then it comes home to roost
+  if (META.balloonVendorPending && META.week >= META.balloonVendorWeek + 2 && S.day === 0) {
+    S.queue.unshift('balloonInvoice');
+    META.balloonVendorPending = false; saveMeta();
+  }
+  // the "anonymous" survey response, followed up on the next Monday
+  if (META.surveyFlagged && META.week >= META.surveyFlaggedWeek + 1 && S.day === 0) {
+    S.queue.unshift('surveyFollowup');
+    META.surveyFlagged = false; saveMeta();
+  }
   const subs = [
     'A NEW WEEK. THE BUILDING REMEMBERS YOU.',
     'THE COFFEE MACHINE HAS BEEN "UPGRADED." NOBODY ASKED.',
@@ -2174,6 +2360,11 @@ function startDay() {
 
 function nextEncounter() {
   if (S.over) return;
+  // the weekly clock ticks one beat per call, except the very first call of
+  // the day (that's "the day beginning," not "a beat completed")
+  if (S.dayJustStarted) { S.dayJustStarted = false; }
+  else { S.beatIndex = Math.min(DAY_BEATS[S.day] || 1, (S.beatIndex || 0) + 1); }
+  render();
   // fixed injections (elevator, training-compliance) always play out first
   if (S.queue.length > 0) {
     const key = S.queue.shift();
@@ -2187,6 +2378,12 @@ function nextEncounter() {
       return showCard(item.card, nextEncounter);
     }
     return showChooser();
+  }
+  // Mon-Thu: lunch is the last beat before the evening. Friday already has an
+  // equivalent choice baked into "The Quiet Morning," so it isn't duplicated here.
+  if (S.day <= 3 && !S.lunchDone) {
+    S.lunchDone = true;
+    return showCard(CARDS.lunch(), nextEncounter);
   }
   if (S.day === 4) return fridayMeeting();
   return atRiskScreen(() => eveningEvent());
@@ -2242,10 +2439,14 @@ function pickEvening(pool) {
 
 function eveningEvent() {
   if (S.over) return;
-  // Week 2+: evening availability is now a core value: voluntolds crowd out free time.
+  // Week 2+: evening availability is a core value, voluntolds crowd out free
+  // time, at a real 60% clip. Week 1 used to be a hard 0%, a full free week
+  // with no downside; v0.23 gives it a smaller 20% taste of the same pressure
+  // instead of a cliff, so the softening at week 1 isn't total.
   let ev;
   if (S.day === 3) ev = APPRECIATION;
   else if (META.week >= 2 && Math.random() < 0.6) ev = pickEvening([EVENINGS[2], EVENINGS[3]]);
+  else if (META.week === 1 && Math.random() < 0.2) ev = pickEvening([EVENINGS[2], EVENINGS[3]]);
   else ev = pickEvening(EVENINGS);
   S.lastEvening = ev;
   showCard({ title: 'EVENING · ' + ev.title, tag: ev.tag || 'AFTER HOURS', flavor: ev.flavor, choices: ev.choices, ptoAllowed: false },
@@ -2381,7 +2582,8 @@ function runMeeting(boss) {
   const el = $('card');
   // substitutes claim one fewer than Miller would, at every tier, so he is always the worst Friday;
   // winning most of the agenda's items of business knocks one more off, on top of that
-  const claims = Math.max(0, (META.week >= 7 ? 3 : META.week >= 3 ? 2 : 1) + boss.claimsAdjust + (S.escalationBonus || 0));
+  // v0.23: 2 claims now starts week 2, not week 3 (matches the bossRoundCount pull-forward)
+  const claims = Math.max(0, (META.week >= 7 ? 3 : META.week >= 2 ? 2 : 1) + boss.claimsAdjust + (S.escalationBonus || 0));
 
   // The week's small, easy-to-forget choices echo here. None of this was ever hidden,
   // it just hadn't come due yet.
@@ -2408,7 +2610,7 @@ function runMeeting(boss) {
   if (S.declines >= 2) { if (!apply({ rep: -4 })) return; }
   else if (S.accepts >= 2 && S.declines === 0) { if (!apply({ rep: 3 })) return; }
 
-  // Targets locked at Thursday midnight; locked = safe. Week 3+: they take the top TWO unlocked.
+  // Targets locked at Thursday midnight; locked = safe. Week 2+: they take the top TWO unlocked.
   // Reputation shields the single best unlocked item, at a threshold that varies by who's
   // running the room. Miller's is highest (70), so he's hardest to shield against even
   // though the substitutes are otherwise weaker on every other axis. He cannot publicly
@@ -2715,28 +2917,33 @@ function storeScreen() {
       html += '<button class="choice" data-pin="' + idx + '">' + it.name + (it.stolen ? ' <span style="color:var(--danger);">(claimed by ' + BOSS + ')</span>' : it.locked ? ' <span class="lockmark">🔒</span>' : '') + '<span class="cost">keep a copy, off the books</span></button>';
     });
   }
-  STORE.forEach(it => {
-    const has = META.up[it.id];
-    // Nina made a call: the Network is cheaper if she trusts you
-    const cost = (it.id === 'network' && META.ninaTrust) ? it.cost - 10 : it.cost;
-    const afford = META.leverage >= cost;
-    // commendation-gated items show what they need, greyed, until earned
-    if (!has && it.requires && !(META.comms || {})[it.requires]) {
-      const req = COMMENDATIONS.find(c => c.id === it.requires);
-      html += '<div class="riskitem" style="flex-direction:column;align-items:flex-start;opacity:0.55;">' +
-        '<span>▢ ' + it.name + ' · ' + it.cost + ' Leverage</span>' +
-        '<span style="color:var(--ink-dim);font-size:0.88em;white-space:normal;margin-top:4px;">Requires commendation: <b>' + req.name + '</b>. ' + req.desc + '</span></div>';
-      return;
-    }
-    if (has) {
-      html += '<div class="riskitem locked" style="flex-direction:column;align-items:flex-start;">' +
-        '<span>' + it.name + ' <span class="lockmark">✓ YOURS</span></span>' +
-        '<span style="color:var(--ink-dim);font-size:0.88em;white-space:normal;margin-top:4px;">' + it.desc + '</span></div>';
-    } else {
-      html += '<button class="choice" data-buy="' + it.id + '" ' + (afford ? '' : 'disabled') + '>' + (it.escape ? '⬒ ' : it.trinket ? '◎ ' : '') + it.name + ' · ' + cost + ' Leverage' +
-        (cost !== it.cost ? ' <span class="secure">(Nina made a call)</span>' : '') +
-        '<span class="cost">' + it.desc + '</span></button>';
-    }
+  STORE_CATS.forEach(cat => {
+    const items = STORE.filter(it => it.cat === cat.id);
+    if (!items.length) return;
+    html += '<div class="tag" style="margin-top:14px;">' + cat.label + '</div>';
+    items.forEach(it => {
+      const has = META.up[it.id];
+      // Nina made a call: the Network is cheaper if she trusts you
+      const cost = (it.id === 'network' && META.ninaTrust) ? it.cost - 10 : it.cost;
+      const afford = META.leverage >= cost;
+      // commendation-gated items show what they need, greyed, until earned
+      if (!has && it.requires && !(META.comms || {})[it.requires]) {
+        const req = COMMENDATIONS.find(c => c.id === it.requires);
+        html += '<div class="riskitem" style="flex-direction:column;align-items:flex-start;opacity:0.55;">' +
+          '<span>▢ ' + it.name + ' · ' + it.cost + ' Leverage</span>' +
+          '<span style="color:var(--ink-dim);font-size:0.88em;white-space:normal;margin-top:4px;">Requires commendation: <b>' + req.name + '</b>. ' + req.desc + '</span></div>';
+        return;
+      }
+      if (has) {
+        html += '<div class="riskitem locked" style="flex-direction:column;align-items:flex-start;">' +
+          '<span>' + it.name + ' <span class="lockmark">✓ YOURS</span></span>' +
+          '<span style="color:var(--ink-dim);font-size:0.88em;white-space:normal;margin-top:4px;">' + it.desc + '</span></div>';
+      } else {
+        html += '<button class="choice" data-buy="' + it.id + '" ' + (afford ? '' : 'disabled') + '>' + (it.escape ? '⬒ ' : it.trinket ? '◎ ' : '') + it.name + ' · ' + cost + ' Leverage' +
+          (cost !== it.cost ? ' <span class="secure">(Nina made a call)</span>' : '') +
+          '<span class="cost">' + it.desc + '</span></button>';
+      }
+    });
   });
   // the personnel file: every commendation, earned or waiting, with its terms visible
   const commCount = Object.keys(META.comms || {}).length;
@@ -3014,10 +3221,13 @@ function buildBootLines() {
   const notices = [];
   notices.push('POLICY UPDATE: EMOTIONAL OVERHEAD IS NOW BILLED AT COST. ALL SANITY EXPENDITURES ARE ASSESSED AT 150% OF STICKER.');
   notices.push('POLICY UPDATE: RECOGNITION HAS BEEN RECALIBRATED. REPUTATION GAINS NOW LAND AT 70% OF FACE VALUE. LOSSES ARE UNAFFECTED. THE BUILDING THANKS YOU IN ADVANCE.');
+  notices.push('NOTICE: THE BUILDING HAS ALREADY BEGUN TO SETTLE, EFFECTIVE IMMEDIATELY. YOUR FIRST WEEK IS NOT EXEMPT.');
+  if (META.week === 1) notices.push('POLICY UPDATE: THE OCCASIONAL EVENING ASK NOW BEGINS DAY ONE, IN SMALL DOSES, AS A COURTESY.');
   if (META.week >= 2) notices.push('POLICY UPDATE: EVENING AVAILABILITY IS NOW A CORE VALUE.');
-  if (META.week >= 2) notices.push('NOTICE: THE BUILDING HAS BEGUN TO SETTLE. EVERYTHING COSTS SLIGHTLY MORE NOW, AND WILL KEEP COSTING MORE FOR A WHILE.');
-  if (META.week >= 3) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. AVP MILLER HAS A REPUTATION TO MAINTAIN, AND SO, BY EXTENSION, DOES WHOEVER IS COVERING FOR HIM.');
-  if (META.week >= 3) notices.push('POLICY UPDATE: THE FRIDAY MEETING AGENDA HAS BEEN EXPANDED TO TWO (2) ITEMS OF BUSINESS. ATTENDANCE OF YOUR WHOLE SELF IS EXPECTED.');
+  if (META.week >= 2) notices.push('NOTICE: THE BUILDING CONTINUES TO SETTLE. EVERYTHING COSTS SLIGHTLY MORE NOW, AND WILL KEEP COSTING MORE FOR A WHILE.');
+  if (META.week >= 2) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. AVP MILLER HAS A REPUTATION TO MAINTAIN, AND SO, BY EXTENSION, DOES WHOEVER IS COVERING FOR HIM.');
+  if (META.week >= 2) notices.push('POLICY UPDATE: THE FRIDAY MEETING AGENDA HAS BEEN EXPANDED TO TWO (2) ITEMS OF BUSINESS. ATTENDANCE OF YOUR WHOLE SELF IS EXPECTED.');
+  if (META.week >= 2) notices.push('NOTICE: "WELLNESS RESOURCES" ARE BEING REVIEWED FOR EFFICIENCY. AN UPDATE WILL FOLLOW.');
   if (META.week >= 4) notices.push('POLICY UPDATE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED. RECOVERY IS SLIGHTLY LESS EFFECTIVE NOW.');
   if (META.week >= 5) notices.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A SECOND SIGNATURE.');
   if (META.week >= 6) notices.push('NOTICE: THE BUILDING HAS FINISHED SETTLING. THIS IS APPARENTLY WHAT FOUNDATIONAL LOOKS LIKE.');
