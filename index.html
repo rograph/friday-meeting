@@ -82,10 +82,11 @@
   .daylbl { fill: var(--ink-dim); font-size: 9px; text-anchor: middle; font-family: inherit; }
   .forkmark { fill: var(--warn); opacity: 0.85; }
   #weekclock {
-    text-align: center; font-size: 0.72em; letter-spacing: 2px; color: var(--ink-dim);
-    margin: -8px 0 12px; font-variant-numeric: tabular-nums; transition: color .4s;
+    text-align: center; font-size: 1.5em; font-weight: bold; letter-spacing: 3px; color: var(--accent);
+    margin: 0 0 16px; font-variant-numeric: tabular-nums; transition: color .4s;
+    text-shadow: 0 0 10px rgba(82,224,210,0.35);
   }
-  body.crunch #weekclock { color: var(--danger); animation: pulse 1.2s infinite; }
+  body.crunch #weekclock { color: var(--danger); text-shadow: 0 0 14px rgba(224,121,106,0.5); animation: pulse 1.2s infinite; }
   #stats {
     display: flex; gap: 10px; flex-wrap: wrap;
     margin-bottom: 16px; font-size: 0.78em;
@@ -107,6 +108,11 @@
   @keyframes flashUp   { 0% { border-color: var(--lock); background: #10312a; } 100% {} }
   #sanitybarwrap { width: 100%; height: 4px; background: #123; margin-top: 4px; }
   #sanitybar { height: 100%; background: var(--accent); width: 100%; transition: width .6s ease, background .6s; }
+  #composurewrap { margin-bottom: 16px; }
+  #composurelabel { font-size: 0.7em; letter-spacing: 2px; color: var(--danger); margin-bottom: 5px; }
+  #composurebarwrap { width: 100%; height: 10px; background: #2c1516; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+  #composurebar { height: 100%; background: var(--danger); width: 100%; transition: width .5s ease; }
+  #composurebar.broken { background: var(--lock); }
   .float-delta {
     position: absolute; left: 8px; top: -6px;
     font-size: 0.95em; font-weight: bold;
@@ -308,7 +314,6 @@
     text-shadow: 0 0 14px rgba(82,224,210,0.5);
     margin: 10px 0; animation: titleIn 1.2s;
   }
-  #log { font-size: 0.72em; color: var(--ink-dim); margin-top: 18px; line-height: 1.7; border-top: 1px dashed var(--line); padding-top: 8px; max-height: 130px; overflow-y: auto; }
   .footer-note { margin-top: 26px; font-size: 0.7em; color: var(--ink-dim); letter-spacing: 1px; }
   a { color: var(--accent); }
   #musicbtn {
@@ -453,7 +458,7 @@
   <b>Credit</b> is what your work is worth. Every result you produce appears on the <b>At Risk tracker</b> (top bar, and in full at end of day).<br>
   <b>Paper Trails</b> lock an item so it cannot be claimed. Locks cost Time. Targets freeze at midnight Thursday.<br>
   <b>Friday, 4:00 PM:</b> someone reads the week aloud and claims your most valuable unlocked item, usually AVP Miller, sometimes one of his directors covering for him. You won't know who until the slide goes up. Later weeks, they claim more. Lock everything and nobody claims anything.<br>
-  <b>The Agenda:</b> before the slide, the meeting runs items of business. One in week 1, two from week 2, three from week 7. Each is a shot at you, in the host's own dialect. Deflecting is safe and costs Sanity, more every week. Countering risks Sanity and Reputation on a roll: Reputation helps, later weeks hurt, Miller is the hardest to beat, and your opening stance tilts the odds for the whole meeting. Win most of the agenda and one fewer item gets claimed. There is no way to skip the agenda.<br>
+  <b>The Agenda:</b> before the slide, the meeting runs items of business against the host's Composure, shown as a bar, up to a cap of one item in week 1, two from week 2, three from week 7. Each item is a shot at you, in the host's own dialect. Deflecting is safe, costs Sanity (more every week), and lets Composure recover a little. Countering risks Sanity and Reputation on a roll (Reputation helps, later weeks hurt, Miller is the hardest to beat, your opening stance tilts the odds for the whole meeting), but a win does real damage to the bar, and a loss lets it recover more than a deflect would. Break it completely and Friday can claim nothing at all; wear it down partway and one fewer item gets claimed. The fight can end early if you break it, or run the full cap if you don't. There is no way to skip the agenda.<br>
   <b>Reputation</b> matters at the edges, and it accrues at a recalibrated rate: gains land at 70% of face value, losses land in full. The building keeps the difference. Below 30, you may not decline evening "opportunities." At 70 or above, your standing shields your single best unlocked item from being claimed (he cannot publicly take the headline win of someone that visible). At 0, you're performance managed out, a run-ending outcome, same as Burnout.<br>
   <b>PTO</b> skips a card. Its use is noted.<br>
   <b>Termination</b> (Burnout, or Performance Managed Out at 0 Reputation) ends more than the week: you restart at week 1. Upgrades and commendations survive; the Escape Plan does not survive unemployment. The building rehires. The building always rehires.<br>
@@ -498,7 +503,6 @@
     </div>
     <div id="contractline"></div>
     <div class="card" id="card"></div>
-    <div id="log"></div>
     <div class="footer-note">EVERWELL GROUP · OPERATIONS WING · THIS TERMINAL IS MONITORED FOR YOUR SAFETY</div>
   </div>
 </div>
@@ -544,6 +548,7 @@ const STORE = [
   { id: 'pto',      name: 'Unused PTO, Actually Used',         cost: 8,  desc: '+1 PTO per week.', cat: 'time' },
   { id: 'ergo',     name: 'An Ergonomic Assessment (Self-Funded)', cost: 15, desc: 'The first Sanity cost each day is reduced by 2, never below 1. The chair was available all along.', requires: 'tenure', cat: 'time' },
   { id: 'monitor',  name: 'A Second Monitor (From Home)',      cost: 20, desc: '+1 max Time. The IT ticket for one at the office enters its second fiscal year.', requires: 'aGrade', cat: 'time' },
+  { id: 'fridgeKey',name: 'A Copy of the Key (Don\'t Ask How)', cost: 35, desc: 'Unlocks a fourth option on The Minifridge: take a Coke yourself, whenever. +30 Sanity, real Reputation risk every time, people notice a locked door that isn\'t locked for you.', cat: 'time' },
   { id: 'templates',name: 'The Templates Folder',              cost: 10, desc: 'Paper trails cost 1 less Time. You\'ve done this before. You\'ll do it again.', cat: 'career' },
   { id: 'lunch',    name: 'Standing Lunch with Chris',         cost: 10, desc: 'Start every week with Chris as an ally (one free lock per week). Also unlocks a better daily lunch option.', cat: 'career' },
   { id: 'decoy',    name: 'A Decoy Deliverable',               cost: 18, desc: 'Thursday night, name one unlocked item as the one he watches. He claims it first, ahead of whatever he\'d normally take. Doesn\'t change what he takes total, changes what he takes instead.', trinket: true, cat: 'career' },
@@ -588,7 +593,11 @@ const COMMENDATIONS = [
   { id: 'tenure', name: 'TENURE', desc: 'Reach week 8. Nobody reaches week 8 on purpose.', bonus: 10,
     check: () => META.week >= 8 },
   { id: 'vested', name: 'FULLY VESTED', desc: 'Own everything in the store that is not a way out.', bonus: 15,
-    check: () => STORE.filter(it => !it.escape).every(it => META.up[it.id]) }
+    check: () => STORE.filter(it => !it.escape).every(it => META.up[it.id]) },
+  { id: 'underTheWire', name: 'UNDER THE WIRE', desc: 'Clock out in under 6 real minutes, survived or compliant. The building calls this "efficient."', bonus: 10,
+    // real elapsed time, per the actual stopwatch, not an in-fiction reading. Threshold
+    // is a first guess, tune after seeing real playtest clock-out times.
+    check: (kind) => (kind === 'survived' || kind === 'compliance') && !!S.weekStartMs && (Date.now() - S.weekStartMs) < 6 * 60 * 1000 }
 ];
 let NEW_COMMS = [];
 function checkCommendations(kind, grade) {
@@ -706,6 +715,17 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function bossRoundCount() { return META.week >= 7 ? 3 : META.week >= 2 ? 2 : 1; }
 function deflectCost() { return 2 + Math.floor(META.week / 3); }
 function counterLossDelta() { return { sanity: 4 + Math.floor(META.week / 3), rep: 4 + Math.floor(META.week / 4) }; }
+// v0.24: the agenda now runs on an actual Composure meter instead of a fixed
+// round count with a majority-vote outcome. bossRoundCount() is now a CAP
+// (the fight can end before it, if he breaks, or right at it, if he doesn't),
+// not a fixed length. Sized so a clean win streak can break him right around
+// the round cap, not comfortably before it: 2 counter wins = exactly COMPOSURE_MAX,
+// achievable from week 2 on; 1 win alone (week 1's cap) never gets close, by design,
+// week 1 stays a tutorial you can wear him down in, not one you can finish.
+const COMPOSURE_MAX = 70;
+const COMPOSURE_WIN_DAMAGE = 35;
+const COMPOSURE_LOSS_REGEN = 15;
+const COMPOSURE_DEFLECT_REGEN = 8;
 function counterChance(boss) {
   return Math.max(0.15, Math.min(0.85,
     0.5 + (S.rep - 50) / 200
@@ -810,20 +830,57 @@ const BOSS_MOVES = {
   ]
 };
 
+// the Composure bar: injected above whatever showCard just rendered, since
+// showCard replaces #card's innerHTML wholesale and has no concept of a
+// persistent header. Insert once per round (right after showCard, which wipes
+// any prior bar); update in place afterward (showResult only appends, it
+// doesn't wipe, so the bar inserted for this round is still there to update).
+function renderComposureBar(boss) {
+  const pct = Math.max(0, Math.min(100, Math.round(100 * S.bossComposure / S.bossComposureMax)));
+  $('card').insertAdjacentHTML('afterbegin',
+    '<div id="composurewrap"><div id="composurelabel">' + boss.name.toUpperCase() + '\'S COMPOSURE</div>' +
+    '<div id="composurebarwrap"><div id="composurebar' + (pct <= 0 ? ' broken' : '') + '" style="width:' + pct + '%;"></div></div></div>');
+}
+function updateComposureBar() {
+  const bar = document.getElementById('composurebar');
+  if (!bar) return;
+  const pct = Math.max(0, Math.min(100, Math.round(100 * S.bossComposure / S.bossComposureMax)));
+  bar.style.width = pct + '%';
+  bar.classList.toggle('broken', pct <= 0);
+}
+
+// bossRoundCount() is now a CAP, not a fixed length: the fight ends early if
+// Composure breaks (best outcome), or runs the full cap and settles on
+// however much got depleted (v0.24, replacing the old fixed-round majority-vote system).
+function settleAgenda() {
+  const depletedPct = 1 - (S.bossComposure / S.bossComposureMax);
+  if (S.bossComposure <= 0) {
+    S.escalationBonus = -2; // broken: the strongest outcome, can zero out Friday's claims entirely
+  } else if (depletedPct >= 0.5) {
+    S.escalationBonus = -1; // shaken: one fewer item claimed, same threshold the old system used
+  } else {
+    S.escalationBonus = 0;
+  }
+  // sweeps are judged against rounds actually played, not the week's cap,
+  // so breaking him early with a clean win streak still counts as a sweep
+  if (S.roundsPlayed >= 2 && S.roundsWon === S.roundsPlayed) META.stats.agendaSweeps = (META.stats.agendaSweeps || 0) + 1;
+}
+
 function runBossRounds(boss, done) {
   const moves = BOSS_MOVES[boss.key].slice().sort(() => Math.random() - 0.5).slice(0, bossRoundCount());
   S.roundsWon = 0;
-  S.roundsTotal = moves.length;
+  S.roundsTotal = moves.length; // the cap for this week, for display ("ITEM x OF y")
+  S.roundsPlayed = 0;
   let i = 0;
   const next = () => {
-    if (i >= moves.length) {
-      // win most of the agenda and the meeting claims one fewer item
-      if (S.roundsWon * 2 > S.roundsTotal) S.escalationBonus = -1;
-      if (S.roundsTotal >= 2 && S.roundsWon === S.roundsTotal) META.stats.agendaSweeps = (META.stats.agendaSweeps || 0) + 1;
+    // the fight can end before the round cap if he's already broken
+    if (i >= moves.length || S.bossComposure <= 0) {
+      settleAgenda();
       done();
       return;
     }
     const mv = moves[i]; i++;
+    S.roundsPlayed++;
     const chance = counterChance(boss);
     showCard({
       title: mv.title, tag: 'CONFERENCE ROOM C · ITEM ' + i + ' OF ' + moves.length, ptoAllowed: false,
@@ -833,19 +890,31 @@ function runBossRounds(boss, done) {
           after: (cont) => {
             if (Math.random() < chance) {
               S.roundsWon++;
-              apply({ rep: 2 });
+              const wasIntact = S.bossComposure > 0;
+              S.bossComposure = Math.max(0, S.bossComposure - COMPOSURE_WIN_DAMAGE);
+              const justBroke = wasIntact && S.bossComposure <= 0;
+              if (!apply({ rep: justBroke ? 5 : 2 })) return; // the run can end right here, mid-meeting
               sfx('lock');
-              showResult(mv.win, cont);
+              updateComposureBar();
+              showResult(mv.win + (justBroke ? ' Something in ' + boss.object + ' actually gives, in front of everyone. The room feels it too.' : ''), cont);
             } else {
               const d = counterLossDelta();
+              S.bossComposure = Math.min(S.bossComposureMax, S.bossComposure + COMPOSURE_LOSS_REGEN);
               if (!apply({ sanity: d.sanity, rep: -d.rep })) return; // the run can end right here, mid-meeting
               sfx('bad');
+              updateComposureBar();
               showResult(mv.lose, cont);
             }
           } },
-        { label: mv.deflect, delta: { sanity: deflectCost() }, result: mv.deflectLine }
+        { label: mv.deflect, delta: { sanity: deflectCost() }, result: mv.deflectLine,
+          after: (cont) => {
+            S.bossComposure = Math.min(S.bossComposureMax, S.bossComposure + COMPOSURE_DEFLECT_REGEN);
+            updateComposureBar();
+            showResult(mv.deflectLine, cont);
+          } }
       ]
     }, next);
+    renderComposureBar(boss);
   };
   next();
 }
@@ -1153,8 +1222,6 @@ function render() {
     $('s-risk').textContent = S.items.length ? 'all secured' : 'none';
     $('stat-risk').style.borderColor = S.items.length ? 'var(--lock)' : 'var(--line)';
   }
-  $('log').innerHTML = S.log.slice(-8).map(l => '&raquo; ' + l).join('<br>');
-  $('log').scrollTop = $('log').scrollHeight;
   // the office darkens as your Time runs out, and sickens as Sanity drains:
   // continuous corruption, not just the one-shot Burnout glitch
   const bright = crunch ? 0.8 : S.time <= 2 ? 0.9 : 1;
@@ -2037,13 +2104,21 @@ const CARDS = {
   }),
   minifridge: () => ({
     title: 'The Minifridge', tag: 'KITCHEN · KEYS: ' + BOSS + ' + TWO DIRECTORS ONLY', ptoAllowed: true,
-    flavor: 'The minifridge in the kitchen is full, visibly, through the glass door, of the good sodas, the ones that vanished from the vending machine budget two reorgs ago. It is locked. ' + BOSS + ' has the only key that matters; two directors have the other two, for reasons nobody has ever needed to ask about out loud. The handbook does not mention a minifridge policy. The lock is the policy. "All you have to do is ask," he told you once, meaning it as a kindness.',
-    choices: [
-      { label: 'Ask him directly for a Coke, like he said to', delta: { sanity: 3, heal: 1 },
-        result: '"All you have to do is ask," he says, unlocking it like a magic trick, like the lock was never really the point. You say thank you. You mean it, which is somehow the worst part. The soda is not that good.' },
-      { label: 'Walk to the vending machine by the loading dock instead', delta: { time: 2, heal: 2 },
-        result: 'It takes four minutes there and back and the soda costs a dollar seventy-five and belongs, unambiguously, to you. This feels, for four minutes, like enough.' }
-    ]
+    flavor: 'The minifridge in the kitchen is full, visibly, through the glass door, of the good sodas, the ones that vanished from the vending machine budget two reorgs ago. It is locked. ' + BOSS + ' has the only key that matters; two directors have the other two, for reasons nobody has ever needed to ask about out loud. The handbook does not mention a minifridge policy. The lock is the policy. "All you have to do is ask," he told you once, meaning it as a kindness.' +
+      (META.up.fridgeKey ? ' There is a fourth key now. Nobody issued it. Nobody has noticed it yet, which is not the same as nobody noticing.' : ''),
+    choices: (function () {
+      const c = [
+        { label: 'Ask him directly for a Coke, like he said to', delta: { sanity: 4, rep: 1 },
+          result: '"All you have to do is ask," he says, unlocking it like a magic trick, like the lock was never really the point. You say thank you. You mean it, which is somehow the worst part. The soda is not that good.' },
+        { label: 'Walk to the vending machine by the loading dock instead', delta: { time: 2, heal: 2 },
+          result: 'It takes four minutes there and back and the soda costs a dollar seventy-five and belongs, unambiguously, to you. This feels, for four minutes, like enough.' }
+      ];
+      if (META.up.fridgeKey) {
+        c.push({ label: 'Use your own key. Take a Coke, no asking.', delta: { heal: 30, rep: -6 },
+          result: 'The lock gives without a sound, like it was never really locked, just closed. You drink it at your desk, slowly, the way you\'d drink something you weren\'t supposed to have. Someone mentions, a few days later, that the minifridge inventory "seems off." Nobody looks at you when they say it. That is somehow worse than if they had.' });
+      }
+      return c;
+    })()
   }),
   balloonArch: () => ({
     title: 'The Career Fair Arch', tag: 'CAREER FAIR · FACILITIES REQUEST · DUE: TOMORROW', ptoAllowed: false,
@@ -2539,6 +2614,8 @@ function meetingProper() {
   S.escalationBonus = 0;
   S.fightFooting = 0;
   S.roundsWon = 0;
+  S.bossComposureMax = COMPOSURE_MAX;
+  S.bossComposure = COMPOSURE_MAX;
   inBossFight = true;
   document.body.classList.add('confrontation');
   stopFridayTension(); // the waiting is over; the actual meeting music takes over from here
@@ -2589,7 +2666,8 @@ function runMeeting(boss) {
   if (S.hrFlagged) { preamble += '<div class="event">' + boss.name + ' mentions, apropos of nothing, that HR "flagged a great question" this week. ' + boss.Pronoun + ' is smiling. ' + boss.Pronoun + ' is always smiling.</div>'; }
   if (S.declines >= 2) { preamble += '<div class="event">"Busy weekend?" ' + boss.name + ' asks, to the room, not to you specifically, which is worse.</div>'; }
   else if (S.accepts >= 2 && S.declines === 0) { preamble += '<div class="event" style="border-left-color: var(--lock);">"Reliable," ' + boss.name + ' says, of you, to the room. It is meant as the highest compliment the building has.</div>'; }
-  if (S.escalationBonus === -1) { preamble += '<div class="event" style="border-left-color: var(--lock);">You held the room through the agenda. One line item quietly stops being interesting to ' + boss.object + '. It never appears on any tracker. It happened anyway.</div>'; }
+  if (S.escalationBonus === -2) { preamble += '<div class="event" style="border-left-color: var(--lock);">Something in ' + boss.object + ' actually broke this afternoon, in front of the room, and everyone has agreed, without discussing it, to have not seen that. ' + boss.Pronoun + ' reads the slide anyway. ' + boss.Pronoun + ' does not claim anything off it. Nobody asks why.</div>'; }
+  else if (S.escalationBonus === -1) { preamble += '<div class="event" style="border-left-color: var(--lock);">You held the room through the agenda. One line item quietly stops being interesting to ' + boss.object + '. It never appears on any tracker. It happened anyway.</div>'; }
 
   const absenceLine = boss.absence ? '<div class="event" style="border-left-color: var(--warn);">' + boss.absence + '</div>' : '';
 

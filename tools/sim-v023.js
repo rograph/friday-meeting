@@ -140,10 +140,10 @@ function drain(w, cap) {
   check('week 2 heal taper applied (50+9=59, not 60)', heal2 === 59, heal2);
 }
 
-// --- 8. store: 12 items, no coffee, 3 category headers, FULLY VESTED unaffected ---
+// --- 8. store: 13 items (12 minus coffee, plus the fridge key), 3 category headers, FULLY VESTED unaffected ---
 {
   const w = fresh();
-  check('store has 12 items', ev(w, 'STORE.length') === 12, ev(w, 'STORE.length'));
+  check('store has 13 items', ev(w, 'STORE.length') === 13, ev(w, 'STORE.length'));
   check('coffee item removed', ev(w, "STORE.some(it => it.id === 'coffee')") === false);
   check('every item has a category', ev(w, "STORE.every(it => !!it.cat)"));
   ev(w, "S.day=4; S.items=[]; storeScreen();");
@@ -154,6 +154,52 @@ function drain(w, cap) {
   });
   const vested = ev(w, "STORE.filter(it => !it.escape).every(it => true)"); // sanity: no crash iterating
   check('STORE iteration for FULLY VESTED does not throw', vested === true);
+}
+
+// --- 9. UNDER THE WIRE commendation: real elapsed time, not in-fiction time ---
+{
+  const w = fresh();
+  ev(w, "S.weekStartMs = Date.now() - 60000;"); // 1 real minute in
+  const fastOk = ev(w, "COMMENDATIONS.find(c => c.id === 'underTheWire').check('survived')");
+  check('UNDER THE WIRE triggers under the real-time threshold', fastOk === true, fastOk);
+  ev(w, "S.weekStartMs = Date.now() - 7 * 60000;"); // 7 real minutes in, over threshold
+  const slowOk = ev(w, "COMMENDATIONS.find(c => c.id === 'underTheWire').check('survived')");
+  check('UNDER THE WIRE does not trigger past the threshold', slowOk === false, slowOk);
+  const wrongKind = ev(w, "S.weekStartMs = Date.now(); COMMENDATIONS.find(c => c.id === 'underTheWire').check('burnout')");
+  check('UNDER THE WIRE does not trigger on burnout', wrongKind === false, wrongKind);
+}
+
+// --- 10. the choice-recap log is gone: no #log element, nothing renders into it ---
+{
+  const w = fresh();
+  check('#log element removed from the page', ev(w, "document.getElementById('log')") === null);
+  ev(w, "S.day = 0; S.sanity = 100; S.time = 10; S.items = []; showCard(CARDS.minifridge(), function(){});");
+  clickChoice(w, 0);
+  drain(w, 3);
+  check('no lingering #log element after play', ev(w, "document.getElementById('log')") === null);
+}
+
+// --- 11. minifridge: humiliation costs Sanity outright, no offsetting heal, small Rep nod ---
+{
+  const w = fresh();
+  const c = ev(w, "CARDS.minifridge()");
+  check('ask-him choice has a sanity cost', c.choices[0].delta.sanity === 4, JSON.stringify(c.choices[0].delta));
+  check('ask-him choice no longer offsets with a heal', c.choices[0].delta.heal === undefined, c.choices[0].delta.heal);
+  check('ask-him choice gives a small Rep nod', c.choices[0].delta.rep === 1, c.choices[0].delta.rep);
+}
+
+// --- 12. the fridge key: expensive, ungated, unlocks a 3rd minifridge choice ---
+{
+  const w = fresh();
+  check('store has 13 items now', ev(w, 'STORE.length') === 13, ev(w, 'STORE.length'));
+  check('fridgeKey is the most expensive non-escape item', ev(w, "STORE.find(it => it.id === 'fridgeKey').cost") === 35);
+  check('fridgeKey has no commendation gate', ev(w, "!!STORE.find(it => it.id === 'fridgeKey').requires") === false);
+  check('minifridge has 2 choices without the key', ev(w, 'CARDS.minifridge().choices.length') === 2);
+  const withKey = ev(w, "META.up.fridgeKey = true; CARDS.minifridge()");
+  check('minifridge has 3 choices with the key', withKey.choices.length === 3, withKey.choices.length);
+  const keyChoice = withKey.choices[2];
+  check('key choice heals 30 Sanity', keyChoice.delta.heal === 30, keyChoice.delta.heal);
+  check('key choice costs Reputation', keyChoice.delta.rep === -6, keyChoice.delta.rep);
 }
 
 console.log('\n' + (failures === 0 ? 'ALL CHECKS PASSED' : failures + ' FAILURES'));
