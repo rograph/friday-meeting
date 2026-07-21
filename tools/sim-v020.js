@@ -199,14 +199,16 @@ for (const boss of ['miller', 'reed', 'brooks', 'calloway']) {
   clickChoice(w, 1); // quiet stance chosen, result showing, still the stance card
   check('no composure bar yet on the stance card', w.document.getElementById('composurewrap') === null);
   clickCont(w); // now advances into round 1
-  const barAtFull = w.document.getElementById('composurebar');
-  check('composure bar present once the first round shows', barAtFull !== null);
-  check('composure bar starts at 100% width', barAtFull.style.width === '100%', barAtFull.style.width);
+  // v0.27: the bar is gone; the host's state reads as a line of prose
+  const labelAtFull = w.document.getElementById('composurelabel');
+  check('composure line present once the first round shows', labelAtFull !== null);
+  check('composure line opens composed', /is composed/.test(labelAtFull.textContent), labelAtFull.textContent);
+  check('no bar element exists anymore', w.document.getElementById('composurebar') === null);
   ev(w, 'Math.random = () => 0.001;'); // this counter wins
   clickChoice(w, 0);
-  const barAfterWin = w.document.getElementById('composurebar');
-  check('composure bar updates in place after a win (50%), not duplicated', barAfterWin.style.width === '50%', barAfterWin.style.width);
-  check('exactly one composure bar element exists', w.document.querySelectorAll('#composurewrap').length === 1);
+  const labelAfterWin = w.document.getElementById('composurelabel');
+  check('composure line updates in place after a win (rattled at 50%)', /is rattled/.test(labelAfterWin.textContent), labelAfterWin.textContent);
+  check('exactly one composure line element exists', w.document.querySelectorAll('#composurewrap').length === 1);
 }
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : '\n' + failures + ' FAILURES');
