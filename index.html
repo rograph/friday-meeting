@@ -102,11 +102,10 @@
   @keyframes flashUp   { 0% { border-color: var(--lock); background: #10312a; } 100% {} }
   #sanitybarwrap { width: 100%; height: 4px; background: #123; margin-top: 4px; }
   #sanitybar { height: 100%; background: var(--accent); width: 100%; transition: width .6s ease, background .6s; }
+  /* v0.27: the health-bar visual is gone (Rodolfo's call); the meter mechanic
+     is unchanged and the host's state reads as a line of prose instead */
   #composurewrap { margin-bottom: 16px; }
-  #composurelabel { font-size: 0.7em; letter-spacing: 2px; color: var(--danger); margin-bottom: 5px; }
-  #composurebarwrap { width: 100%; height: 10px; background: #2c1516; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
-  #composurebar { height: 100%; background: var(--danger); width: 100%; transition: width .5s ease; }
-  #composurebar.broken { background: var(--lock); }
+  #composurelabel { font-size: 0.78em; letter-spacing: 2px; margin-bottom: 5px; transition: color .5s; }
   .float-delta {
     position: absolute; left: 8px; top: -6px;
     font-size: 0.95em; font-weight: bold;
@@ -458,7 +457,9 @@
   <b>Credit</b> is what your work is worth. Every result you produce appears on the <b>At Risk tracker</b>, shown in full at the end of each day.<br>
   <b>Paper Trails</b> lock an item so it cannot be claimed. Locks cost Time. Targets freeze at midnight Thursday.<br>
   <b>Friday, 4:00 PM:</b> someone reads the week aloud and claims your most valuable unlocked item, usually AVP Miller, sometimes one of his directors covering for him. You won't know who until the slide goes up. Later weeks, they claim more. Lock everything and nobody claims anything.<br>
-  <b>The Agenda:</b> before the slide, the meeting runs items of business against the host's Composure, shown as a bar, up to a cap of one item in week 1, two from week 2, three from week 7. Each item is a shot at you, in the host's own dialect. Deflecting is safe, costs Sanity (more every week), and lets Composure recover a little. Countering risks Sanity and Reputation on a roll (Reputation helps, later weeks hurt, Miller is the hardest to beat, your opening stance tilts the odds for the whole meeting), but a win does real damage to the bar, and a loss lets it recover more than a deflect would. Break it completely and Friday can claim nothing at all; wear it down partway and one fewer item gets claimed. The fight can end early if you break it, or run the full cap if you don't. There is no way to skip the agenda.<br>
+  <b>The Agenda:</b> before the slide, the meeting runs items of business against the host's Composure, which you read the way the room does: a line above the card says how they're holding up, up to a cap of one item in week 1, two from week 2, three from week 7. Each item is a shot at you, in the host's own dialect. Deflecting is safe, costs Sanity (more every week), and lets Composure recover a little. Countering risks Sanity and Reputation on a roll (Reputation helps, later weeks hurt, Miller is the hardest to beat, your opening stance tilts the odds for the whole meeting), but a win does real damage, and a loss lets them recover more than a deflect would. Break them completely and Friday can claim nothing at all; wear it down partway and one fewer item gets claimed. The fight can end early if you break it, or run the full cap if you don't. There is no way to skip the agenda.<br>
+  <b>Development:</b> secure every item two weeks running and the building adapts: that Friday you present the wins yourself, from slides you did not write. Whose framing survives decides what a clean week pays and how hungry the next one arrives. Paper Trails themselves are never broken. The building has other doors.<br>
+  <b>Notes:</b> on Saturdays you may leave one line for Monday-you. Internal correspondence is reviewed. What arrives is usually what you wrote.<br>
   <b>Reputation</b> matters at the edges, and it accrues at a recalibrated rate: gains land at 70% of face value, losses land in full. The building keeps the difference. Below 30, you may not decline evening "opportunities." At 70 or above, your standing shields your single best unlocked item from being claimed (he cannot publicly take the headline win of someone that visible). At 0, you're performance managed out, a run-ending outcome, same as Burnout.<br>
   <b>PTO</b> skips a card. Its use is noted.<br>
   <b>Termination</b> (Burnout, or Performance Managed Out at 0 Reputation) ends more than the week: you restart at week 1. Upgrades and commendations survive; the Escape Plan does not survive unemployment. The building rehires. The building always rehires.<br>
@@ -500,7 +501,7 @@
 <script>
 'use strict';
 // =============================================================
-// FRIDAY MEETING (v0.26 "The Offer Letter")
+// FRIDAY MEETING (v0.27 "Development Opportunity")
 // Balance per docs/Friday_Meeting_Design_Doc.md · history in docs/CHANGELOG.md
 // All names fictional. Boss name is a placeholder pending lore thread.
 // =============================================================
@@ -514,7 +515,8 @@ function loadMeta() {
   const def = { week: 1, leverage: 0, ng: 0, onboarded: 0, bestWeekMs: 0, up: {}, life: { plant: 2, friend: 2, hobby: 2 }, ninaTrust: false, presidentSeen: false,
     fileCabinet: [], contractHistory: [], lastClaimLine: -1, lastClaimLineByBoss: {}, trainingPending: false,
     balloonVendorPending: false, balloonVendorWeek: 0, surveyFlagged: false, surveyFlaggedWeek: 0, totalPlayMs: 0,
-    comms: {}, stats: { pushbacks: 0, agendaSweeps: 0, bossesSeen: {} } };
+    cleanStreak: 0, nextWeekExtraClaim: false, phoneRang: false, note: null,
+    comms: {}, stats: { pushbacks: 0, agendaSweeps: 0, bossesSeen: {}, restoratives: 0 } };
   try { return Object.assign(def, JSON.parse(localStorage.getItem(META_KEY)) || {}); }
   catch (e) { return def; }
 }
@@ -596,6 +598,8 @@ const COMMENDATIONS = [
     check: () => STORE.filter(it => !it.escape).every(it => META.up[it.id]) },
   { id: 'revolvingDoor', name: 'THE REVOLVING DOOR', desc: 'Leave on your own terms twice. The building has a word for people like you. The word is "boomerang," and it is said fondly, through teeth.', bonus: 15,
     check: (kind) => kind === 'quit' && (META.ng || 0) >= 1 },
+  { id: 'sincerity', name: 'SINCERITY DETECTED', desc: 'Complete a Restorative Conversation. The statement was read. The statement was heard. The statement was you.', bonus: 5,
+    check: () => (META.stats.restoratives || 0) >= 1 },
   { id: 'underTheWire', name: 'UNDER THE WIRE', desc: 'Clock out in under 6 real minutes, survived or compliant. The building calls this "efficient."', bonus: 10,
     // real elapsed time, per the actual stopwatch, not an in-fiction reading. Threshold
     // is a first guess, tune after seeing real playtest clock-out times.
@@ -849,18 +853,31 @@ const BOSS_MOVES = {
 // persistent header. Insert once per round (right after showCard, which wipes
 // any prior bar); update in place afterward (showResult only appends, it
 // doesn't wipe, so the bar inserted for this round is still there to update).
-function renderComposureBar(boss) {
+// v0.27: no bar. The room reads the host the way a room actually does, in prose.
+// Same thresholds the bar used to draw; the mechanic underneath is untouched.
+function composureState(boss) {
   const pct = Math.max(0, Math.min(100, Math.round(100 * S.bossComposure / S.bossComposureMax)));
+  let t, c;
+  if (pct <= 0)       { t = boss.name + ' has stopped talking.'; c = 'var(--lock)'; }
+  else if (pct <= 25) { t = boss.name + ' is cracking. Nobody in the room is breathing.'; c = 'var(--danger)'; }
+  else if (pct <= 50) { t = boss.name + ' is rattled. The room has noticed. ' + boss.Pronoun + ' has noticed the room noticing.'; c = 'var(--warn)'; }
+  else if (pct <= 75) { t = boss.name + ' is controlled. With effort.'; c = 'var(--warn)'; }
+  else                { t = boss.name + ' is composed. The agenda proceeds.'; c = 'var(--ink-dim)'; }
+  if (S.bossPhase2 && pct > 0) t += ' Steadied.';
+  return { t, c };
+}
+function renderComposureBar(boss) {
+  const st = composureState(boss);
   $('card').insertAdjacentHTML('afterbegin',
-    '<div id="composurewrap"><div id="composurelabel">' + boss.name.toUpperCase() + '\'S COMPOSURE</div>' +
-    '<div id="composurebarwrap"><div id="composurebar' + (pct <= 0 ? ' broken' : '') + '" style="width:' + pct + '%;"></div></div></div>');
+    '<div id="composurewrap"><div id="composurelabel" style="color:' + st.c + ';">' + st.t + '</div></div>');
+  S.composureBoss = boss;
 }
 function updateComposureBar() {
-  const bar = document.getElementById('composurebar');
-  if (!bar) return;
-  const pct = Math.max(0, Math.min(100, Math.round(100 * S.bossComposure / S.bossComposureMax)));
-  bar.style.width = pct + '%';
-  bar.classList.toggle('broken', pct <= 0);
+  const label = document.getElementById('composurelabel');
+  if (!label || !S.composureBoss) return;
+  const st = composureState(S.composureBoss);
+  label.textContent = st.t;
+  label.style.color = st.c;
 }
 
 // bossRoundCount() is now a CAP, not a fixed length: the fight ends early if
@@ -990,7 +1007,8 @@ const CARD_UNLOCKS = {
   theBackfill: 2, onboardingBuddy: 2, allStaffSurvey: 3,
   refresherModule: 2, crossFunctionalProject: 3, terrysOffice: 3, exitInterview: 3,
   anniversaryEmail: 4, ninaOpportunity: 4, dougThirdTracker: 6, badgeReader: 8, reedAudit: 8,
-  bossEmail: 1, minifridge: 1, balloonArch: 2, anonSurvey: 2, standingMeeting: 3, deskPlantDirective: 4
+  bossEmail: 1, minifridge: 1, balloonArch: 2, anonSurvey: 2, standingMeeting: 3, deskPlantDirective: 4,
+  minuteMeeting: 4
 };
 
 const S = {
@@ -1208,6 +1226,9 @@ function formatStopwatch(ms) {
 function updateStopwatch() {
   const el = $('weekclock');
   if (!el || !S.weekStartMs) return;
+  // the sixty-second sync (v0.27): while that meeting holds you, every real
+  // second costs two. The clock is not broken. The clock is attending.
+  if (S.clockWarp && !S.over) S.weekStartMs -= 1000;
   el.textContent = 'CLOCKED IN · ' + formatStopwatch(Date.now() - S.weekStartMs);
 }
 
@@ -1256,6 +1277,7 @@ function costLabel(d, life) {
 function showCard(c, onDone) {
   const el = $('card');
   CONTEXT = c.title;
+  if (c.onShow) { try { c.onShow(); } catch (e) {} c.onShow = null; }
   el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
   // below 30 Sanity: the text drifts, words repeat repeat, and the terminal
   // starts describing your choices before you make them
@@ -1273,6 +1295,12 @@ function showCard(c, onDone) {
   let html = '<h2>' + c.title + '</h2><div class="tag">' + (c.tag || 'ENCOUNTER') + '</div><div class="flavor">' + flavor + '</div>';
   if (c.orientNote) {
     html += '<div class="event" style="border-left-color: var(--accent); color: var(--ink-dim); font-size: 0.9em;">' + c.orientNote + '</div>';
+  }
+  if (c.selfNote) {
+    html += '<div class="event" style="border-left-color: var(--warn); font-size: 0.9em;">INTERNAL CORRESPONDENCE · REVIEWED · DELIVERED MONDAY 9:00 AM<br>' +
+      '<i>"' + c.selfNote.text + '"</i>' +
+      (c.selfNote.reveal ? '<br>Beneath it, a second line, in handwriting that is almost yours: "' + c.selfNote.reveal + ' has the room Friday."' : '') +
+      '</div>';
   }
   if (dissoc) {
     html += '<div class="narrator">' + NARRATOR[Math.floor(Math.random() * NARRATOR.length)] + '</div>';
@@ -1382,7 +1410,9 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 const CARDS = {
   standup: () => ({
     title: 'Daily Standup', tag: 'MEETING · 9:15 AM', ptoAllowed: false,
-    flavor: CHAIR_DETAILS[(META.week - 1) % CHAIR_DETAILS.length] + ' Nobody remembers whose idea the circle was. It\'s your turn.',
+    flavor: (META.ng && META.week === 1
+      ? 'Chairs in a perfect circle. Your chair is here too, at this campus you have never worked at, worn in the shape of you. Nobody moved it from the other building, because, per the records, there was no other building.'
+      : CHAIR_DETAILS[(META.week - 1) % CHAIR_DETAILS.length]) + ' Nobody remembers whose idea the circle was. It\'s your turn.',
     choices: [
       { label: 'Give the 30-second version', delta: { time: 2 },
         result: 'You kept it tight. The room nods in unison, half a second too late.',
@@ -2135,19 +2165,38 @@ const CARDS = {
     })()
   }),
   balloonArch: () => ({
-    title: 'The Career Fair Arch', tag: 'CAREER FAIR · FACILITIES REQUEST · DUE: TOMORROW', ptoAllowed: false,
-    flavor: BOSS + ' wants a full balloon arch for tomorrow\'s career fair, decided today, at 4:45 PM. Facilities\' approved vendor can\'t turn it around in time. There\'s another vendor who can, a guy a friend used once, not on the approved list, but ' + BOSS + ' says "just get it done, I\'ll handle the paperwork later," in the specific tone that means the paperwork will not, in fact, be handled by him, later or otherwise.',
+    title: 'The Arch', tag: 'THE EVENT · FACILITIES REQUEST · DUE: TOMORROW', ptoAllowed: false,
+    flavor: BOSS + ' wants a full balloon arch for tomorrow\'s event, decided today, at 4:45 PM. Nobody says which event; there is always an event. Facilities\' approved vendor can\'t turn it around in time. There\'s another vendor who can, a guy a friend used once, not on the approved list, but ' + BOSS + ' says "just get it done, I\'ll handle the paperwork later," in the specific tone that means the paperwork will not, in fact, be handled by him, later or otherwise.',
     choices: [
-      { label: 'Book the fast vendor. Full arch by morning.', delta: { time: 2, credit: 5, creditItem: 'Career fair balloon arch, delivered on time' },
+      { label: 'Book the fast vendor. Full arch by morning.', delta: { time: 2, credit: 5, creditItem: 'Balloon arch, delivered on time' },
         result: 'The arch is enormous, genuinely impressive, photographed for the newsletter within the hour. ' + BOSS + ' stands under it for the photo. Nobody asks who booked it. Somebody, eventually, will ask who is paying for it.',
         after: (done) => { META.balloonVendorPending = true; META.balloonVendorWeek = META.week; saveMeta();
           showResult('The arch is enormous, genuinely impressive, photographed for the newsletter within the hour. ' + BOSS + ' stands under it for the photo. Nobody asks who booked it. Somebody, eventually, will ask who is paying for it.', done); } },
-      { label: 'Use the pre-approved vendor. Smaller, no drama.', delta: { time: 1, credit: 2, creditItem: 'Career fair balloons, modest, approved' },
+      { label: 'Use the pre-approved vendor. Smaller, no drama.', delta: { time: 1, credit: 2, creditItem: 'Event balloons, modest, approved' },
         result: 'Six balloons, not an arch, tied to a table leg by 9 AM. It photographs fine, cropped tight. Nothing about it will ever require an explanation.' }
     ]
   }),
+  minuteMeeting: () => ({
+    // the warp starts when the card is SHOWN (not built: Tue/Thu build cards
+    // ahead for the chooser, and the clock must not run for an unpicked card)
+    onShow: () => { S.clockWarp = true; },
+    title: 'The Sixty-Second Sync', tag: 'MEETING · "THIS WILL ONLY TAKE A MINUTE" · THE CLOCK IS RUNNING', ptoAllowed: false,
+    flavor: 'The invite says one minute. Everyone in the room believes it, the way you believe a horizon. Watch the clock at the top of your screen while ' + BOSS + ' finds the file he definitely had open a second ago. Watch it. Something is wrong with it. Nothing is wrong with it. This meeting is simply where time goes.',
+    choices: [
+      { label: 'Sit through the minute. All of it.', delta: { time: 2, credit: 5, creditItem: 'The minute, survived' },
+        result: '', after: (done) => {
+          S.clockWarp = false;
+          showResult('Forty subjective minutes later, the minute ends. "Great sync," ' + BOSS + ' says. On your way out you check the clock at the top of the screen, and then you decide, for your own protection, that you checked it wrong.', done);
+        } },
+      { label: '"I have a hard stop." You do not have a hard stop.', delta: { heal: 2, rep: -3 },
+        result: '', after: (done) => {
+          S.clockWarp = false;
+          showResult('You invoke the hard stop. The room parts. Walking back to your desk, time resumes its usual price, and you feel the specific guilt of a person who has escaped something ongoing.', done);
+        } }
+    ]
+  }),
   balloonInvoice: () => ({
-    title: 'The Invoice, Still', tag: 'ACCOUNTS PAYABLE · RE: RE: RE: CAREER FAIR VENDOR · UNRESOLVED', ptoAllowed: false,
+    title: 'The Invoice, Still', tag: 'ACCOUNTS PAYABLE · RE: RE: RE: THE BALLOON VENDOR · UNRESOLVED', ptoAllowed: false,
     flavor: 'Procurement finally noticed the balloon vendor was never approved. The invoice has nowhere to go: not in the system, not under any budget code that exists, not signed off by anyone who will admit to remembering the words "just get it done." Accounts Payable forwards it to you, "for visibility," which in this building has only ever meant "for blame."',
     choices: [
       { label: 'Walk it through procurement properly. Get it approved, retroactively.', delta: { time: 3, sanity: 4 },
@@ -2257,6 +2306,7 @@ function topUnlocked() {
 }
 function lockCost(item) {
   let c = 2 + (item.noticed ? 1 : 0) + (META.week >= 9 ? 2 : META.week >= 5 ? 1 : 0) - (META.up.templates ? 1 : 0);
+  if (S.noteLockDiscount && S.day === 0) c -= 1; // Friday-you warned you. Monday-you listened. (v0.27)
   if (S.millerGone) c -= 1; // he left "for a thing." nobody is watching the filing cabinet.
   if (S.millerPleased) c -= 1; // he's still glowing about the portrait
   if (S.millerAnnoyed) c += 1; // he's still sore about the slow-walk
@@ -2294,9 +2344,16 @@ function atRiskScreen(onDone) {
   if (S.millerGone) {
     html += '<div class="event" style="border-left-color: var(--lock);">It is 3:04 PM and Miller\'s office is dark. He left "for a thing." He always has a thing. The building relaxes by one degree: <b>paper trails cost 1 less tonight.</b></div>';
   }
+  // below 30 Sanity (v0.27): one real item on the board is yours and you have
+  // no memory of it. It was always there. That is what makes it worse.
+  let fogItem = null;
+  if (S.sanity < 30 && S.sanity > 0) {
+    const exposed = S.items.filter(i => !i.locked);
+    if (exposed.length) fogItem = exposed[(META.week + S.day) % exposed.length];
+  }
   S.items.forEach((it, idx) => {
     const cls = it.locked ? 'riskitem locked' : (it === target ? 'riskitem target' : 'riskitem');
-    html += '<div class="' + cls + '"><span>' + it.name + (it.noticed && !it.locked ? ' <span style="color:var(--warn)">[NOTICED]</span>' : '') +
+    html += '<div class="' + cls + '"><span>' + it.name + (it === fogItem ? ' <span style="color:var(--ink-dim); font-style:italic;">· you do not remember writing this</span>' : '') + (it.noticed && !it.locked ? ' <span style="color:var(--warn)">[NOTICED]</span>' : '') +
       (it.decoy && !it.locked ? ' <span style="color:var(--accent)">◎ DECOY SET</span>' : '') +
       (it.locked ? ' <span class="lockmark stampin">🔒 SECURED</span>' : '') + '</span><span class="val">+' + it.value + '</span></div>';
   });
@@ -2356,6 +2413,58 @@ function atRiskScreen(onDone) {
   }
   el.insertAdjacentHTML('beforeend', '<button class="choice" id="endday" style="margin-top:10px;">' + (t ? 'Leave the rest exposed, end the day' : 'Everything is secured. End the day.') + '</button>');
   $('endday').onclick = onDone;
+}
+
+// ---------- a restorative conversation (v0.27) ----------
+// The building's softest room and its hardest one. You read the prepared
+// statement aloud until sincerity is detected. The statement gets shorter
+// each time. That is not a mercy.
+const RESTORATIVE_STATEMENTS = [
+  'I am grateful for the opportunities this role provides. I recognize that feedback is a gift. I am committed to showing up as my best self.',
+  'I am grateful for the opportunities this role provides. I recognize that feedback is a gift. I am committed to showing up.',
+  'I am grateful for the opportunities. I recognize the gift. I am committed.',
+  'I am grateful. I recognize. I am.'
+];
+function restorativeScene(onDone) {
+  CONTEXT = 'A Restorative Conversation';
+  let reads = 0;
+  let sincerity = 0;
+  function renderScene() {
+    const el = $('card');
+    el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+    const statement = RESTORATIVE_STATEMENTS[Math.min(reads, RESTORATIVE_STATEMENTS.length - 1)];
+    let html = '<h2>A Restorative Conversation</h2>' +
+      '<div class="tag">HR · DANA · THIS IS NOT DISCIPLINARY · ATTENDANCE IS</div>' +
+      '<div class="flavor">' + (reads === 0
+        ? 'The room has soft chairs and a plant that is real, which somehow makes it worse. Dana slides a laminated card across the table, face up, unhurried. "Whenever you\'re ready," she says. "Take all the time you need." There is one exit and she is closer to it.'
+        : 'Dana listens with her whole face. She writes nothing down. Something in the room is writing it down for her.') + '</div>' +
+      '<div class="event" style="border-left-color: var(--warn);">THE STATEMENT, AS PROVIDED:<br><i>"' + statement + '"</i></div>' +
+      (reads > 0 ? '<div class="scoregrid">SINCERITY: <b>' + sincerity + '%</b> · ' + (sincerity >= 100 ? '<span class="secure">DETECTED</span>' : '<span style="color:var(--danger)">INSUFFICIENT · PLEASE CONTINUE</span>') + '</div>' : '') +
+      (sincerity >= 100
+        ? '<div class="event" style="border-left-color: var(--lock);">"There it is," Dana says, warmly, to the room rather than to you. Your file updates somewhere with a sound only the building can hear.</div>'
+        : '');
+    el.innerHTML = html;
+    if (sincerity >= 100) {
+      el.insertAdjacentHTML('beforeend', '<button class="choice" id="restdone">Stand up. Thank her. That part is not optional either.</button>');
+      $('restdone').onclick = () => {
+        sfx('lock');
+        META.stats.restoratives = (META.stats.restoratives || 0) + 1; saveMeta();
+        if (!apply({ rep: 8 })) return;
+        log('A Restorative Conversation concluded. Sincerity was detected. Reputation partially restored.');
+        onDone();
+      };
+    } else {
+      el.insertAdjacentHTML('beforeend', '<button class="choice" id="restread">Read the statement aloud<span class="cost">-1 Sanity · it gets shorter every time you read it</span></button>');
+      $('restread').onclick = () => {
+        sfx('click');
+        if (!apply({ sanity: 1 }, { src: 'A Restorative Conversation' })) return;
+        reads++;
+        sincerity = reads >= RESTORATIVE_STATEMENTS.length ? 100 : Math.min(96, sincerity + 24 + Math.floor(Math.random() * 12));
+        renderScene();
+      };
+    }
+  }
+  renderScene();
 }
 
 // ---------- day flow ----------
@@ -2447,6 +2556,13 @@ function startDay() {
     S.queue.unshift('surveyFollowup');
     META.surveyFlagged = false; saveMeta();
   }
+  // a restorative conversation (v0.27): once per run, when your standing has
+  // fallen far enough that the building would rather repair you than lose the
+  // paperwork of replacing you
+  if (S.rep < 30 && !S.restorativeDone && S.day >= 1 && S.day <= 3) {
+    S.restorativeDone = true;
+    S.queue.unshift('restorative');
+  }
   const subs = [
     'A NEW WEEK. THE BUILDING REMEMBERS YOU.',
     'THE COFFEE MACHINE HAS BEEN "UPGRADED." NOBODY ASKED.',
@@ -2455,6 +2571,32 @@ function startDay() {
     'THE MEETING IS AT 4:00 PM. IT HAS ALWAYS BEEN AT 4:00 PM.'
   ];
   interstitial(DAYS[S.day], subs[S.day], () => { render(); nextEncounter(); });
+}
+
+// ---------- notes between selves (v0.27) ----------
+// Saturday, you may write one line to Monday-you. It is delivered after review.
+// Usually intact. Sometimes a word is redacted. Rarely a word has been changed,
+// and the game never acknowledges it. The threshold between the person who
+// leaves on Friday and the person who badges in on Monday is where this game
+// lives; this is the one channel across it, and the building is on the line.
+const NOTE_TEXTS = {
+  warning: 'Lock the big one first. Do not trust the quiet morning.',
+  encouragement: 'You got through this week. You get through all of them. Someday one of them is the last one.',
+  instruction: 'Find out who has the room on Friday before you spend anything.'
+};
+const NOTE_SWAPS = ['fine', 'always', 'never', 'his', 'forever', 'nothing'];
+function reviewNote(base) {
+  const roll = Math.random();
+  if (roll >= 0.30) return { text: base, mangled: false };
+  const words = base.split(' ');
+  const eligible = words.map((w, i) => i).filter(i => words[i].replace(/[^a-zA-Z]/g, '').length >= 3);
+  const i = eligible[Math.floor(Math.random() * eligible.length)];
+  if (roll < 0.18) {
+    words[i] = '█████';
+  } else {
+    words[i] = NOTE_SWAPS[Math.floor(Math.random() * NOTE_SWAPS.length)];
+  }
+  return { text: words.join(' '), mangled: true };
 }
 
 // the onboarding packet (v0.26): shown once, on a brand-new save's first Monday,
@@ -2472,8 +2614,14 @@ function nextEncounter() {
   if (S.queue.length > 0) {
     const key = S.queue.shift();
     if (key === 'fridayMorning') return fridayMorning();
+    if (key === 'restorative') return restorativeScene(nextEncounter);
     const c = CARDS[key]();
     if (S.orientation && S.day === 0 && ORIENT_NOTES[key]) c.orientNote = ORIENT_NOTES[key];
+    // the note from Friday-you arrives with the first thing Monday shows (v0.27)
+    if (S.deliveredNote && S.day === 0 && !S.deliveredNoteShown) {
+      c.selfNote = S.deliveredNote;
+      S.deliveredNoteShown = true;
+    }
     return showCard(c, nextEncounter);
   }
   if (S.choicePool && S.choicePool.length > 0) {
@@ -2665,6 +2813,10 @@ function meetingProper() {
   // through this one. Every Friday costs something just for being in the
   // room now, on top of whatever gets claimed, this is the one moment you
   // get to decide what it costs instead of having it decided for you.
+  // development opportunity (v0.27): you present. There is no agenda to fight,
+  // because you are the agenda. Replaces the stance and the items of business.
+  if (S.presentationWeek) return presentationScene(boss);
+
   const stanceSanity = 4;
   const rounds = bossRoundCount();
   showCard({
@@ -2686,12 +2838,45 @@ function meetingProper() {
   }, () => runBossRounds(boss, () => runMeeting(boss)));
 }
 
+// ---------- the presentation (v0.27) ----------
+// The building's answer to two clean weeks in a row. Nothing here breaks a
+// Paper Trail; locks stay absolute. What is at stake is the FRAMING: read his
+// slides in your voice and the room remembers him holding the clicker (the
+// compliance payout halves, and next week arrives hungrier). Deviate, and it
+// is a roll in front of everyone.
+function presentationScene(boss) {
+  showCard({
+    title: 'The Presentation', tag: 'CONFERENCE ROOM C · 4:00 PM · THE CLICKER IS IN YOUR HAND', ptoAllowed: false,
+    flavor: boss.name + ' meets you at the door, warm, terrible. "Development," ' + boss.pronoun + ' says, pressing the clicker into your hand like a medal. "The team should hear this one from you." The slides are already loaded. You did not write them. Your week is on them, in ' + boss.possessive + ' font, under the word OURS. The room settles. The room waits. The first slide is warming the screen behind you.',
+    choices: [
+      { label: 'Read it as written. ' + boss.Possessive + ' framing, your voice.', delta: { sanity: 6 },
+        result: '', after: (done) => {
+          S.presentationMeek = true;
+          META.nextWeekExtraClaim = true; saveMeta();
+          showResult('You read it. The room hears your own voice say "we," slide after slide, in the cadence ' + boss.pronoun + ' would have used. It goes well. That is the worst part: it goes well. ' + boss.name + ' watches from the second row like a director at a premiere. Whatever the tracker says on Friday, the room will remember who the week belonged to, and next week the building will arrive a little hungrier, because you taught it your voice.', () => runMeeting(boss));
+        } },
+      { label: 'Deviate. Present the week the way it actually happened.', delta: {},
+        result: '', after: (done) => {
+          if (Math.random() < counterChance(boss)) {
+            if (!apply({ rep: 5 })) return;
+            showResult('You click past the first slide without reading it. Then the second. You present the week in plain sentences: what broke, who fixed it, what it cost. Names attached, yours among them, correctly. The room does not look at the screen again. ' + boss.name + ' leads the applause a half-second late, which everyone hears, and no one will ever mention.', () => runMeeting(boss));
+          } else {
+            S.presentationMeek = true;
+            META.nextWeekExtraClaim = true; saveMeta();
+            if (!apply({ sanity: 6, rep: -5 })) return;
+            showResult('Halfway through your version, ' + boss.name + ' laughs, kindly, which is the cruelest available volume, and says "I love this energy, let\'s take it offline," and the room exhales and returns to the slides. Your sentences hang there, half finished, becoming a story about your composure instead of a story about your week.', () => runMeeting(boss));
+          }
+        } }
+    ]
+  }, () => runMeeting(boss));
+}
+
 function runMeeting(boss) {
   const el = $('card');
   // substitutes claim one fewer than Miller would, at every tier, so he is always the worst Friday;
   // winning most of the agenda's items of business knocks one more off, on top of that
   // v0.23: 2 claims now starts week 2, not week 3 (matches the bossRoundCount pull-forward)
-  const claims = Math.max(0, (META.week >= 7 ? 3 : META.week >= 2 ? 2 : 1) + boss.claimsAdjust + (S.escalationBonus || 0));
+  const claims = Math.max(0, (META.week >= 7 ? 3 : META.week >= 2 ? 2 : 1) + boss.claimsAdjust + (S.escalationBonus || 0) + (S.extraClaim || 0));
 
   // The week's small, easy-to-forget choices echo here. None of this was ever hidden,
   // it just hadn't come due yet.
@@ -2701,7 +2886,14 @@ function runMeeting(boss) {
   if (S.hrFlagged) { preamble += '<div class="event">' + boss.name + ' mentions, apropos of nothing, that HR "flagged a great question" this week. ' + boss.Pronoun + ' is smiling. ' + boss.Pronoun + ' is always smiling.</div>'; }
   if (S.declines >= 2) { preamble += '<div class="event">"Busy weekend?" ' + boss.name + ' asks, to the room, not to you specifically, which is worse.</div>'; }
   else if (S.accepts >= 2 && S.declines === 0) { preamble += '<div class="event" style="border-left-color: var(--lock);">"Reliable," ' + boss.name + ' says, of you, to the room. It is meant as the highest compliment the building has.</div>'; }
-  if (S.escalationBonus === -2) { preamble += '<div class="event" style="border-left-color: var(--lock);">Something in ' + boss.object + ' actually broke this afternoon, in front of the room, and everyone has agreed, without discussing it, to have not seen that. ' + boss.Pronoun + ' reads the slide anyway. ' + boss.Pronoun + ' does not claim anything off it. Nobody asks why.</div>'; }
+  if (S.escalationBonus === -2) {
+    preamble += '<div class="event" style="border-left-color: var(--lock);">Something in ' + boss.object + ' actually broke this afternoon, in front of the room, and everyone has agreed, without discussing it, to have not seen that. ' + boss.Pronoun + ' reads the slide anyway. ' + boss.Pronoun + ' does not claim anything off it. Nobody asks why.</div>';
+    // the phone (v0.27): once per save, ever. Never explained. Never repeated.
+    if (!META.phoneRang) {
+      META.phoneRang = true; saveMeta();
+      preamble += '<div class="event" style="border-left-color: var(--ink-dim);">A phone on the wall rings. Nobody knew there was a phone on the wall. ' + boss.name + ' answers it, listens for eleven seconds, says "understood," and hangs up. ' + boss.Pronoun + ' does not mention it. The meeting continues as if the wall were bare, and by Monday it will be.</div>';
+    }
+  }
   else if (S.escalationBonus === -1) { preamble += '<div class="event" style="border-left-color: var(--lock);">You held the room through the agenda. One line item quietly stops being interesting to ' + boss.object + '. It never appears on any tracker. It happened anyway.</div>'; }
 
   const absenceLine = boss.absence ? '<div class="event" style="border-left-color: var(--warn);">' + boss.absence + '</div>' : '';
@@ -2819,7 +3011,9 @@ function leverageFor(kind, grade) {
   if (kind === 'burnout') return 3;
   if (kind === 'firedForCause') return 2;
   const kept = S.items.filter(i => !i.stolen).reduce((a, b) => a + b.value, 0);
-  const bonus = kind === 'compliance' ? 8 : grade === 'A' ? 6 : grade === 'B' ? 4 : grade === 'C' ? 2 : 1;
+  // v0.27: a compliance week where you read his slides in your voice pays half
+  // the bonus. The tracker recorded nothing reassigned; the room recorded you.
+  const bonus = kind === 'compliance' ? (S.presentationMeek ? 4 : 8) : grade === 'A' ? 6 : grade === 'B' ? 4 : grade === 'C' ? 2 : 1;
   return Math.round(kept / 5) + Math.round(S.sanity / 20) + bonus;
 }
 
@@ -2847,6 +3041,9 @@ function awardLeverage(kind, grade) {
     META.contractHistory.push({ name: S.contract.name, desc: S.contract.desc, week: META.week, met: !!S.contractMet });
   }
   META.leverage += earned;
+  // the clean-week streak feeds the development opportunity (v0.27)
+  if (kind === 'compliance') META.cleanStreak = (META.cleanStreak || 0) + 1;
+  else if (kind === 'survived' || kind === 'burnout' || kind === 'firedForCause') META.cleanStreak = 0;
   // the personnel file reviews the week (commendation bonuses are added to
   // META.leverage directly, surfaced on the Saturday screen, not folded into
   // the week's own payout line)
@@ -2970,7 +3167,7 @@ function ending(kind) {
       '<div class="flavor">You wait until he finishes the word "wins." Then you stand, cross Conference Room C, and set the letter beside his laptop. On the keyboard, actually, where it cannot be scrolled past.<br><br>' +
       'And here is the thing you will tell people for years: <b>he looks up.</b> For the first time in institutional memory, ' + BOSS + ' looks up from the screen at a human being who is leaving. The room watches him do it. Somebody\'s coffee goes cold in real time.<br><br>' +
       '"We\'d hate to lose you," he says, reaching for the phrases. "We were about to talk about your growth."<br><br>' +
-      'The raise was capped at 3%. The exit never was. You walk out through the lobby, past the founder\'s portrait, out the doors, into the enormous, unmonitored afternoon.</div>' +
+      'The raise was capped at 3%. The exit never was. You walk out through the lobby, past the founder\'s portrait' + (META.ng ? ', which is of someone else now, and has always been,' : ',') + ' out the doors, into the enormous, unmonitored afternoon.</div>' +
       scoreBlock(true) +
       '<div class="event" style="border-left-color: var(--lock);"><b>THE TRUE ENDING.</b> Built across ' + META.week + ' week' + (META.week > 1 ? 's' : '') + ': a portfolio, a network, a runway. None of it appeared on their tracker. That was the point.</div>' +
       '<div class="event">TIME CLOCKED, START TO DOOR: <b>' + formatStopwatch(finalMs) + '</b></div>' +
@@ -3103,6 +3300,19 @@ function storeScreen() {
       html += '<button class="choice" data-pin="' + idx + '">' + it.name + (it.stolen ? ' <span style="color:var(--danger);">(claimed by ' + BOSS + ')</span>' : it.locked ? ' <span class="lockmark">🔒</span>' : '') + '<span class="cost">keep a copy, off the books</span></button>';
     });
   }
+  // a note to Monday (v0.27): one line across the weekend threshold, free,
+  // optional, and subject to review. What arrives is usually what you wrote.
+  if (META.note) {
+    html += '<div class="tag" style="margin-top:14px;">A NOTE TO MONDAY · FILED FOR REVIEW</div>' +
+      '<div class="riskitem locked" style="flex-direction:column;align-items:flex-start;"><span>"' + NOTE_TEXTS[META.note.type] + '"</span>' +
+      '<span style="color:var(--ink-dim);font-size:0.88em;margin-top:4px;">It will be waiting Monday morning. Most of it.</span></div>';
+  } else {
+    html += '<div class="tag" style="margin-top:14px;">A NOTE TO MONDAY · OPTIONAL · SUBJECT TO REVIEW</div>' +
+      '<div class="flavor" style="font-size:0.85em;">Monday-you badges in alone. You can leave one line on the desk. Internal correspondence is reviewed.</div>' +
+      '<button class="choice" data-note="warning">A warning<span class="cost">"' + NOTE_TEXTS.warning + '" · Monday\'s first Paper Trail costs 1 less</span></button>' +
+      '<button class="choice" data-note="encouragement">An encouragement<span class="cost">"' + NOTE_TEXTS.encouragement + '" · a small Monday mercy</span></button>' +
+      '<button class="choice" data-note="instruction">An instruction<span class="cost">"' + NOTE_TEXTS.instruction + '" · if it survives review, Monday names Friday\'s host</span></button>';
+  }
   STORE_CATS.forEach(cat => {
     const items = STORE.filter(it => it.cat === cat.id);
     if (!items.length) return;
@@ -3152,6 +3362,15 @@ function storeScreen() {
       sfx('lock');
       S.cabinetPinned = true;
       META.fileCabinet.push({ title: it.name, week: META.week, note: it.stolen ? 'Claimed by ' + BOSS + ' at the Friday Meeting. You kept your own copy anyway.' : it.locked ? 'Secured with a Paper Trail. Filed here too, just in case.' : 'Never claimed, never locked. Filed away all the same.' });
+      saveMeta();
+      storeScreen();
+    };
+  });
+  el.querySelectorAll('[data-note]').forEach(btn => {
+    btn.onclick = () => {
+      if (META.note) return;
+      sfx('lock');
+      META.note = { type: btn.dataset.note, week: META.week };
       saveMeta();
       storeScreen();
     };
@@ -3405,9 +3624,17 @@ function buildBootLines() {
     'CONFERENCE ROOM B REMAINS OUT OF SERVICE. THE TABLE IS BEING STUDIED.',
     'YOUR BADGE PHOTO HAS BEEN RETAKEN. YOU WERE NOT PRESENT FOR THIS.'
   ];
+  // cycle 2+ (v0.27): the building misremembers you, confidently, in writing
+  if (META.ng) {
+    KNOWS.push('YOUR PREVIOUS DESK HAS BEEN PRESERVED EXACTLY. THERE IS NO PREVIOUS DESK.');
+    KNOWS.push('THE EXIT INTERVIEW YOU RECALL GIVING IS NOT ON FILE. NOTHING IS MISSING FROM THE FILE.');
+  }
+  const greet = (META.ng && META.week === 1)
+    ? 'EMPLOYEE VERIFIED. WELCOME BACK. OUR RECORDS SHOW NO INTERRUPTION IN YOUR SERVICE. OUR RECORDS ARE CORRECT.'
+    : GREETS[(META.week - 1) % GREETS.length];
   const lines = [
     'EVERWELL GROUP · OPERATIONS TERMINAL 4B',
-    GREETS[(META.week - 1) % GREETS.length],
+    greet,
     'WEEK ' + META.week + (META.ng ? ' · CYCLE ' + (META.ng + 1) : '') + '. ' + KNOWS[(META.week - 1) % KNOWS.length]
   ];
   // Difficulty is announced, never hidden, but it doesn't need to be read aloud
@@ -3435,6 +3662,9 @@ function buildBootLines() {
   if (wk >= 7) push('POLICY UPDATE: THE FRIDAY MEETING AGENDA NOW RUNS THREE (3) ITEMS OF BUSINESS. THE MEETING IS GROWING. NOTHING ELSE IS.', 7);
   if (wk >= 8) push('NOTICE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED FURTHER. THIS IS PROGRESS.', 8);
   if (wk >= 9) push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A THIRD SIGNATURE.', 9);
+  // the building adapts to being starved (v0.27)
+  if ((META.cleanStreak || 0) >= 2) push('DEVELOPMENT OPPORTUNITY: IN RECOGNITION OF TWO CONSECUTIVE FULLY SECURED WEEKS, YOU WILL PRESENT THIS FRIDAY\'S WINS PERSONALLY. THE SLIDES HAVE BEEN PREPARED FOR YOU. THE FRAMING HAS BEEN TAKEN CARE OF.', wk);
+  if (META.nextWeekExtraClaim) push('POLICY UPDATE: FOLLOWING LAST WEEK\'S PRESENTATION, WEEKLY REVIEWS RECOGNIZE ONE (1) ADDITIONAL WIN THIS WEEK. THE ROOM AGREED. YOU WERE IN THE ROOM. YOU WERE, TECHNICALLY, PRESENTING.', wk);
   // the Old Rolodex: somebody who used to work here already knows who has the room
   if (META.up.rolodex) {
     PREPICKED_BOSS = PREPICKED_BOSS || pickFridayBoss();
@@ -3494,7 +3724,27 @@ function boot() {
     // order plus onboarding-packet notes, once, ever. A veteran who gets fired
     // back to week 1 is not a new hire and does not get re-onboarded.
     S.orientation = !META.onboarded && META.week === 1 && !META.ng && !META.totalPlayMs && META.leverage === 0 && Object.keys(META.comms || {}).length === 0;
-    META.onboarded = 1; saveMeta();
+    META.onboarded = 1;
+    // the development opportunity (v0.27): two consecutive fully-secured weeks
+    // and the building adapts. This Friday, you hold the clicker. Streak resets
+    // the moment it fires, so it comes back every second clean week.
+    S.presentationWeek = (META.cleanStreak || 0) >= 2;
+    if (S.presentationWeek) META.cleanStreak = 0;
+    // last week's presentation, read as written, set this week's appetite
+    if (META.nextWeekExtraClaim) { S.extraClaim = 1; META.nextWeekExtraClaim = false; }
+    // the note from Friday-you clears review and gets delivered (v0.27)
+    if (META.note && NOTE_TEXTS[META.note.type]) {
+      const reviewed = reviewNote(NOTE_TEXTS[META.note.type]);
+      S.deliveredNote = { text: reviewed.text, type: META.note.type, mangled: reviewed.mangled };
+      if (META.note.type === 'warning') S.noteLockDiscount = true;
+      if (META.note.type === 'encouragement') S.noteHeal = true;
+      if (META.note.type === 'instruction' && !reviewed.mangled) {
+        PREPICKED_BOSS = PREPICKED_BOSS || pickFridayBoss();
+        S.deliveredNote.reveal = DIRECTORS[PREPICKED_BOSS].name;
+      }
+      META.note = null;
+    }
+    saveMeta();
     // apply owned upgrades to the fresh week (the ledger costs a slot of every day)
     S.maxTime = 10 + (META.up.coffee ? 1 : 0) + (META.up.monitor ? 1 : 0) - (META.up.ledger ? 1 : 0);
     S.pto = (META.week >= 6 ? 1 : 2) + (META.up.pto ? 1 : 0);
@@ -3508,6 +3758,7 @@ function boot() {
     S.stopwatchTimer = setInterval(updateStopwatch, 1000);
     buildWeek();
     render();
+    if (S.noteHeal) apply({ heal: 3 }); // encouragement, from the only person who was there
     startDay();
   };
   if (POLICY_NOTICES.length) {
