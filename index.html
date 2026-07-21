@@ -75,12 +75,6 @@
   }
   header h1 { font-size: 0.95em; letter-spacing: 4px; margin: 0; color: var(--accent); text-shadow: 0 0 8px rgba(82,224,210,0.4); }
   #daylabel { font-size: 0.8em; color: var(--ink-dim); letter-spacing: 2px; }
-  #daymap { display: block; margin: 2px auto 14px; max-width: 320px; width: 100%; }
-  .daynode { fill: var(--panel-2); stroke: var(--line); stroke-width: 1.5; transition: fill .5s, stroke .5s; }
-  .daynode.done { fill: var(--lock); stroke: var(--lock); }
-  .daynode.current { fill: var(--accent); stroke: var(--accent); animation: pulse 1.8s infinite; }
-  .daylbl { fill: var(--ink-dim); font-size: 9px; text-anchor: middle; font-family: inherit; }
-  .forkmark { fill: var(--warn); opacity: 0.85; }
   #weekclock {
     text-align: center; font-size: 1.5em; font-weight: bold; letter-spacing: 3px; color: var(--accent);
     margin: 0 0 16px; font-variant-numeric: tabular-nums; transition: color .4s;
@@ -367,8 +361,14 @@
   #cabinetoverlay .filenote { color: var(--ink-dim); }
   #cabinetoverlay .contractrow.met { border-left-color: var(--lock); }
   #cabinetoverlay .contractrow.unmet { border-left-color: var(--ink-dim); }
-  #stat-risk { border-color: var(--danger); min-width: 150px; }
-  #stat-risk b { font-size: 0.95em; }
+  /* small screens: the three fixed top-right buttons used to march left across
+     the whole header and collide with the title (Decisions Log #36 leftover) */
+  @media (max-width: 640px) {
+    #musicbtn   { top: 6px; right: 6px;   padding: 4px 7px; font-size: 0.58em; letter-spacing: 1px; }
+    #helpbtn    { top: 6px; right: 84px;  padding: 4px 7px; font-size: 0.58em; letter-spacing: 1px; }
+    #cabinetbtn { top: 6px; right: 168px; padding: 4px 7px; font-size: 0.58em; letter-spacing: 1px; }
+    #game header { padding-top: 18px; }
+  }
   #app { transition: filter .8s; }
   .card { position: relative; }
   .narrator {
@@ -455,14 +455,15 @@
   <h2>EMPLOYEE HANDBOOK (ABRIDGED)</h2>
   <b>Sanity</b> is your health. At zero, you burn out and the run ends. Emotional overhead is billed at cost: everything hurts one and a half times as much as the button implies, before the building settles further on top.<br>
   <b>Time</b> resets each morning. Run out and you enter Crunch: sanity costs rise 50%.<br>
-  <b>Credit</b> is what your work is worth. Every result you produce appears on the <b>At Risk tracker</b> (top bar, and in full at end of day).<br>
+  <b>Credit</b> is what your work is worth. Every result you produce appears on the <b>At Risk tracker</b>, shown in full at the end of each day.<br>
   <b>Paper Trails</b> lock an item so it cannot be claimed. Locks cost Time. Targets freeze at midnight Thursday.<br>
   <b>Friday, 4:00 PM:</b> someone reads the week aloud and claims your most valuable unlocked item, usually AVP Miller, sometimes one of his directors covering for him. You won't know who until the slide goes up. Later weeks, they claim more. Lock everything and nobody claims anything.<br>
   <b>The Agenda:</b> before the slide, the meeting runs items of business against the host's Composure, shown as a bar, up to a cap of one item in week 1, two from week 2, three from week 7. Each item is a shot at you, in the host's own dialect. Deflecting is safe, costs Sanity (more every week), and lets Composure recover a little. Countering risks Sanity and Reputation on a roll (Reputation helps, later weeks hurt, Miller is the hardest to beat, your opening stance tilts the odds for the whole meeting), but a win does real damage to the bar, and a loss lets it recover more than a deflect would. Break it completely and Friday can claim nothing at all; wear it down partway and one fewer item gets claimed. The fight can end early if you break it, or run the full cap if you don't. There is no way to skip the agenda.<br>
   <b>Reputation</b> matters at the edges, and it accrues at a recalibrated rate: gains land at 70% of face value, losses land in full. The building keeps the difference. Below 30, you may not decline evening "opportunities." At 70 or above, your standing shields your single best unlocked item from being claimed (he cannot publicly take the headline win of someone that visible). At 0, you're performance managed out, a run-ending outcome, same as Burnout.<br>
   <b>PTO</b> skips a card. Its use is noted.<br>
   <b>Termination</b> (Burnout, or Performance Managed Out at 0 Reputation) ends more than the week: you restart at week 1. Upgrades and commendations survive; the Escape Plan does not survive unemployment. The building rehires. The building always rehires.<br>
-  <b>Leverage</b> is paid at week's end and spent on Saturdays, on the version of you that leaves. Three purchases make up the Escape Plan. Complete it.<br><br>
+  <b>Leverage</b> is paid at week's end and spent on Saturdays, on the version of you that leaves. Three purchases make up the Escape Plan. Complete it.<br>
+  <b>Leaving</b> is the true ending, and it comes with an offer letter: a new position, a new cycle, also Everwell. Upgrades and commendations carry. The Escape Plan does not; it was the ticket. Each cycle the building settles harder, the agenda steadies itself when pressed, and the way out costs more than it did. The building is confident you will be back. The building has data.<br><br>
   <b>The clock</b> at the top is real. It starts the moment you clock in and runs the whole week, in actual seconds. Nothing in the building stops for it, and it does not stop for you.<br><br>
   This handbook is provided for your convenience. It is not a contract. Nothing is a contract.<br><br>
   <button class="choice" id="helpclose">Return to work</button>
@@ -481,16 +482,6 @@
       <h1>FRIDAY MEETING</h1>
       <div id="daylabel">MONDAY</div>
     </header>
-    <svg id="daymap" viewBox="0 0 300 42" aria-hidden="true">
-      <line x1="20" y1="16" x2="280" y2="16" stroke="var(--line)" stroke-width="2"/>
-      <circle id="daycircle-0" class="daynode" cx="20" cy="16" r="8"/><text class="daylbl" x="20" y="36">MON</text>
-      <circle id="daycircle-1" class="daynode" cx="85" cy="16" r="8"/><text class="daylbl" x="85" y="36">TUE</text>
-      <rect class="forkmark" x="80.5" y="1" width="5" height="5" transform="rotate(45 83 3.5)"/>
-      <circle id="daycircle-2" class="daynode" cx="150" cy="16" r="8"/><text class="daylbl" x="150" y="36">WED</text>
-      <circle id="daycircle-3" class="daynode" cx="215" cy="16" r="8"/><text class="daylbl" x="215" y="36">THU</text>
-      <rect class="forkmark" x="210.5" y="1" width="5" height="5" transform="rotate(45 213 3.5)"/>
-      <circle id="daycircle-4" class="daynode" cx="280" cy="16" r="8"/><text class="daylbl" x="280" y="36">FRI</text>
-    </svg>
     <div id="weekclock">CLOCKED IN · 0:00</div>
     <div id="stats">
       <div class="stat" id="stat-sanity"><span class="stat-ic"><svg viewBox="0 0 16 16"><polyline points="1,9 4,9 6,3 9,13 11,9 15,9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Sanity <b id="s-sanity">100</b><div id="sanitybarwrap"><div id="sanitybar"></div></div></div>
@@ -498,11 +489,10 @@
       <div class="stat" id="stat-credit"><span class="stat-ic"><svg viewBox="0 0 16 16"><path d="M1 6 L1 1 L6 1 L14 9 L9 14 Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/><circle cx="4" cy="4" r="1" fill="currentColor"/></svg></span>Credit <b id="s-credit">0</b></div>
       <div class="stat" id="stat-rep"><span class="stat-ic"><svg viewBox="0 0 16 16"><path d="M8 1 L14 3.2 V8 C14 12 11 14 8 15 C5 14 2 12 2 8 V3.2 Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span>Reputation <b id="s-rep">50</b></div>
       <div class="stat" id="stat-pto"><span class="stat-ic"><svg viewBox="0 0 16 16"><path d="M8 15 C8 15 7 9 8 5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M8 6 C5 5 3 3 2 1 C5 1 8 3 8 7 Z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6 C11 5 13 3 14 1 C11 1 8 3 8 7 Z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>PTO <b id="s-pto">2</b></div>
-      <div class="stat" id="stat-risk"><span class="stat-ic"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="0.9" fill="currentColor"/></svg></span>At Risk <b id="s-risk">none</b></div>
       <div id="crunchtag">CRUNCH</div>
     </div>
     <div id="contractline"></div>
-    <div class="card" id="card"></div>
+    <div class="card" id="card" aria-live="polite"></div>
     <div class="footer-note">EVERWELL GROUP · OPERATIONS WING · THIS TERMINAL IS MONITORED FOR YOUR SAFETY</div>
   </div>
 </div>
@@ -510,8 +500,8 @@
 <script>
 'use strict';
 // =============================================================
-// FRIDAY MEETING: full-week vertical slice (v0.2)
-// Balance v0.1 per docs/Friday_Meeting_Design_Doc.md
+// FRIDAY MEETING (v0.26 "The Offer Letter")
+// Balance per docs/Friday_Meeting_Design_Doc.md · history in docs/CHANGELOG.md
 // All names fictional. Boss name is a placeholder pending lore thread.
 // =============================================================
 
@@ -521,7 +511,7 @@ const BOSS = 'AVP Miller';
 // ---------- meta-progression (persists across weeks via localStorage) ----------
 const META_KEY = 'fm_meta_v1';
 function loadMeta() {
-  const def = { week: 1, leverage: 0, up: {}, life: { plant: 2, friend: 2, hobby: 2 }, ninaTrust: false, presidentSeen: false,
+  const def = { week: 1, leverage: 0, ng: 0, onboarded: 0, bestWeekMs: 0, up: {}, life: { plant: 2, friend: 2, hobby: 2 }, ninaTrust: false, presidentSeen: false,
     fileCabinet: [], contractHistory: [], lastClaimLine: -1, lastClaimLineByBoss: {}, trainingPending: false,
     balloonVendorPending: false, balloonVendorWeek: 0, surveyFlagged: false, surveyFlaggedWeek: 0, totalPlayMs: 0,
     comms: {}, stats: { pushbacks: 0, agendaSweeps: 0, bossesSeen: {} } };
@@ -550,6 +540,7 @@ const STORE = [
   { id: 'monitor',  name: 'A Second Monitor (From Home)',      cost: 20, desc: '+1 max Time. The IT ticket for one at the office enters its second fiscal year.', requires: 'aGrade', cat: 'time' },
   { id: 'fridgeKey',name: 'A Copy of the Key (Don\'t Ask How)', cost: 35, desc: 'Unlocks a fourth option on The Minifridge: take a Coke yourself, whenever. +30 Sanity, real Reputation risk every time, people notice a locked door that isn\'t locked for you.', cat: 'time' },
   { id: 'templates',name: 'The Templates Folder',              cost: 10, desc: 'Paper trails cost 1 less Time. You\'ve done this before. You\'ll do it again.', cat: 'career' },
+  { id: 'ledger',   name: 'A Ledger of Your Own',              cost: 25, desc: 'END OF WEEK: +1 Leverage for every Paper Trail still held. COST: -1 max Time, every day, forever. Documentation is a second job. This is its salary.', cat: 'career' },
   { id: 'lunch',    name: 'Standing Lunch with Chris',         cost: 10, desc: 'Start every week with Chris as an ally (one free lock per week). Also unlocks a better daily lunch option.', cat: 'career' },
   { id: 'decoy',    name: 'A Decoy Deliverable',               cost: 18, desc: 'Thursday night, name one unlocked item as the one he watches. He claims it first, ahead of whatever he\'d normally take. Doesn\'t change what he takes total, changes what he takes instead.', trinket: true, cat: 'career' },
   { id: 'rolodex',  name: 'The Old Rolodex',                   cost: 20, desc: 'Monday boot names who is running the Friday Meeting. Somebody who used to work here still answers your calls.', requires: 'coverage', cat: 'career' },
@@ -563,6 +554,15 @@ const STORE_CATS = [
   { id: 'escape', label: 'ESCAPE PLAN' }
 ];
 function escapeReady() { return META.up.portfolio && META.up.network && META.up.savings; }
+// what a store item actually costs today: the Escape Plan gets 15 more expensive
+// per completed cycle (NG+, v0.26; the market knows you'll pay it), and Nina's
+// call still takes 10 off the Network
+function storeCost(it) {
+  let c = it.cost;
+  if (it.escape) c += 15 * (META.ng || 0);
+  if (it.id === 'network' && META.ninaTrust) c -= 10;
+  return c;
+}
 
 // ---------- the personnel file: commendations (v0.21) ----------
 // Deadpan corporate awards, tracked across runs, each paying a one-time
@@ -594,6 +594,8 @@ const COMMENDATIONS = [
     check: () => META.week >= 8 },
   { id: 'vested', name: 'FULLY VESTED', desc: 'Own everything in the store that is not a way out.', bonus: 15,
     check: () => STORE.filter(it => !it.escape).every(it => META.up[it.id]) },
+  { id: 'revolvingDoor', name: 'THE REVOLVING DOOR', desc: 'Leave on your own terms twice. The building has a word for people like you. The word is "boomerang," and it is said fondly, through teeth.', bonus: 15,
+    check: (kind) => kind === 'quit' && (META.ng || 0) >= 1 },
   { id: 'underTheWire', name: 'UNDER THE WIRE', desc: 'Clock out in under 6 real minutes, survived or compliant. The building calls this "efficient."', bonus: 10,
     // real elapsed time, per the actual stopwatch, not an in-fiction reading. Threshold
     // is a first guess, tune after seeing real playtest clock-out times.
@@ -732,8 +734,20 @@ function counterChance(boss) {
     - Math.min(0.16, 0.02 * (META.week - 1))
     - (boss.key === 'miller' ? 0.15 : 0)
     + (S.fightFooting || 0)
+    - (S.bossPhase2 ? 0.08 : 0) // NG+ phase 2: he has seen your best move before
   ));
 }
+
+// NG+ boss phase 2 (v0.26): from the second cycle on, wounding a boss past half
+// Composure doesn't just hurt them, it steadies them. One line, in their own
+// dialect, and the rest of the fight is played against someone who has done
+// this longer than you have: counters land less, their Composure recovers more.
+const PHASE_LINES = {
+  miller: 'Miller straightens the agenda against the table, twice, and finds the voice he uses for Upstairs. "Let\'s keep this productive." The room recalibrates around him.',
+  reed: 'Reed uncaps the expensive pen. Whatever this meeting was, it is now a process, and processes do not lose.',
+  brooks: 'Brooks laughs, half a second too late, and then stops laughing entirely. Nobody in the room has ever seen that before.',
+  calloway: 'Calloway closes her eyes, breathes in for four counts, and opens them with fresh, weaponized calm. "I\'m so glad we\'re having this conversation."'
+};
 
 const BOSS_MOVES = {
   miller: [
@@ -893,13 +907,19 @@ function runBossRounds(boss, done) {
               const wasIntact = S.bossComposure > 0;
               S.bossComposure = Math.max(0, S.bossComposure - COMPOSURE_WIN_DAMAGE);
               const justBroke = wasIntact && S.bossComposure <= 0;
+              // NG+ phase 2: hurt past half, not broken, and they steady themselves
+              let phaseLine = '';
+              if (META.ng >= 1 && !S.bossPhase2 && !justBroke && S.bossComposure <= S.bossComposureMax / 2) {
+                S.bossPhase2 = true;
+                phaseLine = ' ' + PHASE_LINES[boss.key];
+              }
               if (!apply({ rep: justBroke ? 5 : 2 })) return; // the run can end right here, mid-meeting
               sfx('lock');
               updateComposureBar();
-              showResult(mv.win + (justBroke ? ' Something in ' + boss.object + ' actually gives, in front of everyone. The room feels it too.' : ''), cont);
+              showResult(mv.win + (justBroke ? ' Something in ' + boss.object + ' actually gives, in front of everyone. The room feels it too.' : '') + phaseLine, cont);
             } else {
               const d = counterLossDelta();
-              S.bossComposure = Math.min(S.bossComposureMax, S.bossComposure + COMPOSURE_LOSS_REGEN);
+              S.bossComposure = Math.min(S.bossComposureMax, S.bossComposure + COMPOSURE_LOSS_REGEN + (S.bossPhase2 ? 5 : 0));
               if (!apply({ sanity: d.sanity, rep: -d.rep })) return; // the run can end right here, mid-meeting
               sfx('bad');
               updateComposureBar();
@@ -908,7 +928,7 @@ function runBossRounds(boss, done) {
           } },
         { label: mv.deflect, delta: { sanity: deflectCost() }, result: mv.deflectLine,
           after: (cont) => {
-            S.bossComposure = Math.min(S.bossComposureMax, S.bossComposure + COMPOSURE_DEFLECT_REGEN);
+            S.bossComposure = Math.min(S.bossComposureMax, S.bossComposure + COMPOSURE_DEFLECT_REGEN + (S.bossPhase2 ? 4 : 0));
             updateComposureBar();
             showResult(mv.deflectLine, cont);
           } }
@@ -1016,7 +1036,8 @@ function apply(d, opts) {
   if (sanityCost > 0) sanityCost = Math.ceil(sanityCost * 1.5);
   // v0.23: week 1 used to be the only truly free week (surcharge 0); now it
   // carries the same +1 week 2 always had. Weeks 2-6+ ramp unchanged.
-  if (sanityCost > 0) sanityCost += Math.min(5, Math.max(1, META.week - 1));
+  // NG+ (v0.26): every cycle after the first, the building settles one point harder, permanently
+  if (sanityCost > 0) sanityCost += Math.min(5, Math.max(1, META.week - 1)) + (META.ng || 0);
   if (sanityCost > 0 && META.up.therapy) sanityCost = Math.max(1, sanityCost - 1);
   if (sanityCost > 0 && inCrunch()) sanityCost = Math.ceil(sanityCost * 1.5);
   // the ergonomic assessment: the first hit of each day lands softer (v0.21)
@@ -1198,30 +1219,12 @@ function render() {
   $('s-pto').textContent = S.pto;
   $('daylabel').textContent = (DAYS[S.day] || '·') + ' · WEEK ' + META.week;
   updateStopwatch();
-  // the week map: filled nodes are done, the pulsing one is today
-  for (let i = 0; i < 5; i++) {
-    const node = $('daycircle-' + i);
-    if (!node) continue;
-    node.classList.remove('done', 'current');
-    if (i < S.day) node.classList.add('done');
-    else if (i === S.day) node.classList.add('current');
-  }
   const bar = $('sanitybar');
   bar.style.width = S.sanity + '%';
   bar.style.background = S.sanity > 60 ? 'var(--accent)' : S.sanity > 30 ? 'var(--warn)' : 'var(--danger)';
   const crunch = inCrunch();
   $('crunchtag').style.display = crunch ? 'block' : 'none';
   document.body.classList.toggle('crunch', crunch);
-  // the tracker never sleeps: the current target is always visible
-  const riskTop = topUnlocked();
-  if (riskTop) {
-    const nm = riskTop.name.length > 20 ? riskTop.name.slice(0, 19) + '…' : riskTop.name;
-    $('s-risk').textContent = nm + ' +' + riskTop.value;
-    $('stat-risk').style.borderColor = 'var(--danger)';
-  } else {
-    $('s-risk').textContent = S.items.length ? 'all secured' : 'none';
-    $('stat-risk').style.borderColor = S.items.length ? 'var(--lock)' : 'var(--line)';
-  }
   // the office darkens as your Time runs out, and sickens as Sanity drains:
   // continuous corruption, not just the one-shot Burnout glitch
   const bright = crunch ? 0.8 : S.time <= 2 ? 0.9 : 1;
@@ -1268,6 +1271,9 @@ function showCard(c, onDone) {
     }
   }
   let html = '<h2>' + c.title + '</h2><div class="tag">' + (c.tag || 'ENCOUNTER') + '</div><div class="flavor">' + flavor + '</div>';
+  if (c.orientNote) {
+    html += '<div class="event" style="border-left-color: var(--accent); color: var(--ink-dim); font-size: 0.9em;">' + c.orientNote + '</div>';
+  }
   if (dissoc) {
     html += '<div class="narrator">' + NARRATOR[Math.floor(Math.random() * NARRATOR.length)] + '</div>';
   }
@@ -2274,6 +2280,9 @@ function atRiskScreen(onDone) {
   const target = topUnlocked();
   let html = '<h2>At Risk</h2><div class="tag">CREDIT TRACKER · ' + (isThu ? '<span style="color:var(--danger)">FINAL NIGHT · TARGETS LOCK AT MIDNIGHT</span>' : 'WHAT THE FRIDAY MEETING ALREADY KNOWS ABOUT') + '</div>';
   html += '<div class="flavor">Anything unlocked can be claimed at the Friday Meeting. Highest unlocked item is the target.</div>';
+  if (S.orientation && S.day === 0) {
+    html += '<div class="event" style="border-left-color: var(--accent); color: var(--ink-dim); font-size: 0.9em;">FROM YOUR ONBOARDING PACKET: This screen appears every evening. Filing a Paper Trail tonight costs Time and cannot be undone by anyone above you. Items left exposed by Thursday midnight stay exposed. Fridays are why this packet exists.</div>';
+  }
   if (S.millerGone) {
     html += '<div class="event" style="border-left-color: var(--lock);">It is 3:04 PM and Miller\'s office is dark. He left "for a thing." He always has a thing. The building relaxes by one degree: <b>paper trails cost 1 less tonight.</b></div>';
   }
@@ -2348,6 +2357,12 @@ function buildWeek() {
   // deal only from unlocked personnel files; new files are added each week
   const pool = Object.keys(CARD_UNLOCKS).filter(k => CARD_UNLOCKS[k] <= META.week);
   weekDeck = shuffle(pool);
+  // the scripted first Monday (v0.26): a brand-new hire's first two cards are
+  // fixed, one that teaches earning Credit, one whose best choice IS a Paper
+  // Trail, so the earn/lock/steal loop is taught by play before Friday tests it
+  if (S.orientation) {
+    weekDeck = ['quickSync', 'partnership', ...weekDeck.filter(k => k !== 'quickSync' && k !== 'partnership')];
+  }
   // who runs 4 PM this week. Weeks 1-2 are always Miller, so the player learns
   // the baseline before the roster starts rotating. You don't find out who
   // showed up until the slide goes up.
@@ -2434,13 +2449,24 @@ function startDay() {
   interstitial(DAYS[S.day], subs[S.day], () => { render(); nextEncounter(); });
 }
 
+// the onboarding packet (v0.26): shown once, on a brand-new save's first Monday,
+// pinned to the three fixed cards. Deadpan, diegetic, and it teaches the loop:
+// Time is spent, Credit appears on the tracker, Paper Trails are the game.
+const ORIENT_NOTES = {
+  standup: 'FROM YOUR ONBOARDING PACKET: Meetings cost Time. Time resets each morning. Running out does not excuse you from the afternoon.',
+  quickSync: 'FROM YOUR ONBOARDING PACKET: Completed work becomes Credit and appears on the At Risk tracker. The tracker is reviewed on Fridays. By someone.',
+  partnership: 'FROM YOUR ONBOARDING PACKET: A Paper Trail secures a result to your name. Secured items cannot be Reassigned. This is the most important sentence in the packet.'
+};
+
 function nextEncounter() {
   if (S.over) return;
   // fixed injections (elevator, training-compliance) always play out first
   if (S.queue.length > 0) {
     const key = S.queue.shift();
     if (key === 'fridayMorning') return fridayMorning();
-    return showCard(CARDS[key](), nextEncounter);
+    const c = CARDS[key]();
+    if (S.orientation && S.day === 0 && ORIENT_NOTES[key]) c.orientNote = ORIENT_NOTES[key];
+    return showCard(c, nextEncounter);
   }
   if (S.choicePool && S.choicePool.length > 0) {
     // one card left: no real choice left to make, it just happens
@@ -2614,6 +2640,7 @@ function meetingProper() {
   S.escalationBonus = 0;
   S.fightFooting = 0;
   S.roundsWon = 0;
+  S.bossPhase2 = false;
   S.bossComposureMax = COMPOSURE_MAX;
   S.bossComposure = COMPOSURE_MAX;
   inBossFight = true;
@@ -2733,6 +2760,9 @@ function runMeeting(boss) {
   }
   function verdict() {
     const v = $('meetverdict');
+    // the weekly performance summary reads these later (v0.26)
+    S.claimedItems = targets.map(t => ({ name: t.name, value: t.value }));
+    S.meetingBossName = boss.name;
     // the claimed items physically leave your side of the table
     targets.forEach(t => {
       const idx = items.indexOf(t);
@@ -2790,6 +2820,19 @@ function awardLeverage(kind, grade) {
   const noEndOfWeekBonus = kind === 'burnout' || kind === 'firedForCause';
   // audit week: every locked item pays out
   if (MOD.id === 'audit' && !noEndOfWeekBonus) earned += S.items.filter(i => i.locked).length;
+  // the ledger (v0.26): documentation as a second job. Every Paper Trail still
+  // held at week's end pays out, every single week, in exchange for the max
+  // Time it costs to maintain. The build-around item: templates + ledger +
+  // archivist contracts + audit weeks stack into an actual documentation build.
+  if (META.up.ledger && !noEndOfWeekBonus) earned += S.items.filter(i => i.locked).length;
+  // the stopwatch's personal best: fastest week that ended with you still employed (v0.26)
+  if (kind === 'survived' || kind === 'compliance') {
+    const elapsed = (S.weekEndMs || Date.now()) - (S.weekStartMs || Date.now());
+    if (elapsed > 0 && (!META.bestWeekMs || elapsed < META.bestWeekMs)) {
+      META.bestWeekMs = elapsed;
+      S.newBestWeek = true;
+    }
+  }
   // the weekly contract
   if (S.contract && !noEndOfWeekBonus && S.contract.check()) { earned += 4; S.contractMet = true; }
   if (S.contract) {
@@ -2913,6 +2956,8 @@ function ending(kind) {
     // the actual speedrun stat: total real time clocked in across the whole save, this week included
     const finalMs = (META.totalPlayMs || 0) + (Date.now() - (S.weekStartMs || Date.now()));
     META.totalPlayMs = finalMs; saveMeta();
+    // the door commendations can finally persist, now that quitting doesn't wipe the file (v0.26)
+    checkCommendations('quit');
     el.innerHTML = '<div class="endingtitle">TWO WEEKS\' NOTICE</div>' +
       '<div class="flavor">You wait until he finishes the word "wins." Then you stand, cross Conference Room C, and set the letter beside his laptop. On the keyboard, actually, where it cannot be scrolled past.<br><br>' +
       'And here is the thing you will tell people for years: <b>he looks up.</b> For the first time in institutional memory, ' + BOSS + ' looks up from the screen at a human being who is leaving. The room watches him do it. Somebody\'s coffee goes cold in real time.<br><br>' +
@@ -2921,11 +2966,25 @@ function ending(kind) {
       scoreBlock(true) +
       '<div class="event" style="border-left-color: var(--lock);"><b>THE TRUE ENDING.</b> Built across ' + META.week + ' week' + (META.week > 1 ? 's' : '') + ': a portfolio, a network, a runway. None of it appeared on their tracker. That was the point.</div>' +
       '<div class="event">TIME CLOCKED, START TO DOOR: <b>' + formatStopwatch(finalMs) + '</b></div>' +
-      '<button class="choice" id="newgame" style="margin-top:10px;">NEW GAME: someone else\'s first Monday</button>';
+      // NEW GAME+ (v0.26): the true ending now has a door on the other side of it.
+      // The next job is also Everwell, because everything is. Upgrades, commendations,
+      // and leftover Leverage carry; the Escape Plan was spent getting you here; the
+      // market prices your ambition in a little more every time you use the door.
+      '<div class="event" style="border-left-color: var(--warn);">Monday, there is an offer letter. Operations. A different campus. The org chart has the same shape. The salary is described as "competitive," a word that does not say with whom.</div>' +
+      '<button class="choice" id="ngplus" style="margin-top:10px;">ACCEPT THE OFFER · CYCLE ' + ((META.ng || 0) + 2) + '<span class="cost">what you built carries; the Escape Plan was spent getting out; the building settles harder where you\'re going, and it knows you can leave</span></button>' +
+      '<button class="choice" id="newgame" style="margin-top:10px;">NEW GAME: someone else\'s first Monday<span class="cost">erase the record entirely. The building will not remember you. Neither will the save file.</span></button>';
+    $('ngplus').onclick = () => {
+      META.ng = (META.ng || 0) + 1;
+      META.week = 1;
+      ['portfolio', 'network', 'savings'].forEach(k => { delete META.up[k]; });
+      saveMeta();
+      location.reload();
+    };
     $('newgame').onclick = () => { try { localStorage.removeItem(META_KEY); } catch (e) {} location.reload(); };
     return;
   }
   if (kind === 'compliance') {
+    S.weekEndMs = Date.now();
     const earned = awardLeverage('compliance');
     el.innerHTML = '<div class="endingtitle">MALICIOUS COMPLIANCE</div>' +
       '<div class="flavor">You beat the system with its own favorite weapon: documentation. Every win secured, every trail papered, every witness looped. He stood at the front of Conference Room C with nothing to take, and for 4 entire minutes, ' + BOSS + ' experienced what the wellness module calls "an opportunity for growth."<br><br>You have not escaped. You have merely won. On Monday it begins again. But they know, now. And so do you.</div>' +
@@ -2943,6 +3002,8 @@ function ending(kind) {
     const grade = stolen <= 5 && S.sanity >= 50 ? 'A'
                 : stolen <= 10 && S.sanity >= 35 ? 'B'
                 : S.sanity >= 25 ? 'C' : 'D';
+    S.weekEndMs = Date.now();
+    S.weekGrade = grade;
     const earned = awardLeverage('survived', grade);
     el.innerHTML = '<div class="endingtitle">WEEK SURVIVED · GRADE ' + grade + '</div>' +
       '<div class="tag">GRADED ON WHAT HE TOOK, NOT WHAT YOU MADE</div>' +
@@ -2951,7 +3012,42 @@ function ending(kind) {
       '<div class="event">+' + earned + ' LEVERAGE. The raise is capped. The exit is not.</div>' +
       '<button class="choice" id="toStore" style="margin-top:10px;">Go home. Spend the weekend on yourself.</button>';
   }
-  $('toStore').onclick = storeScreen;
+  // survived and compliance weeks get a performance summary before Saturday;
+  // the building only writes memos about people it still employs
+  $('toStore').onclick = () => reportCard(kind, S.weekGrade || null);
+}
+
+// ---------- the weekly performance summary (v0.26) ----------
+// One screen that assembles the whole week: the shareable artifact. Auto-generated,
+// never reviewed, always retained.
+function reportCard(kind, grade) {
+  const el = $('card');
+  el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  const earnedTotal = S.items.reduce((a, b) => a + b.value, 0);
+  const kept = S.items.filter(i => !i.stolen).reduce((a, b) => a + b.value, 0);
+  const stolen = earnedTotal - kept;
+  const locks = S.items.filter(i => i.locked).length;
+  const claimed = S.claimedItems || [];
+  const weekMs = (S.weekEndMs || Date.now()) - (S.weekStartMs || Date.now());
+  const headline = kind === 'compliance' ? 'NOTHING WAS REASSIGNED' : 'GRADE ' + (grade || 'D');
+  const agendaLine = S.roundsPlayed
+    ? 'Items of business: <b>' + S.roundsWon + ' held of ' + S.roundsPlayed + '</b>' +
+      (S.escalationBonus === -2 ? ' · <span class="secure">COMPOSURE: BROKEN</span>' : S.escalationBonus === -1 ? ' · <b style="color:var(--warn)">COMPOSURE: SHAKEN</b>' : ' · composure: intact, regrettably')
+    : '';
+  let html = '<h2>WEEKLY PERFORMANCE SUMMARY</h2>' +
+    '<div class="tag">INTERNAL MEMORANDUM · AUTO-GENERATED · NOT REVIEWED · RETAINED</div>' +
+    '<div class="scoregrid" style="font-size:1.02em;">WEEK <b>' + META.week + '</b>' + (META.ng ? ' · CYCLE <b>' + (META.ng + 1) + '</b>' : '') + ' · <b style="color:var(--accent);letter-spacing:2px;">' + headline + '</b> · Host: <b>' + (S.meetingBossName || BOSS) + '</b></div>' +
+    '<div class="scoregrid">Credit produced: <b>' + earnedTotal + '</b> · Retained: <b>' + kept + '</b> · Reassigned: <b style="color:var(--danger)">' + stolen + '</b> · Paper Trails filed: <b>' + locks + '</b></div>' +
+    (claimed.length
+      ? '<div class="event" style="border-left-color: var(--danger);">REASSIGNED THIS WEEK:<br>' + claimed.map(c => '"' + c.name + '" · +' + c.value).join('<br>') + '</div>'
+      : '<div class="event" style="border-left-color: var(--lock);">REASSIGNED THIS WEEK: nothing. The slide was read aloud anyway, to keep the muscle warm.</div>') +
+    '<div class="scoregrid">Sanity remaining: <b>' + S.sanity + '</b> · Reputation: <b>' + S.rep + '</b>' + (agendaLine ? ' · ' + agendaLine : '') + '</div>' +
+    '<div class="scoregrid">TIME CLOCKED THIS WEEK: <b>' + formatStopwatch(weekMs) + '</b>' +
+    (S.newBestWeek ? ' · <span class="secure">A PERSONAL RECORD. IT WILL NOT BE MENTIONED AGAIN.</span>' : (META.bestWeekMs ? ' · fastest on file: <b>' + formatStopwatch(META.bestWeekMs) + '</b>' : '')) + '</div>' +
+    '<div class="flavor" style="font-size:0.9em;">This summary was generated by the tracker. The tracker does not evaluate. It remembers.</div>' +
+    '<button class="choice" id="fileit" style="margin-top:10px;">File it. Go home.</button>';
+  el.innerHTML = html;
+  $('fileit').onclick = storeScreen;
 }
 
 // ---------- the store (Saturday: your time, your money, their absence) ----------
@@ -2963,10 +3059,10 @@ function storeScreen() {
   // real elapsed time, this week plus everything banked before it
   const weekMs = Date.now() - (S.weekStartMs || Date.now());
   const totalMs = (META.totalPlayMs || 0) + weekMs;
-  let html = '<h2>Saturday, 9:04 AM</h2><div class="tag">YOUR TIME · NO BADGE · NOT MONITORED (PROBABLY)</div>' +
+  let html = '<h2>Saturday, 9:04 AM</h2><div class="tag">YOUR TIME · NO BADGE · NOT MONITORED (PROBABLY)' + (META.ng ? ' · CYCLE ' + (META.ng + 1) : '') + '</div>' +
     '<div class="flavor">The week paid you in the only currency the building can\'t claim. Spend it on the version of you that leaves.</div>' +
     '<div class="scoregrid">LEVERAGE: <b>' + META.leverage + '</b> · ESCAPE PLAN: <b>' + escapeCount + '/3</b>' + (escapeReady() ? ' · <span class="secure">READY. The letter is in your bag</span>' : '') + '</div>' +
-    '<div class="scoregrid" style="color:var(--ink-dim);">THIS WEEK: <b>' + formatStopwatch(weekMs) + '</b> · TOTAL CLOCKED: <b>' + formatStopwatch(totalMs) + '</b></div>';
+    '<div class="scoregrid" style="color:var(--ink-dim);">THIS WEEK: <b>' + formatStopwatch(weekMs) + '</b> · TOTAL CLOCKED: <b>' + formatStopwatch(totalMs) + '</b>' + (META.bestWeekMs ? ' · FASTEST WEEK ON FILE: <b>' + formatStopwatch(META.bestWeekMs) + '</b>' : '') + '</div>';
   // termination: the run is over, the file is not
   if (S.terminated) {
     const LOST_LINES = {
@@ -3005,8 +3101,7 @@ function storeScreen() {
     html += '<div class="tag" style="margin-top:14px;">' + cat.label + '</div>';
     items.forEach(it => {
       const has = META.up[it.id];
-      // Nina made a call: the Network is cheaper if she trusts you
-      const cost = (it.id === 'network' && META.ninaTrust) ? it.cost - 10 : it.cost;
+      const cost = storeCost(it);
       const afford = META.leverage >= cost;
       // commendation-gated items show what they need, greyed, until earned
       if (!has && it.requires && !(META.comms || {})[it.requires]) {
@@ -3022,7 +3117,8 @@ function storeScreen() {
           '<span style="color:var(--ink-dim);font-size:0.88em;white-space:normal;margin-top:4px;">' + it.desc + '</span></div>';
       } else {
         html += '<button class="choice" data-buy="' + it.id + '" ' + (afford ? '' : 'disabled') + '>' + (it.escape ? '⬒ ' : it.trinket ? '◎ ' : '') + it.name + ' · ' + cost + ' Leverage' +
-          (cost !== it.cost ? ' <span class="secure">(Nina made a call)</span>' : '') +
+          (it.id === 'network' && META.ninaTrust ? ' <span class="secure">(Nina made a call)</span>' : '') +
+          (it.escape && META.ng ? ' <span style="color:var(--warn)">(the market has adjusted)</span>' : '') +
           '<span class="cost">' + it.desc + '</span></button>';
       }
     });
@@ -3057,7 +3153,7 @@ function storeScreen() {
       const it = STORE.find(x => x.id === btn.dataset.buy);
       if (!it) return;
       if (it.requires && !(META.comms || {})[it.requires]) return;
-      const cost = (it.id === 'network' && META.ninaTrust) ? it.cost - 10 : it.cost;
+      const cost = storeCost(it);
       if (META.up[it.id] || META.leverage < cost) return;
       sfx('buy');
       META.leverage -= cost;
@@ -3083,7 +3179,9 @@ function storeScreen() {
 let AC = null, musicOn = false, musicNodes = null;
 
 function startMusic() {
-  if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+  // no Web Audio (old browser, headless run): the building stays quiet, nothing breaks
+  try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  if (!AC) return;
   AC.resume();
   const master = AC.createGain();
   master.gain.setValueAtTime(0.0001, AC.currentTime);
@@ -3302,42 +3400,47 @@ function buildBootLines() {
   const lines = [
     'EVERWELL GROUP · OPERATIONS TERMINAL 4B',
     GREETS[(META.week - 1) % GREETS.length],
-    'WEEK ' + META.week + '. ' + KNOWS[(META.week - 1) % KNOWS.length]
+    'WEEK ' + META.week + (META.ng ? ' · CYCLE ' + (META.ng + 1) : '') + '. ' + KNOWS[(META.week - 1) % KNOWS.length]
   ];
   // Difficulty is announced, never hidden, but it doesn't need to be read aloud
-  // every single week. It's collected here and offered as a notice, not force-fed.
+  // every single week. Each notice carries the week it took effect (w), so the
+  // memo can lead with WHAT CHANGED and file the rest as standing policy
+  // (v0.26; w === current week reads as new, w of 0 means always-new).
+  const wk = META.week;
   const notices = [];
-  notices.push('POLICY UPDATE: EMOTIONAL OVERHEAD IS NOW BILLED AT COST. ALL SANITY EXPENDITURES ARE ASSESSED AT 150% OF STICKER.');
-  notices.push('POLICY UPDATE: RECOGNITION HAS BEEN RECALIBRATED. REPUTATION GAINS NOW LAND AT 70% OF FACE VALUE. LOSSES ARE UNAFFECTED. THE BUILDING THANKS YOU IN ADVANCE.');
-  notices.push('NOTICE: THE BUILDING HAS ALREADY BEGUN TO SETTLE, EFFECTIVE IMMEDIATELY. YOUR FIRST WEEK IS NOT EXEMPT.');
-  if (META.week === 1) notices.push('POLICY UPDATE: THE OCCASIONAL EVENING ASK NOW BEGINS DAY ONE, IN SMALL DOSES, AS A COURTESY.');
-  if (META.week >= 2) notices.push('POLICY UPDATE: EVENING AVAILABILITY IS NOW A CORE VALUE.');
-  if (META.week >= 2) notices.push('NOTICE: THE BUILDING CONTINUES TO SETTLE. EVERYTHING COSTS SLIGHTLY MORE NOW, AND WILL KEEP COSTING MORE FOR A WHILE.');
-  if (META.week >= 2) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. AVP MILLER HAS A REPUTATION TO MAINTAIN, AND SO, BY EXTENSION, DOES WHOEVER IS COVERING FOR HIM.');
-  if (META.week >= 2) notices.push('POLICY UPDATE: THE FRIDAY MEETING AGENDA HAS BEEN EXPANDED TO TWO (2) ITEMS OF BUSINESS. ATTENDANCE OF YOUR WHOLE SELF IS EXPECTED.');
-  if (META.week >= 2) notices.push('NOTICE: "WELLNESS RESOURCES" ARE BEING REVIEWED FOR EFFICIENCY. AN UPDATE WILL FOLLOW.');
-  if (META.week >= 4) notices.push('POLICY UPDATE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED. RECOVERY IS SLIGHTLY LESS EFFECTIVE NOW.');
-  if (META.week >= 5) notices.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A SECOND SIGNATURE.');
-  if (META.week >= 6) notices.push('NOTICE: THE BUILDING HAS FINISHED SETTLING. THIS IS APPARENTLY WHAT FOUNDATIONAL LOOKS LIKE.');
-  if (META.week >= 6) notices.push('POLICY UPDATE: PTO REQUESTS NOW REQUIRE DIRECTOR APPROVAL. PLAN AHEAD.');
-  if (META.week >= 7) notices.push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE THREE (3) WINS. HE IS BEING CONSIDERED FOR SOMETHING.');
-  if (META.week >= 7) notices.push('POLICY UPDATE: THE FRIDAY MEETING AGENDA NOW RUNS THREE (3) ITEMS OF BUSINESS. THE MEETING IS GROWING. NOTHING ELSE IS.');
-  if (META.week >= 8) notices.push('NOTICE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED FURTHER. THIS IS PROGRESS.');
-  if (META.week >= 9) notices.push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A THIRD SIGNATURE.');
+  const push = (t, w) => notices.push({ t, w });
+  push('POLICY UPDATE: EMOTIONAL OVERHEAD IS NOW BILLED AT COST. ALL SANITY EXPENDITURES ARE ASSESSED AT 150% OF STICKER.', 1);
+  push('POLICY UPDATE: RECOGNITION HAS BEEN RECALIBRATED. REPUTATION GAINS NOW LAND AT 70% OF FACE VALUE. LOSSES ARE UNAFFECTED. THE BUILDING THANKS YOU IN ADVANCE.', 1);
+  push('NOTICE: THE BUILDING HAS ALREADY BEGUN TO SETTLE, EFFECTIVE IMMEDIATELY. YOUR FIRST WEEK IS NOT EXEMPT.', 1);
+  if (META.ng) push('WELCOME TO CYCLE ' + (META.ng + 1) + '. YOUR EXPERIENCE HAS BEEN PRICED IN: THE BUILDING SETTLES ' + META.ng + ' POINT' + (META.ng > 1 ? 'S' : '') + ' HARDER, THE AGENDA STEADIES ITSELF WHEN PRESSED, AND THE WAY OUT COSTS MORE THAN IT DID. YOU KNEW THIS WHEN YOU SIGNED.', wk);
+  if (wk === 1) push('POLICY UPDATE: THE OCCASIONAL EVENING ASK NOW BEGINS DAY ONE, IN SMALL DOSES, AS A COURTESY.', 1);
+  if (wk >= 2) push('POLICY UPDATE: EVENING AVAILABILITY IS NOW A CORE VALUE.', 2);
+  if (wk >= 2) push('NOTICE: THE BUILDING CONTINUES TO SETTLE. EVERYTHING COSTS SLIGHTLY MORE NOW, AND WILL KEEP COSTING MORE FOR A WHILE.', 2);
+  if (wk >= 2) push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE TWO (2) WINS. AVP MILLER HAS A REPUTATION TO MAINTAIN, AND SO, BY EXTENSION, DOES WHOEVER IS COVERING FOR HIM.', 2);
+  if (wk >= 2) push('POLICY UPDATE: THE FRIDAY MEETING AGENDA HAS BEEN EXPANDED TO TWO (2) ITEMS OF BUSINESS. ATTENDANCE OF YOUR WHOLE SELF IS EXPECTED.', 2);
+  if (wk >= 2) push('NOTICE: "WELLNESS RESOURCES" ARE BEING REVIEWED FOR EFFICIENCY. AN UPDATE WILL FOLLOW.', 2);
+  if (wk >= 4) push('POLICY UPDATE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED. RECOVERY IS SLIGHTLY LESS EFFECTIVE NOW.', 4);
+  if (wk >= 5) push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A SECOND SIGNATURE.', 5);
+  if (wk >= 6) push('NOTICE: THE BUILDING HAS FINISHED SETTLING. THIS IS APPARENTLY WHAT FOUNDATIONAL LOOKS LIKE.', 6);
+  if (wk >= 6) push('POLICY UPDATE: PTO REQUESTS NOW REQUIRE DIRECTOR APPROVAL. PLAN AHEAD.', 6);
+  if (wk >= 7) push('POLICY UPDATE: WEEKLY REVIEWS NOW RECOGNIZE THREE (3) WINS. HE IS BEING CONSIDERED FOR SOMETHING.', 7);
+  if (wk >= 7) push('POLICY UPDATE: THE FRIDAY MEETING AGENDA NOW RUNS THREE (3) ITEMS OF BUSINESS. THE MEETING IS GROWING. NOTHING ELSE IS.', 7);
+  if (wk >= 8) push('NOTICE: "WELLNESS RESOURCES" HAVE BEEN OPTIMIZED FURTHER. THIS IS PROGRESS.', 8);
+  if (wk >= 9) push('POLICY UPDATE: DOCUMENTATION NOW REQUIRES A THIRD SIGNATURE.', 9);
   // the Old Rolodex: somebody who used to work here already knows who has the room
   if (META.up.rolodex) {
     PREPICKED_BOSS = PREPICKED_BOSS || pickFridayBoss();
-    notices.push('UNOFFICIAL: THE ROLODEX SAYS ' + DIRECTORS[PREPICKED_BOSS].name.toUpperCase() + ' HAS CONFERENCE ROOM C ON FRIDAY. PLAN ACCORDINGLY. YOU DID NOT HEAR THIS FROM ANYONE.');
+    push('UNOFFICIAL: THE ROLODEX SAYS ' + DIRECTORS[PREPICKED_BOSS].name.toUpperCase() + ' HAS CONFERENCE ROOM C ON FRIDAY. PLAN ACCORDINGLY. YOU DID NOT HEAR THIS FROM ANYONE.', wk);
   }
   // the way out, acknowledged the way the building acknowledges everything
   const escN = ['portfolio', 'network', 'savings'].filter(k => META.up[k]).length;
-  if (escN === 3) notices.push('FINAL NOTICE: THE LETTER IN YOUR BAG HAS BEEN NOTED. IT HAS ALWAYS BEEN NOTED.');
-  else if (escN > 0) notices.push('NOTE: OUTSIDE ACTIVITY DETECTED ON YOUR PROFILE (' + escN + ' OF 3). THIS IS NOT A THREAT. IT IS A COUNT.');
+  if (escN === 3) push('FINAL NOTICE: THE LETTER IN YOUR BAG HAS BEEN NOTED. IT HAS ALWAYS BEEN NOTED.', wk);
+  else if (escN > 0) push('NOTE: OUTSIDE ACTIVITY DETECTED ON YOUR PROFILE (' + escN + ' OF 3). THIS IS NOT A THREAT. IT IS A COUNT.', wk);
   // this week's modifier, announced like everything else
-  notices.push(MOD.boot);
+  push(MOD.boot, wk);
   // new personnel files unlocked this week
   const newFiles = Object.keys(CARD_UNLOCKS).filter(k => CARD_UNLOCKS[k] === META.week).length;
-  if (META.week > 1 && newFiles > 0) notices.push('PERSONNEL UPDATE: ' + newFiles + ' NEW FILE' + (newFiles > 1 ? 'S' : '') + ' ADDED TO YOUR ROTATION.');
+  if (META.week > 1 && newFiles > 0) push('PERSONNEL UPDATE: ' + newFiles + ' NEW FILE' + (newFiles > 1 ? 'S' : '') + ' ADDED TO YOUR ROTATION.', wk);
   lines.push('REMINDER: THE FRIDAY MEETING IS AT 4:00 PM.');
   lines.push('IT HAS ALWAYS BEEN AT 4:00 PM.');
   return { lines, notices };
@@ -3379,8 +3482,13 @@ function boot() {
   $('boot').addEventListener('click', (e) => { startBootTheme(); if (e.target.tagName !== 'BUTTON') finishTyping(); });
   $('bootbtn').onclick = () => {
     stopBootTheme(); // the melody ends; the drone, like the job, continues
-    // apply owned upgrades to the fresh week
-    S.maxTime = 10 + (META.up.coffee ? 1 : 0) + (META.up.monitor ? 1 : 0);
+    // a genuinely fresh file gets a scripted first Monday (v0.26): fixed card
+    // order plus onboarding-packet notes, once, ever. A veteran who gets fired
+    // back to week 1 is not a new hire and does not get re-onboarded.
+    S.orientation = !META.onboarded && META.week === 1 && !META.ng && !META.totalPlayMs && META.leverage === 0 && Object.keys(META.comms || {}).length === 0;
+    META.onboarded = 1; saveMeta();
+    // apply owned upgrades to the fresh week (the ledger costs a slot of every day)
+    S.maxTime = 10 + (META.up.coffee ? 1 : 0) + (META.up.monitor ? 1 : 0) - (META.up.ledger ? 1 : 0);
     S.pto = (META.week >= 6 ? 1 : 2) + (META.up.pto ? 1 : 0);
     if (META.up.lunch) { S.ally = true; log('Standing lunch with Chris: ally from day one.'); }
     $('boot').style.display = 'none';
@@ -3395,10 +3503,23 @@ function boot() {
     startDay();
   };
   if (POLICY_NOTICES.length) {
+    // the weekly memo (v0.26): what changed leads; the rest is standing policy.
+    // By week 7 the flat list was a wall; a wall is only fun the first time.
+    const fresh = POLICY_NOTICES.filter(n => n.w === META.week);
+    const standing = POLICY_NOTICES.filter(n => n.w !== META.week);
     $('boot').insertAdjacentHTML('beforeend',
-      '<div><button id="noticebtn">▸ POLICY NOTICES (' + POLICY_NOTICES.length + ') · CLICK TO REVIEW</button></div>');
+      '<div><button id="noticebtn">▸ THE WEEKLY MEMO (' + (fresh.length ? fresh.length + ' NEW' : 'NOTHING NEW') + (standing.length ? ' · ' + standing.length + ' STANDING' : '') + ') · CLICK TO REVIEW</button></div>');
     $('noticebtn').onclick = () => {
-      $('noticecontent').innerHTML = POLICY_NOTICES.map(n => '<div class="noticerow">' + n + '</div>').join('');
+      let html = '';
+      html += '<div class="tag">EFFECTIVE THIS WEEK</div>';
+      html += fresh.length
+        ? fresh.map(n => '<div class="noticerow">' + n.t + '</div>').join('')
+        : '<div class="noticerow" style="color:var(--ink-dim);">NO NEW POLICY THIS WEEK. THE BUILDING IS SAVING SOMETHING.</div>';
+      if (standing.length) {
+        html += '<div class="tag" style="margin-top:14px;">STANDING POLICY · STILL IN EFFECT · STILL POLICY</div>';
+        html += standing.map(n => '<div class="noticerow" style="opacity:0.75;">' + n.t + '</div>').join('');
+      }
+      $('noticecontent').innerHTML = html;
       $('noticeoverlay').style.display = 'block';
     };
   }
