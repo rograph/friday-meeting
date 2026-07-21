@@ -1342,7 +1342,15 @@ function showResult(text, onDone) {
   const el = $('card');
   el.insertAdjacentHTML('beforeend', '<div class="result">' + text + '</div>');
   el.insertAdjacentHTML('beforeend', '<button class="choice" id="cont" style="margin-top:8px;">Continue</button>');
-  $('cont').onclick = onDone;
+  // fire once, ever: a double-click here used to run onDone twice, and when the
+  // result was an evening's, that advanced TWO days behind the interstitial
+  // (found live, v0.26.1)
+  $('cont').onclick = () => {
+    const b = $('cont');
+    if (!b || b.disabled) return;
+    b.disabled = true;
+    onDone();
+  };
 }
 
 // ---------- interstitial ----------
