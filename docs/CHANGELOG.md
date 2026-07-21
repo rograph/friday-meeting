@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.26.1 · 2026-07-21 (hotfix, found by playtesting live)
+- **Double-clicking Continue no longer fires its action twice.** The Continue button stayed clickable behind the day-transition animation, so a double-click on an evening's result advanced two (or more) days at once; a live playthrough went Monday to Friday in one screen. It now disables itself on the first click.
+
 ## v0.26 · 2026-07-21 "The Offer Letter"
 The whole 2026-07-21 designer-review list, shipped in one pass: onboarding for strangers, a shareable week summary, NEW GAME+, a build-around store item, stopwatch records, a reorganized weekly memo, and the mobile/accessibility leftovers.
 - **The scripted first Monday.** A brand-new save's Monday is no longer random: Standup, then The "Quick Sync" (teaches: work becomes Credit on the tracker), then The Partnership (its best choice IS a Paper Trail). Each carries a deadpan "FROM YOUR ONBOARDING PACKET" note, and the first evening's At Risk screen explains locks and Thursday midnight in one paragraph. Fires once, ever: a fired veteran rehired at week 1 is not a new hire and is not re-onboarded.
