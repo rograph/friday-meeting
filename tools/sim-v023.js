@@ -140,10 +140,10 @@ function drain(w, cap) {
   check('week 2 heal taper applied (50+9=59, not 60)', heal2 === 59, heal2);
 }
 
-// --- 8. store: 13 items (12 minus coffee, plus the fridge key), 3 category headers, FULLY VESTED unaffected ---
+// --- 8. store: 14 items (12 minus coffee, plus the fridge key, plus the v0.26 ledger), 3 category headers, FULLY VESTED unaffected ---
 {
   const w = fresh();
-  check('store has 13 items', ev(w, 'STORE.length') === 13, ev(w, 'STORE.length'));
+  check('store has 14 items', ev(w, 'STORE.length') === 14, ev(w, 'STORE.length'));
   check('coffee item removed', ev(w, "STORE.some(it => it.id === 'coffee')") === false);
   check('every item has a category', ev(w, "STORE.every(it => !!it.cat)"));
   ev(w, "S.day=4; S.items=[]; storeScreen();");
@@ -191,7 +191,7 @@ function drain(w, cap) {
 // --- 12. the fridge key: expensive, ungated, unlocks a 3rd minifridge choice ---
 {
   const w = fresh();
-  check('store has 13 items now', ev(w, 'STORE.length') === 13, ev(w, 'STORE.length'));
+  check('store has 14 items now', ev(w, 'STORE.length') === 14, ev(w, 'STORE.length'));
   check('fridgeKey is the most expensive non-escape item', ev(w, "STORE.find(it => it.id === 'fridgeKey').cost") === 35);
   check('fridgeKey has no commendation gate', ev(w, "!!STORE.find(it => it.id === 'fridgeKey').requires") === false);
   check('minifridge has 2 choices without the key', ev(w, 'CARDS.minifridge().choices.length') === 2);
