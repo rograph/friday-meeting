@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.31 · 2026-07-22 "Clock Discipline"
+The first human playtest pass (Rodolfo, week-6 completion, 45:51) surfaced six findings. All six, answered:
+- **The day's clock now runs in one direction.** Lunch ("somewhere between 12 and 2") fires BEFORE the day's final card instead of after everything, so the 3:47 PM Early Exit and every other afternoon card can no longer precede it. The day is now: two cards, lunch, then the last card, with the sneak offer between lunch and that card, where 3:47 belongs.
+- **The 11:58 PM email arrives like a real one.** Nobody is at the office at midnight; the card now reads as sent last night, opened by everyone this morning, silently, on the clock. Same email. Same em dashes.
+- **You cannot leave twice.** Sneaking out IS the commute now: the ride's whole payoff (the heal, the Life Outside, the daylight) lives on the sneak choice itself, the At Risk review happens from home on your phone, and the evening event is skipped entirely, voluntolds included. The 4:15 no longer appears as a second departure; The 7:40 and the ordinary commute pool are untouched.
+- **The raise line retired from the weekly summary.** Repetition had made it invisible. The math now happens once, out loud, in a new card: **The Adjustment** (week 6+, annual, out of the pool for six weeks after it lands). Merit increases "at up to 3%," parking up 6, and a ledger entry whose note ends with a negative sign.
+- **The memo now earns its button.** The week's policy modifier (audit, checkpoint, strategic partner) is typed on the boot screen itself instead of hiding behind the button; the memo button glows ACTION REQUIRED when it holds something actionable (the Rolodex tip, a checkpoint, a development opportunity, an extra claim); and three OPERATIONS NOTES join the notices with real hints, phrased as non-instructions: the Thursday freeze, the afternoons the floor empties early, and what standing does before the slide goes up.
+- **Crunch explains itself.** The moment Time hits zero, one line, once per day: everything costs 50% more Sanity until tomorrow's clock-in. The building calls this "finding another gear." The building is not the one shifting. The CRUNCH tag also carries the rule as a tooltip.
+- Verified via `node --check`, a clean dominance audit, sims v020-v030 (v023's lunch-position check and v029's sneak semantics updated to the new contracts), and a new `tools/sim-v031.js` (23 checks).
+
 ## v0.30 · 2026-07-22 "Test Pattern"
 The title card. The set warms up before the shift does.
 - **FRIDAY MEETING, first.** A cold open now shows the marquee: the two words in full phosphor bloom (glow, chromatic fringe, a slow flicker that starts after the bloom settles), a rolling sync bar, the existing scanline and vignette overlays rendering OVER the title so it reads as the same monitor, and one line of chrome: EVERWELL GROUP · OPERATIONS TERMINAL 4B. Click or any key powers the set off with the same CRT collapse the days use, and the boot terminal starts typing on the other side.
