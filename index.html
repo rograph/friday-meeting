@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FRIDAY MEETING</title>
-<meta name="description" content="A roguelike about surviving the workweek. Grind procedurally generated workweeks as an Operations Manager, protect your credit from the boss, don't burn out.">
+<meta name="description" content="A roguelike about the one person who actually keeps the building running. Survive procedurally generated workweeks as an Operations Manager, protect your credit from the boss, don't burn out.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23041219'/%3E%3Cpolyline points='1,9 4,9 6,3 9,13 11,9 15,9' fill='none' stroke='%2352e0d2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="alternate icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Friday Meeting">
-<meta property="og:description" content="A roguelike about surviving the workweek. Grind procedurally generated workweeks as an Operations Manager, protect your credit from the boss, don't burn out.">
+<meta property="og:description" content="A roguelike about the one person who actually keeps the building running. Survive procedurally generated workweeks as an Operations Manager, protect your credit from the boss, don't burn out.">
 <meta property="og:image" content="https://rograph.github.io/friday-meeting/og-image.png">
 <meta property="og:url" content="https://rograph.github.io/friday-meeting/">
 <meta name="twitter:card" content="summary_large_image">
@@ -516,6 +516,9 @@ function loadMeta() {
     fileCabinet: [], contractHistory: [], lastClaimLine: -1, lastClaimLineByBoss: {}, trainingPending: false,
     balloonVendorPending: false, balloonVendorWeek: 0, surveyFlagged: false, surveyFlaggedWeek: 0, totalPlayMs: 0,
     cleanStreak: 0, nextWeekExtraClaim: false, phoneRang: false, note: null,
+    internCovered: false, internCoveredWeek: 0, badgeCurious: false,
+    priyaPending: false, priyaWeek: 0, priyaSpokeUp: false, priyaEmail: false,
+    davePending: false, daveWeek: 0, daveLanded: false, daveNetwork: false,
     comms: {}, stats: { pushbacks: 0, agendaSweeps: 0, bossesSeen: {}, restoratives: 0 } };
   try { return Object.assign(def, JSON.parse(localStorage.getItem(META_KEY)) || {}); }
   catch (e) { return def; }
@@ -562,7 +565,15 @@ function escapeReady() { return META.up.portfolio && META.up.network && META.up.
 function storeCost(it) {
   let c = it.cost;
   if (it.escape) c += 15 * (META.ng || 0);
-  if (it.id === 'network' && META.ninaTrust) c -= 10;
+  // the Network is the one store item other people can pay into (v0.28):
+  // Nina's call, Dave's area code, Priya's envelope. Floored so it never goes free;
+  // the last stretch of a way out is always yours to fund.
+  if (it.id === 'network') {
+    if (META.ninaTrust) c -= 10;
+    if (META.daveNetwork) c -= 10;
+    if (META.priyaEmail) c -= 5;
+    c = Math.max(c, 5);
+  }
   return c;
 }
 
@@ -1522,7 +1533,11 @@ const CARDS = {
   }),
   partnership: () => ({
     title: 'The Partnership', tag: 'TASK · HIGH VISIBILITY', ptoAllowed: false,
-    flavor: 'An external partner wants to sign: the deal Operations has circled for two quarters. The contact asks for you by name, because you\'re the only one who ever answered their emails. This is the biggest thing that will happen here this week.',
+    flavor: 'An external partner wants to sign: the deal Operations has circled for two quarters. The contact asks for you by name, ' +
+      (META.daveLanded
+        ? 'because Dave gave them the name. He is at the partner now, and he tells the story of a parking lot, briefly, every time you come up. '
+        : 'because you\'re the only one who ever answered their emails. ') +
+      'This is the biggest thing that will happen here this week.',
     choices: [
       { label: 'Close it. Full push.', delta: { time: 4, sanity: 10, credit: 20, creditItem: 'Partnership closed' },
         result: 'Signed. For one full minute, the work feels like the thing the mission statement claims it is. The minute passes. The tracker updates.' },
@@ -1599,6 +1614,7 @@ const CARDS = {
         result: '"Fourteen years," Dave says at the curb, "and he never looked up." You carry the box. It is very light. Fourteen years, and the box is light.',
         after: (done) => {
           META.leverage += 3;
+          META.davePending = true; META.daveWeek = META.week;
           META.fileCabinet.push({ title: 'Dave, Walked Out', week: META.week, note: 'Fourteen years. The box was light. You carried it anyway.' });
           saveMeta();
           $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+3 LEVERAGE.</b> The company has no field for this. Dave will land somewhere, people always do, and people remember who walked them out.</div>');
@@ -1708,11 +1724,17 @@ const CARDS = {
     flavor: 'Priya, two months into Brooks\' team, gets introduced at the all-hands as "our new mom-brain hire," a bit Brooks has now done to three different women and been surprised, every time, that it didn\'t land. He isn\'t cruel, exactly. He has just never once had to notice, because nobody with the standing to tell him has stayed long enough to bother. Priya laughs the correct amount, on schedule. She will hand in her notice in four weeks. Nobody knows that yet, including her.',
     choices: [
       { label: 'Say something, out loud, in the room, this time.', delta: { time: 1, rep: -3, heal: 5 },
-        result: '"Wow, tough crowd," Brooks says, to you specifically, and the meeting moves on exactly as scheduled. Nothing about Brooks changes. But Priya catches your eye afterward, just once, and that is not nothing.' },
+        result: '"Wow, tough crowd," Brooks says, to you specifically, and the meeting moves on exactly as scheduled. Nothing about Brooks changes. But Priya catches your eye afterward, just once, and that is not nothing.',
+        after: (done) => {
+          META.priyaPending = true; META.priyaWeek = META.week; META.priyaSpokeUp = true; saveMeta();
+          log('You said it out loud. Priya heard it. The four-week clock nobody knows about is running anyway.');
+          showResult('"Wow, tough crowd," Brooks says, to you specifically, and the meeting moves on exactly as scheduled. Nothing about Brooks changes. But Priya catches your eye afterward, just once, and that is not nothing.', done);
+        } },
       { label: 'Say nothing. Add it to the ledger instead.', delta: { time: 1 },
         result: 'Priya\'s name joins a list only you are keeping.',
         after: (done) => {
           META.leverage += 1;
+          META.priyaPending = true; META.priyaWeek = META.week; META.priyaSpokeUp = false;
           META.fileCabinet.push({ title: 'Brooks\' Team, Fourth Departure', week: META.week, note: 'Priya. Not the first woman off that team in two years. Won\'t be the last. HR\'s file will say "cultural fit."' });
           saveMeta();
           $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The fourth departure this way, on your own list, the one nobody official is keeping.</div>');
@@ -1891,9 +1913,19 @@ const CARDS = {
     flavor: 'An IT intern arrives with the replacement TV remote you requisitioned in the spring. He tests it, nods, and in the process of leaning across Conference Room B, breaks the table. Cleanly. Audibly. A table that has held the weight of a thousand slide decks folds like a card. He looks at the table, looks at you, hands you the remote with both hands like a ceremonial sword, and leaves at a speed just under running.',
     choices: [
       { label: 'Report the table accurately, minus the boy', delta: { time: 1, credit: 4, creditItem: 'Conference table incident, documented' },
-        result: 'Your ticket describes "sudden structural fatigue." Facilities will close it in four months, unworked: "could not reproduce." You could reproduce it. You choose not to.' },
+        result: 'Your ticket describes "sudden structural fatigue." Facilities will close it in four months, unworked: "could not reproduce." You could reproduce it. You choose not to.',
+        after: (done) => {
+          META.internCovered = true; META.internCoveredWeek = META.week; saveMeta();
+          log('The table was reported. The intern was not.');
+          showResult('Your ticket describes "sudden structural fatigue." Facilities will close it in four months, unworked: "could not reproduce." You could reproduce it. You choose not to.', done);
+        } },
       { label: 'Say nothing. Let the table become a mystery.', delta: { heal: 4 },
-        result: 'By Thursday the broken table has lore: a ghost, a defect, "the weight of Q3." The intern emails you a thumbs-up from a no-reply address. You will never see him again. The remote works beautifully.' }
+        result: 'By Thursday the broken table has lore: a ghost, a defect, "the weight of Q3." The intern emails you a thumbs-up from a no-reply address. You will never see him again. The remote works beautifully.',
+        after: (done) => {
+          META.internCovered = true; META.internCoveredWeek = META.week; saveMeta();
+          log('The table became a mystery. The intern became a debt.');
+          showResult('By Thursday the broken table has lore: a ghost, a defect, "the weight of Q3." The intern emails you a thumbs-up from a no-reply address. You will never see him again. The remote works beautifully.', done);
+        } }
     ]
   }),
   theBookshelf: () => ({
@@ -2139,11 +2171,26 @@ const CARDS = {
     flavor: 'The email arrives at 11:58 PM, timestamped like it matters. "Hi team! 🎉 I wanted to take a moment — genuinely — to reflect on where we\'ve been and where we\'re going. This isn\'t just a project — it\'s a *journey* — and I couldn\'t be prouder of the incredible synergy we\'ve built together. Let\'s circle back and align on next steps — together — because that\'s what great teams do! 🚀✨" It is signed "Best, ' + BOSS + '," under four paragraphs that use the word "journey" three times and an em dash count that would embarrass a debate coach. Nobody mentions it. Everybody has noticed it.',
     choices: [
       { label: 'Reply "Sounds good!" and move on', delta: {},
-        result: 'You have now replied to an email you did not read using the only two words that satisfy every email. This is a skill. It is not one you are proud of.' },
+        result: 'You have now replied to an email you did not read using the only two words that satisfy every email. This is a skill. It is not one you are proud of.',
+        after: (done) => {
+          S.buriedAsk = true;
+          log('The email was answered. It was not read. Whatever was in paragraph three is still in there.');
+          showResult('You have now replied to an email you did not read using the only two words that satisfy every email. This is a skill. It is not one you are proud of.', done);
+        } },
       { label: 'Actually parse it. There is one real ask in paragraph three.', delta: { time: 2, sanity: 2, credit: 4, creditItem: 'The ask buried in the ChatGPT email, found and done' },
-        result: 'Paragraph three, sentence two, contains an actual deadline. You find it the way you\'d find a tick. You do the thing. Nobody will ever know you found it, including, possibly, him.' },
+        result: 'Paragraph three, sentence two, contains an actual deadline. You find it the way you\'d find a tick. You do the thing. Nobody will ever know you found it, including, possibly, him.',
+        after: (done) => {
+          S.parsedAsk = true;
+          log('Paragraph three, sentence two: a real deadline, found and met. Nobody will ever know. Friday might.');
+          showResult('Paragraph three, sentence two, contains an actual deadline. You find it the way you\'d find a tick. You do the thing. Nobody will ever know you found it, including, possibly, him.', done);
+        } },
       { label: 'Forward it to Chris, no comment', delta: { heal: 4, rep: -1 },
-        result: 'Chris replies in nine seconds: three crying-laughing emojis and nothing else. It is, this week, the most honest communication that has happened in the building.' }
+        result: 'Chris replies in nine seconds: three crying-laughing emojis and nothing else. It is, this week, the most honest communication that has happened in the building.',
+        after: (done) => {
+          S.buriedAsk = true;
+          log('The email became a joke. The deadline inside it did not.');
+          showResult('Chris replies in nine seconds: three crying-laughing emojis and nothing else. It is, this week, the most honest communication that has happened in the building.', done);
+        } }
     ]
   }),
   minifridge: () => ({
@@ -2261,6 +2308,103 @@ const CARDS = {
         result: 'You say your desk is "already at capacity," which is a lie the plant helps you tell convincingly. Nobody follows up. The real plant gets real light for one more week, which is the whole and entire point of keeping it.' }
     ]
   }),
+  // ---------- chain payoffs (v0.28): none of these are dealt from the deck.
+  // Each is injected by a flag an earlier card set, on the schedule its setup
+  // promised: the intern two weeks later, the buried deadline that Thursday,
+  // Priya four weeks later, Dave three. Injected Mondays are capped at one;
+  // unconsumed flags wait their turn. Promises made in card copy are debts
+  // (Decision 54); these are the first four payments.
+  favorFromIT: () => ({
+    title: 'A Favor From IT', tag: 'ACCESS & SYSTEMS · RE: A TABLE, WHICH NEVER HAPPENED', ptoAllowed: false,
+    flavor: 'The intern has a badge now that no longer says CONTRACTOR. Hired full-time on Monday and assigned, with the logic of an institution that promotes its witnesses, to Access & Systems, which is the department that decides what every other department is allowed to touch. He appears at your desk with the practiced casualness of a rehearsed moment. "That table thing," he says. "You never said anything." He is holding a laptop the way people hold things that open doors.',
+    choices: [
+      { label: 'Ask him to make Ticket #6203 disappear. The good way.', delta: { time: 1, heal: 4 },
+        result: 'The light above your desk goes steady that afternoon. No ticket was worked. No ticket was filed. The flicker you knew better than your own ringtone is gone, and you miss it for exactly one hour.' },
+      { label: 'Ask him what the badge reader actually logs', delta: { sanity: 3 },
+        result: 'He looks at you for a second too long. "Which log?" he says, and then, hearing himself, "I\'ll come find you." He does not come find you. Not this week.',
+        after: (done) => {
+          META.badgeCurious = true; saveMeta();
+          log('"Which log?" There is more than one log. You were not supposed to learn that from the plural.');
+          showResult('He looks at you for a second too long. "Which log?" he says, and then, hearing himself, "I\'ll come find you." He does not come find you. Not this week.', done);
+        } },
+      { label: 'Bank it. Favors keep.', delta: {},
+        result: 'You tell him it was nothing, which you both know is not the going rate. He nods slowly, writing the debt into whatever ledger people like him keep, which is to say: an accurate one.',
+        after: (done) => {
+          META.leverage += 1;
+          META.fileCabinet.push({ title: 'The Intern\'s Debt', week: META.week, note: 'Owed by the one person with root access to the building\'s memory. Unexpiring.' });
+          saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The ledger grows. This entry pays interest.</div>');
+          log('The intern\'s debt entered the ledger. +1 Leverage.');
+          showResult('You tell him it was nothing, which you both know is not the going rate. He nods slowly, writing the debt into whatever ledger people like him keep, which is to say: an accurate one.', done);
+        } }
+    ]
+  }),
+  deadlineSurfaced: () => ({
+    title: 'The Deadline, Surfaced', tag: 'THURSDAY · PER HIS EMAIL, APPARENTLY', ptoAllowed: false,
+    flavor: 'Paragraph three, sentence two. There was a deadline in the email everyone answered with two words, and the deadline is today, and the one person who knows nobody read it is currently forwarding the original to the entire floor with the phrase "per my email below." The forward takes eleven seconds. Writing the original took him less. The deadline, unfortunately, is real either way.',
+    choices: [
+      { label: 'Scramble. Build the thing by six.', delta: { time: 4, sanity: 6, credit: 6, creditItem: 'The buried ask, exhumed and done' },
+        result: 'Done by 5:54. Nobody asks how close it was. Tomorrow it will be described as "the team rallying," by the man who buried it.' },
+      { label: 'Let it burn. It was never assigned to anyone.', delta: { rep: -6 },
+        result: 'It burns quietly, the way institutional deadlines burn: a follow-up email, a "disappointing," a lessons-learned meeting that will learn nothing. Your name is nowhere on it. Your name is, somehow, near it.',
+        after: (done) => {
+          S.askBurned = true;
+          log('The deadline burned. Nothing was assigned to you. Blame is not an assignment; it travels on its own.');
+          showResult('It burns quietly, the way institutional deadlines burn: a follow-up email, a "disappointing," a lessons-learned meeting that will learn nothing. Your name is nowhere on it. Your name is, somehow, near it.', done);
+        } }
+    ]
+  }),
+  fourthCake: () => ({
+    title: 'The Fourth Cake', tag: 'BREAK ROOM · FOUR WEEKS, AS SCHEDULED', ptoAllowed: false,
+    flavor: 'The cake is for Priya, two months and four weeks in, precisely on the schedule nobody knew they were keeping, except you, who wrote it down. Brooks gives a short speech containing the phrase "mom brain," which he has somehow not retired, even now, even here, at the goodbye it caused. Priya laughs the correct amount, one last time, off the clock.',
+    choices: (function () {
+      const c = [
+        { label: 'Sign the card. Chip in. Mean it.', delta: { time: 1, heal: 2, rep: 2 },
+          result: 'You write something true. She reads it by the elevator, once, then again. The pen worked. Small mercies.' }
+      ];
+      if (META.priyaSpokeUp) {
+        c.unshift({ label: 'Say goodbye. She finds you first.', delta: { time: 1, heal: 5, rep: 2 },
+          result: '"You were the only one who said anything out loud," she says, and writes her personal email on the back of the card envelope, in front of everyone, which is its own small speech.',
+          after: (done) => {
+            META.priyaEmail = true; saveMeta();
+            $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>THE NETWORK GROWS.</b> Her personal email, on the back of an envelope. The Network costs 5 less in the Saturday store.</div>');
+            log('Priya\'s email, on the back of the envelope. The Network is 5 Leverage cheaper now.');
+            showResult('"You were the only one who said anything out loud," she says, and writes her personal email on the back of the card envelope, in front of everyone, which is its own small speech.', done);
+          } });
+      } else {
+        c.unshift({ label: 'Close the entry.', delta: { time: 1 },
+          result: 'Fourth departure. On time. Foreseen, documented, unprevented.',
+          after: (done) => {
+            META.leverage += 1;
+            META.fileCabinet.push({ title: 'The Fourth Departure, Closed', week: META.week, note: 'Priya. On time, to the week. The ledger is for the system. You are no longer sure the system is the only thing it\'s for.' });
+            saveMeta();
+            $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+1 LEVERAGE.</b> The ledger closes an entry it opened four weeks ago. It was right. Being right was not the goal.</div>');
+            log('The fourth departure, closed on schedule. +1 Leverage.');
+            showResult('Fourth departure. On time. Foreseen, documented, unprevented. The ledger is for the system. You are no longer sure the system is the only thing it\'s for.', done);
+          } });
+      }
+      return c;
+    })()
+  }),
+  daveLanded: () => {
+    META.daveLanded = true; saveMeta();
+    return {
+    title: 'Dave, Landed', tag: 'YOUR PHONE · AN AREA CODE YOU DON\'T RECOGNIZE', ptoAllowed: false,
+    flavor: 'Dave from Records calls from a number that isn\'t the building\'s, which is what landing somewhere sounds like. Fewer floors, better chairs, a manager who has read his file and mentions things from it, correctly, in conversation. He is calling because his new company needs a reference for a vendor you both survived. He is also calling because you carried the box, and fourteen years is a long time for nobody to look up.',
+    choices: [
+      { label: 'Give the reference. Catch up. Mean it.', delta: { time: 1, heal: 6 },
+        result: '"People remember who walked them out," Dave says, by way of goodbye. It turns out that was never a metaphor. It was a forwarding address.',
+        after: (done) => {
+          META.daveNetwork = true; saveMeta();
+          $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>THE NETWORK GROWS.</b> Dave answers on the first ring now. The Network costs 10 less in the Saturday store.</div>');
+          log('Dave, landed, on the record as yours to call. The Network is 10 Leverage cheaper now.');
+          showResult('"People remember who walked them out," Dave says, by way of goodbye. It turns out that was never a metaphor. It was a forwarding address.', done);
+        } },
+      { label: 'Ask him what it\'s like out there', delta: { heal: 4 },
+        result: '"Nobody claims anything on Fridays," he says. "I kept waiting for it. You stop waiting around month two." You write that down too, somewhere that isn\'t the shared drive.' }
+    ]
+    };
+  },
   lunch: () => ({
     title: 'Lunch', tag: 'MIDDAY · WHENEVER YOU CAN ACTUALLY GET TO IT', ptoAllowed: false,
     flavor: (META.up.lunch
@@ -2541,20 +2685,19 @@ function startDay() {
       log('Checkpoint met. No one mentions it. Meeting it was the baseline.');
     }
   }
-  // week 8+, "year two": the training-compliance loop closes on someone.
-  if (META.week >= 2 && META.trainingPending && S.day === 0) {
-    S.queue.unshift('trainingNotCompleted');
-    META.trainingPending = false; saveMeta();
-  }
-  // the balloon vendor, unresolved for about two weeks, then it comes home to roost
-  if (META.balloonVendorPending && META.week >= META.balloonVendorWeek + 2 && S.day === 0) {
-    S.queue.unshift('balloonInvoice');
-    META.balloonVendorPending = false; saveMeta();
-  }
-  // the "anonymous" survey response, followed up on the next Monday
-  if (META.surveyFlagged && META.week >= META.surveyFlaggedWeek + 1 && S.day === 0) {
-    S.queue.unshift('surveyFollowup');
-    META.surveyFlagged = false; saveMeta();
+  // chain payoffs land on Mondays, at most ONE per Monday (v0.28). The rest
+  // keep their flags and wait for the next Monday, in the order below. They
+  // are patient. So is the building. (Before the cap, training + balloon +
+  // survey + Priya + Dave could all arrive with the same coffee.)
+  if (S.day === 0) injectMondayChain();
+  // the buried deadline (v0.28): set by bossEmail earlier this week, due Thursday.
+  // If the email itself arrived on Thursday, the deadline never detonates this
+  // run; sometimes the building is late reading its own mail. Separate from the
+  // Monday cap: Thursday consequences keep Thursday appointments.
+  if (S.day === 3 && S.buriedAsk && !S.deadlineFired) {
+    S.deadlineFired = true;
+    S.buriedAsk = false;
+    S.queue.unshift('deadlineSurfaced');
   }
   // a restorative conversation (v0.27): once per run, when your standing has
   // fallen far enough that the building would rather repair you than lose the
@@ -2571,6 +2714,31 @@ function startDay() {
     'THE MEETING IS AT 4:00 PM. IT HAS ALWAYS BEEN AT 4:00 PM.'
   ];
   interstitial(DAYS[S.day], subs[S.day], () => { render(); nextEncounter(); });
+}
+
+// ---------- the Monday chain queue (v0.28) ----------
+// One injected payoff per Monday, first due wins, FIFO by list order below.
+// Each entry: due() answers "has this debt come due," consume() clears the
+// flag so it fires once. Returns the injected key (or null), so the sims can
+// exercise the cap without a DOM day. NOTE: injected keys are deliberately
+// absent from CARD_UNLOCKS; they are consequences, not deals.
+const MONDAY_CHAINS = [
+  { key: 'trainingNotCompleted', due: () => META.week >= 2 && META.trainingPending, consume: () => { META.trainingPending = false; } },
+  { key: 'balloonInvoice', due: () => META.balloonVendorPending && META.week >= META.balloonVendorWeek + 2, consume: () => { META.balloonVendorPending = false; } },
+  { key: 'surveyFollowup', due: () => META.surveyFlagged && META.week >= META.surveyFlaggedWeek + 1, consume: () => { META.surveyFlagged = false; } },
+  { key: 'favorFromIT', due: () => META.internCovered && META.week >= META.internCoveredWeek + 2, consume: () => { META.internCovered = false; } },
+  { key: 'fourthCake', due: () => META.priyaPending && META.week >= META.priyaWeek + 4, consume: () => { META.priyaPending = false; } },
+  { key: 'daveLanded', due: () => META.davePending && META.week >= META.daveWeek + 3, consume: () => { META.davePending = false; } }
+];
+function injectMondayChain() {
+  for (const c of MONDAY_CHAINS) {
+    if (!c.due()) continue;
+    c.consume();
+    saveMeta();
+    S.queue.unshift(c.key);
+    return c.key;
+  }
+  return null;
 }
 
 // ---------- notes between selves (v0.27) ----------
@@ -2884,6 +3052,8 @@ function runMeeting(boss) {
   if (S.rumorSquashed) { preamble += '<div class="event" style="border-left-color: var(--lock);">The rumor never came back. People remember who put it down.</div>'; }
   if (S.rumorFestering) { preamble += '<div class="event">The rumor is still circulating, slightly mutated. Somehow your name is near it now, tangentially, unfairly.</div>'; }
   if (S.hrFlagged) { preamble += '<div class="event">' + boss.name + ' mentions, apropos of nothing, that HR "flagged a great question" this week. ' + boss.Pronoun + ' is smiling. ' + boss.Pronoun + ' is always smiling.</div>'; }
+  if (S.parsedAsk) { preamble += '<div class="event" style="border-left-color: var(--lock);">The deadline he forgot he set was met, quietly, by someone. ' + boss.name + ' presents this as foresight. ' + boss.Possessive + ' own, specifically.</div>'; }
+  if (S.askBurned) { preamble += '<div class="event">"Ownership culture," ' + boss.name + ' says, to the room, looking at no one, which is a way of looking at everyone.</div>'; }
   if (S.declines >= 2) { preamble += '<div class="event">"Busy weekend?" ' + boss.name + ' asks, to the room, not to you specifically, which is worse.</div>'; }
   else if (S.accepts >= 2 && S.declines === 0) { preamble += '<div class="event" style="border-left-color: var(--lock);">"Reliable," ' + boss.name + ' says, of you, to the room. It is meant as the highest compliment the building has.</div>'; }
   if (S.escalationBonus === -2) {
@@ -3336,6 +3506,8 @@ function storeScreen() {
       } else {
         html += '<button class="choice" data-buy="' + it.id + '" ' + (afford ? '' : 'disabled') + '>' + (it.escape ? '⬒ ' : it.trinket ? '◎ ' : '') + it.name + ' · ' + cost + ' Leverage' +
           (it.id === 'network' && META.ninaTrust ? ' <span class="secure">(Nina made a call)</span>' : '') +
+          (it.id === 'network' && META.daveNetwork ? ' <span class="secure">(Dave answers on the first ring)</span>' : '') +
+          (it.id === 'network' && META.priyaEmail ? ' <span class="secure">(an email, on the back of an envelope)</span>' : '') +
           (it.escape && META.ng ? ' <span style="color:var(--warn)">(the market has adjusted)</span>' : '') +
           '<span class="cost">' + it.desc + '</span></button>';
       }
@@ -3592,6 +3764,7 @@ function importSave() {
     META.week = m.week; META.leverage = m.leverage; META.up = m.up || {};
     META.life = m.life || { plant: 2, friend: 2, hobby: 2 };
     META.ninaTrust = !!m.ninaTrust; META.presidentSeen = !!m.presidentSeen;
+    META.daveNetwork = !!m.daveNetwork; META.daveLanded = !!m.daveLanded; META.priyaEmail = !!m.priyaEmail; META.badgeCurious = !!m.badgeCurious;
     META.fileCabinet = m.fileCabinet || []; META.contractHistory = m.contractHistory || []; META.lastClaimLine = typeof m.lastClaimLine === 'number' ? m.lastClaimLine : -1;
     META.lastClaimLineByBoss = m.lastClaimLineByBoss || {};
     saveMeta();

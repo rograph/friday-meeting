@@ -1,6 +1,6 @@
 # Friday Meeting
 
-A roguelike about an Operations Manager at Everwell Group, a mid-size corporate office whose business function nobody can quite explain. Every run is one workweek: survive Monday through Friday, earn Credit, and protect your best work from Director Miller, who claims your biggest unprotected win every Friday at 4 PM and converts it into his Raise Points.
+A roguelike about the one person who actually keeps the building running: an Operations Manager at Everwell Group, a mid-size corporate office whose business function nobody can quite explain. Every run is one workweek: survive Monday through Friday, earn Credit, and protect your best work from Director Miller, who claims your biggest unprotected win every Friday at 4 PM and converts it into his Raise Points.
 
 Between weeks, spend Leverage in the Saturday store on the version of you that leaves: therapy, boundaries, a portfolio, a network, six months of runway. The raise is capped at 3%. The exit is not.
 
