@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.30 · 2026-07-22 "Test Pattern"
+The title card. The set warms up before the shift does.
+- **FRIDAY MEETING, first.** A cold open now shows the marquee: the two words in full phosphor bloom (glow, chromatic fringe, a slow flicker that starts after the bloom settles), a rolling sync bar, the existing scanline and vignette overlays rendering OVER the title so it reads as the same monitor, and one line of chrome: EVERWELL GROUP · OPERATIONS TERMINAL 4B. Click or any key powers the set off with the same CRT collapse the days use, and the boot terminal starts typing on the other side.
+- **Once per sitting, not once per week.** The weekly reload (Saturday to Monday) lands back on the memo, not the marquee; sessionStorage remembers the sitting. The full boot screen (memo button, record controls) builds at load behind the title, so nothing waits on the animation except the typing itself.
+- **Cycle 2+ knows.** In NG+ the subtitle reads A DIFFERENT CAMPUS · THE SAME 4:00 PM.
+- **The clock is untouched.** The week stopwatch still starts at BEGIN WEEK; the marquee costs a speedrun nothing.
+- Verified via `node --check`, a clean dominance audit, sims v020-v029, a new `tools/sim-v030.js`, and headless Chromium screenshots of the cold open and the dismissal.
+
 ## v0.29 · 2026-07-22 "The 4:15"
 The commute, the sneak-out, and the career clock's full speedrun frame. Design thesis: the commute is the day's receipt; which ride you get is determined by how you left the building.
 - **The Early Exit.** Some afternoons (Mon-Wed, 30%), the boss's office light is off by 3:40 and his car is gone from the RESERVED sign the paper cups paid for. When it happens, the day's final card becomes optional: sneak out and it slides to nowhere, unplayed, its Credit unearned, or stay till five like always. The caught roll happens the moment you leave, silently (base 25%, worse if the vendor has your direct line or HR has your name); the answer arrives in Friday's preamble ("We came by your desk yesterday afternoon," with no question mark anywhere in it, -4 Reputation per caught afternoon), or it never arrives, and you never find out whether anyone looked. Thursday is exempt: the Appreciation is mandatory joy. Friday is the game.
