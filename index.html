@@ -252,6 +252,62 @@
     0% { opacity: 0; letter-spacing: 26px; }
     100% { opacity: 1; }
   }
+  /* ---- Title card (v0.30): the set warms up before the shift does ---- */
+  /* z-index 45: above the app, deliberately UNDER the CRT overlays (50-52),
+     so the scanlines, vignette, and ambient flicker render over the title
+     and it reads as the same monitor, not a slide in front of one. */
+  #titlescreen {
+    position: fixed; inset: 0; z-index: 45;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; cursor: pointer;
+    animation: tvOn .55s ease-out;
+  }
+  #titlescreen.off { animation: tvOff .5s ease-in forwards; pointer-events: none; }
+  /* while the marquee is up, the terminal chrome hasn't clocked in either */
+  body.titling #musicbtn, body.titling #helpbtn, body.titling #cabinetbtn { display: none; }
+  #title-main {
+    font-size: clamp(2.2em, 8vw, 5em);
+    letter-spacing: 0.3em; padding-left: 0.3em;
+    color: var(--accent);
+    text-shadow:
+      0 0 14px rgba(82,224,210,0.65),
+      0 0 44px rgba(82,224,210,0.3),
+      -2px 0 1px rgba(255,70,70,0.16),
+      2px 0 1px rgba(70,130,255,0.16);
+    animation: titleBloom 1.5s ease-out, titleFlicker 7s steps(1) infinite 1.5s;
+  }
+  @keyframes titleBloom {
+    0% { opacity: 0; filter: brightness(3.2) blur(7px); letter-spacing: 0.58em; }
+    55% { opacity: 1; filter: brightness(1.5) blur(0.6px); }
+    100% { filter: brightness(1) blur(0); letter-spacing: 0.3em; }
+  }
+  @keyframes titleFlicker {
+    0%, 100% { opacity: 1; }
+    80% { opacity: 1; } 81% { opacity: 0.5; } 82% { opacity: 1; }
+    83.5% { opacity: 0.75; } 84.5% { opacity: 1; }
+  }
+  #title-sub {
+    margin-top: 28px; color: var(--ink-dim);
+    letter-spacing: 4px; font-size: 0.85em;
+    animation: titleIn 2.2s ease-out;
+  }
+  #title-hint {
+    margin-top: 64px; color: var(--ink-dim); letter-spacing: 3px; font-size: 0.8em;
+    animation: blink 1.6s steps(1) infinite, titleIn 1s ease-out 1.7s backwards;
+  }
+  /* the rolling sync bar: one slow band of brightness, forever */
+  #titlescreen::after {
+    content: '';
+    position: absolute; left: 0; right: 0; top: -14%;
+    height: 90px;
+    background: linear-gradient(180deg, transparent, rgba(120,220,210,0.05), rgba(120,220,210,0.11), rgba(120,220,210,0.05), transparent);
+    animation: syncRoll 7s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes syncRoll { 0% { top: -14%; } 100% { top: 110%; } }
+
   /* ---- Boot ---- */
   #boot { padding-top: 12vh; text-align: center; }
   #bootlines { min-height: 180px; font-size: 0.95em; line-height: 2.1; letter-spacing: 2px; color: var(--ink); white-space: pre-wrap; }
@@ -471,6 +527,12 @@
 </div></div>
 
 <div id="interstitial"><div class="big" id="int-big"></div><div class="sub" id="int-sub"></div></div>
+
+<div id="titlescreen">
+  <div id="title-main">FRIDAY MEETING</div>
+  <div id="title-sub">EVERWELL GROUP · OPERATIONS TERMINAL 4B</div>
+  <div id="title-hint">CLICK TO CLOCK IN</div>
+</div>
 
 <div id="app">
   <div id="boot">
@@ -3965,7 +4027,7 @@ function buildBootLines() {
 const BOOT_DATA = buildBootLines();
 const BOOTLINES = BOOT_DATA.lines;
 const POLICY_NOTICES = BOOT_DATA.notices;
-function boot() {
+function boot(deferTyping) {
   const el = $('bootlines');
   let li = 0, ci = 0, out = '', done = false;
   function finishTyping() {
@@ -3994,7 +4056,10 @@ function boot() {
       setTimeout(type, 720);
     }
   }
-  type();
+  // the title card (v0.30) builds the whole boot screen at load, behind the
+  // marquee, and starts only the typing on dismissal: the memo button and the
+  // record controls exist from the first frame either way.
+  if (deferTyping) BOOT_START_TYPING = type; else type();
   // a click anywhere skips the suspense for returning employees, and wakes the theme
   $('boot').addEventListener('click', (e) => { startBootTheme(); if (e.target.tagName !== 'BUTTON') finishTyping(); });
   $('bootbtn').onclick = () => {
@@ -4082,7 +4147,38 @@ function boot() {
     };
   }
 }
-boot();
+// ---------- the title card (v0.30) ----------
+// The set turns on before the shift does. Shown once per sitting
+// (sessionStorage), NOT on every weekly reload: the week-transition reload
+// should land back on the memo, not the marquee. Click or any key dismisses,
+// with the same CRT power-off the days use. The week clock is untouched:
+// S.weekStartMs starts at BEGIN WEEK, so the marquee costs no speedrun time.
+let BOOT_START_TYPING = null;
+function titleCard() {
+  let seen = false;
+  try { seen = sessionStorage.getItem('fm_title_seen') === '1'; } catch (e) {}
+  if (seen) { $('titlescreen').style.display = 'none'; boot(); return; }
+  // the boot screen builds now, in full, behind the marquee; only the typing waits
+  boot(true);
+  document.body.classList.add('titling');
+  // cycle 2+: the marquee knows where you are, and pretends nothing happened
+  if (META.ng) $('title-sub').textContent = 'A DIFFERENT CAMPUS · THE SAME 4:00 PM';
+  let dismissed = false;
+  const onKey = () => dismiss();
+  function dismiss() {
+    if (dismissed) return;
+    dismissed = true;
+    document.removeEventListener('keydown', onKey);
+    try { sessionStorage.setItem('fm_title_seen', '1'); } catch (e) {}
+    startBootTheme(); // the dismissing click is a real gesture; the theme may wake
+    sfx('day');
+    $('titlescreen').classList.add('off');
+    setTimeout(() => { $('titlescreen').style.display = 'none'; document.body.classList.remove('titling'); if (BOOT_START_TYPING) BOOT_START_TYPING(); }, 520);
+  }
+  $('titlescreen').addEventListener('click', dismiss);
+  document.addEventListener('keydown', onKey);
+}
+titleCard();
 </script>
 </body>
 </html>
