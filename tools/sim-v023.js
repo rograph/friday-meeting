@@ -75,9 +75,11 @@ function drain(w, cap) {
     "var plan = dayPlan(S.day); S.choicePool=null; S.queue=plan; nextEncounter();");
   clickChoice(w, 0); drain(w);           // standup
   clickChoice(w, 0); drain(w);           // deck card 1
-  clickChoice(w, 0); drain(w);           // deck card 2
+  // v0.31: lunch moved BEFORE the day's final card so the fiction's clock runs
+  // in one direction (12-to-2 can no longer follow a 3:47 PM card). Monday is
+  // now: standup, deck card, LUNCH, deck card.
   const title = ev(w, "document.getElementById('card').querySelector('h2') ? document.getElementById('card').querySelector('h2').textContent : ''");
-  check('lunch card appears as the 4th Monday beat', title === 'Lunch', title);
+  check('lunch card appears before the final Monday beat', title === 'Lunch', title);
   check('S.lunchDone true after lunch shown', ev(w, 'S.lunchDone') === true);
 }
 
