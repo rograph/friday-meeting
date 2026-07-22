@@ -160,6 +160,7 @@
   button.choice:hover { border-color: var(--accent); background: #0d3547; transform: translateX(3px); }
   button.choice:active { transform: translateX(3px) scale(0.99); }
   button.choice .cost { color: var(--ink-dim); font-size: 0.85em; display: block; margin-top: 4px; }
+  button.choice .cost.risk { color: var(--warn); }
   button.choice.pto { border-style: dashed; color: var(--warn); }
   button.choice.pto:hover { border-color: var(--warn); }
   button.choice.chooser { border-left: 3px solid var(--accent); }
@@ -425,6 +426,28 @@
   #cabinetoverlay .filenote { color: var(--ink-dim); }
   #cabinetoverlay .contractrow.met { border-left-color: var(--lock); }
   #cabinetoverlay .contractrow.unmet { border-left-color: var(--ink-dim); }
+  /* v0.32: export/import/erase used to be prompt()/confirm()/alert(), which
+     freeze the page's own event loop until a human dismisses them by hand,
+     invisibly to anything watching the tab, and are just as invisible to a
+     screen reader. Same overlay pattern as #cabinetoverlay, reused instead
+     of introduced. */
+  #recordoverlay {
+    display: none; position: fixed; inset: 0; z-index: 80;
+    background: rgba(4,18,29,0.96);
+    overflow-y: auto;
+  }
+  #recordoverlay .inner {
+    max-width: 620px; margin: 8vh auto; padding: 24px;
+    border: 1px solid var(--line); background: var(--panel);
+    font-size: 0.85em; line-height: 1.8;
+  }
+  #recordoverlay h2 { color: var(--accent); letter-spacing: 3px; font-size: 1em; margin-top: 0; }
+  #recordoverlay .recordnote { color: var(--ink-dim); font-size: 0.85em; }
+  #recordoverlay textarea {
+    width: 100%; box-sizing: border-box; margin-top: 10px;
+    background: rgba(0,0,0,0.3); border: 1px solid var(--line); color: var(--ink);
+    font-family: inherit; font-size: 0.8em; padding: 8px; resize: vertical;
+  }
   /* small screens: the three fixed top-right buttons used to march left across
      the whole header and collide with the title (Decisions Log #36 leftover) */
   @media (max-width: 640px) {
@@ -508,6 +531,10 @@
   <div style="color:var(--ink-dim);font-size:0.85em;">Nothing in here appears on the company's tracker. That was always the point.</div>
   <div id="cabinetcontent"></div>
   <button class="choice" id="cabinetclose" style="margin-top:14px;">Close the drawer</button>
+</div></div>
+<div id="recordoverlay"><div class="inner">
+  <div id="recordcontent"></div>
+  <button class="choice" id="recordclose" style="margin-top:14px;">Close</button>
 </div></div>
 <div id="noticeoverlay"><div class="inner">
   <h2>POLICY NOTICES</h2>
@@ -721,7 +748,14 @@ const MODIFIERS = [
   { id: 'calm',   boot: 'NO ADDITIONAL POLICY UPDATES THIS WEEK. THIS IS NOT REASSURING.' },
   { id: 'audit',  boot: 'POLICY UPDATE: AUDIT WEEK. DOCUMENTATION COSTS MORE, AND IS WORTH MORE.' },
   { id: 'quota',  boot: 'POLICY UPDATE: A MID-WEEK CHECKPOINT HAS BEEN INTRODUCED. ' + quotaTarget() + ' CREDIT BY WEDNESDAY EOD.' },
-  { id: 'vendor', boot: 'NOTICE: A VENDOR HAS BEEN GRANTED "STRATEGIC PARTNER" STATUS. THEY HAVE YOUR DIRECT LINE.' }
+  { id: 'vendor', boot: 'NOTICE: A VENDOR HAS BEEN GRANTED "STRATEGIC PARTNER" STATUS. THEY HAVE YOUR DIRECT LINE.' },
+  // v0.32: once Templates Folder + Standing Lunch are both owned, lockCost()
+  // sits at its floor (Math.max(1,c)) most weeks, and a well-run week secures
+  // 100% of credit with no real tension. Rather than raise the permanent ramp
+  // (which would also punish weeks without those upgrades), one week in four
+  // gets a real, telegraphed reason locking costs more: a temporary +1 through
+  // lockCost(), same mechanism as 'audit', not a permanent balance change.
+  { id: 'sweep',  boot: 'POLICY UPDATE: A COMPLIANCE SWEEP IS SCHEDULED THIS WEEK. LOCK COSTS ARE HIGHER, ACROSS THE BOARD, UNTIL FRIDAY.' }
 ];
 const MOD = META.week === 1 ? MODIFIERS[0] : MODIFIERS[Math.floor(Math.random() * MODIFIERS.length)];
 
@@ -839,7 +873,12 @@ const PHASE_LINES = {
 const BOSS_MOVES = {
   miller: [
     { title: 'The We',
-      flavor: 'Your number is on the screen with his name under it. "Proud of what we pulled off here," ' + BOSS + ' says, to the room, about the thing you did alone, at your desk, on a Tuesday he spent in a different building.',
+      // v0.32: Cycle 2+ gets a variant flavor line, same pattern as CARDS.standup's
+      // META.ng-gated flavor and the true ending's founder's-portrait line -- the
+      // building has seen this exact meeting from you before and says so.
+      flavor: () => (META.ng
+        ? 'Your number is on the screen with his name under it, same screen, same seat, same name under it as last cycle. "Proud of what we pulled off here," ' + BOSS + ' says, to a room that has also, somehow, done this before.'
+        : 'Your number is on the screen with his name under it. "Proud of what we pulled off here," ' + BOSS + ' says, to the room, about the thing you did alone, at your desk, on a Tuesday he spent in a different building.'),
       counter: 'Say "I did that." Out loud. In the minutes.',
       win: '"With support from leadership, of course," he adds, but it\'s too late. Somewhere a minute-taker types your name and does not delete it.',
       lose: '"That\'s the spirit, it takes a village," he says, and somehow your sentence becomes evidence for his. The room nods. The village has one address.',
@@ -998,9 +1037,9 @@ function runBossRounds(boss, done) {
     const chance = counterChance(boss);
     showCard({
       title: mv.title, tag: 'CONFERENCE ROOM C · ITEM ' + i + ' OF ' + moves.length, ptoAllowed: false,
-      flavor: mv.flavor,
+      flavor: (typeof mv.flavor === 'function' ? mv.flavor() : mv.flavor),
       choices: [
-        { label: mv.counter, delta: {}, result: '',
+        { label: mv.counter, delta: {}, risky: true, result: '',
           after: (cont) => {
             if (Math.random() < chance) {
               S.roundsWon++;
@@ -1354,7 +1393,7 @@ function render() {
 function log(t) { S.log.push(t); }
 
 // ---------- generic card UI ----------
-function costLabel(d, life) {
+function costLabel(d, life, risky) {
   const p = [];
   if (d.time) p.push('-' + d.time + ' Time');
   if (d.sanity) p.push('-' + d.sanity + ' Sanity');
@@ -1365,7 +1404,12 @@ function costLabel(d, life) {
   // week's end, not an immediate stat), but it has to show up here too, or a
   // choice that trades it for Sanity looks like a free upgrade instead of a trade
   if (life) p.push((life > 0 ? '+' : '') + life + ' Life Outside');
-  return p.join(' · ') || 'no cost';
+  if (p.length) return p.join(' · ');
+  // v0.32: a handful of choices (the Friday Meeting counters, Deviate) resolve
+  // their real cost inside an `after` callback, win-or-lose, instead of in
+  // `delta` -- that's a coin flip, not a free action, and "no cost" was
+  // actively lying about it. `risky` marks those so the button says so.
+  return risky ? 'RISK: SANITY / REP, WIN OR LOSE' : 'no cost';
 }
 
 function showCard(c, onDone) {
@@ -1424,7 +1468,7 @@ function showCard(c, onDone) {
     if (ch.decline && S.rep < 30) {
       return '<button class="choice" disabled>' + ch.label + '<span class="cost">unavailable at your current standing</span></button>';
     }
-    return '<button class="choice" data-i="' + i + '">' + ch.label + '<span class="cost">' + costLabel(ch.delta, ch.life) + '</span></button>';
+    return '<button class="choice" data-i="' + i + '">' + ch.label + '<span class="cost' + (ch.risky ? ' risk' : '') + '">' + costLabel(ch.delta, ch.life, ch.risky) + '</span></button>';
   }).join('');
   if (c.ptoAllowed && S.pto > 0) {
     html += '<button class="choice pto" data-i="pto">Use PTO: skip this entirely<span class="cost">-1 PTO · -3 Rep (its use is noted)</span></button>';
@@ -1698,7 +1742,12 @@ const CARDS = {
         after: (done) => {
           META.leverage += 3;
           META.davePending = true; META.daveWeek = META.week;
-          META.fileCabinet.push({ title: 'Dave, Walked Out', week: META.week, note: 'Fourteen years. The box was light. You carried it anyway.' });
+          // v0.32: Cycle 2+ note, same META.ng-gated pattern as CARDS.standup's
+          // flavor line and the true ending's founder's-portrait line -- Dave
+          // again, the box light again, and now you have the memory to notice.
+          META.fileCabinet.push({ title: 'Dave, Walked Out', week: META.week, note: (META.ng
+            ? 'Fourteen years, again. Same box, same weight. You have done this before. He has not.'
+            : 'Fourteen years. The box was light. You carried it anyway.') });
           saveMeta();
           $('card').insertAdjacentHTML('beforeend', '<div class="event" style="border-left-color: var(--lock);"><b>+3 LEVERAGE.</b> The company has no field for this. Dave will land somewhere, people always do, and people remember who walked them out.</div>');
           log('Walked Dave out. +3 Leverage. The building did not record it, which is how you know it was real.');
@@ -2397,11 +2446,19 @@ const CARDS = {
   // day (that card's Credit is the price), skips the lunch beat you already
   // fictionally had, and routes tonight's evening to The 4:15. The caught roll
   // happens NOW, silently; the answer arrives Friday, or never.
-  earlyExit: () => ({
+  earlyExit: () => {
+    // v0.32: caughtChance was already computed before the roll, just never
+    // shown. The player can't see the surveillance itself, that's the point,
+    // but they should be able to feel it coming: one quiet tell on the
+    // button when this week's odds are worse than the baseline, computed
+    // once here and reused for the actual roll below so the two can't drift.
+    const caughtChance = 0.25 + (S.vendor ? 0.15 : 0) + (S.hrFlagged ? 0.1 : 0);
+    const riskTell = caughtChance > 0.25 ? ' <span style="color:var(--warn);">(riskier than usual this week)</span>' : '';
+    return {
     title: 'The Early Exit', tag: 'AMBIENT · 3:47 PM · HIS LIGHT IS OFF', ptoAllowed: false,
     flavor: BOSS + '\'s office light is off. His car is gone from the RESERVED sign the paper cups paid for. It is 3:47 on a day that has, without announcing it, become unsupervised. The 4:15 leaves in twenty-eight minutes. One thing is still sitting on your desk, and the only person who would notice it slide to tomorrow is currently doing forty-five on the parkway.',
     choices: [
-      { label: 'Sneak out. The 4:15. Go.', life: 1, delta: { heal: 8 },
+      { label: 'Sneak out. The 4:15. Go.' + riskTell, life: 1, delta: { heal: 8 },
         result: 'You leave the monitor on, the chair angled toward the door, a document open mid-scroll: the diorama of a person who has just stepped away. The revolving door spits you onto a 3:52 sidewalk, and the 4:15 is nearly empty, because nobody with a badge is supposed to be on it. Sun comes through the windows at an angle you have never seen from that seat. You are home while the day is still warm, standing in your kitchen at an hour you usually spend in a stairwell, unsure what people do with this much afternoon. Somewhere behind you, at 5:58, an email will arrive at a desk with nobody in it.',
         after: (done) => {
           // the sneak IS the commute (v0.31, playtest finding: "I can't leave
@@ -2410,7 +2467,6 @@ const CARDS = {
           S.snuckOut = true;
           S.queue = [];
           if (S.choicePool) S.choicePool = [];
-          const caughtChance = 0.25 + (S.vendor ? 0.15 : 0) + (S.hrFlagged ? 0.1 : 0);
           if (Math.random() < caughtChance) S.sneakCaughtCount = (S.sneakCaughtCount || 0) + 1;
           log('Left at 3:47, home in daylight. The building did not notice. Probably.');
           showResult('You leave the monitor on, the chair angled toward the door, a document open mid-scroll: the diorama of a person who has just stepped away. The revolving door spits you onto a 3:52 sidewalk, and the 4:15 is nearly empty, because nobody with a badge is supposed to be on it. Sun comes through the windows at an angle you have never seen from that seat. You are home while the day is still warm, standing in your kitchen at an hour you usually spend in a stairwell, unsure what people do with this much afternoon. Somewhere behind you, at 5:58, an email will arrive at a desk with nobody in it.', done);
@@ -2418,7 +2474,8 @@ const CARDS = {
       { label: 'Stay till five. Like always.', delta: {},
         result: 'You finish the day properly, which is a thing you will neither regret nor remember. At 4:59 the cleaning crew arrives and looks mildly surprised to find anyone still breathing on this floor.' }
     ]
-  }),
+    };
+  },
   // ---------- chain payoffs (v0.28): none of these are dealt from the deck.
   // Each is injected by a flag an earlier card set, on the schedule its setup
   // promised: the intern two weeks later, the buried deadline that Thursday,
@@ -2604,6 +2661,7 @@ function lockCost(item) {
   if (S.millerPleased) c -= 1; // he's still glowing about the portrait
   if (S.millerAnnoyed) c += 1; // he's still sore about the slow-walk
   if (MOD.id === 'audit') c += 1; // audit week: documentation costs more, and is worth more
+  if (MOD.id === 'sweep') c += 1; // compliance sweep (v0.32): a temporary tax on the "lock everything" strategy
   return Math.max(1, c);
 }
 
@@ -3225,7 +3283,7 @@ function presentationScene(boss) {
           META.nextWeekExtraClaim = true; saveMeta();
           showResult('You read it. The room hears your own voice say "we," slide after slide, in the cadence ' + boss.pronoun + ' would have used. It goes well. That is the worst part: it goes well. ' + boss.name + ' watches from the second row like a director at a premiere. Whatever the tracker says on Friday, the room will remember who the week belonged to, and next week the building will arrive a little hungrier, because you taught it your voice.', () => runMeeting(boss));
         } },
-      { label: 'Deviate. Present the week the way it actually happened.', delta: {},
+      { label: 'Deviate. Present the week the way it actually happened.', delta: {}, risky: true,
         result: '', after: (done) => {
           if (Math.random() < counterChance(boss)) {
             if (!apply({ rep: 5 })) return;
@@ -3972,13 +4030,13 @@ $('cabinetbtn').onclick = () => { renderCabinet(); $('cabinetoverlay').style.dis
 $('cabinetoverlay').onclick = (e) => { if (e.target.id === 'cabinetoverlay' || e.target.id === 'cabinetclose') $('cabinetoverlay').style.display = 'none'; };
 
 // ---------- save codes (export/import the employee record) ----------
-function exportSave() {
-  const code = btoa(unescape(encodeURIComponent(JSON.stringify(META))));
-  prompt('Your employee record. Copy it somewhere safe. The building would prefer you didn\'t.', code);
-}
-function importSave() {
-  const code = prompt('Paste an employee record:');
-  if (!code) return;
+// v0.32: these were prompt()/confirm()/alert() calls. Native dialogs block
+// the page's own event loop until a human dismisses them by hand, which is
+// invisible to anything watching the tab (no thrown error, no visible state
+// change) and just as invisible to a screen reader. Replaced with the
+// #recordoverlay modal below, reusing the #cabinetoverlay pattern already
+// in this file rather than inventing a new one.
+function loadSaveCode(code) {
   try {
     const m = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
     if (typeof m.week !== 'number' || typeof m.leverage !== 'number' || typeof m.up !== 'object') throw new Error('bad');
@@ -3991,10 +4049,50 @@ function importSave() {
     META.lastClaimLineByBoss = m.lastClaimLineByBoss || {};
     saveMeta();
     location.reload();
+    return true;
   } catch (e) {
-    alert('That record is not recognized by this terminal. (Invalid or corrupted code.)');
+    return false;
   }
 }
+function openRecordModal(mode) {
+  const el = $('recordcontent');
+  if (mode === 'export') {
+    const code = btoa(unescape(encodeURIComponent(JSON.stringify(META))));
+    el.innerHTML = '<h2>YOUR EMPLOYEE RECORD</h2>' +
+      '<div class="recordnote">Copy it somewhere safe. The building would prefer you didn\'t.</div>' +
+      '<textarea id="recordfield" readonly rows="6"></textarea>' +
+      '<button class="choice" id="recordcopy" style="margin-top:10px;">Copy to clipboard</button>';
+    $('recordfield').value = code;
+    $('recordcopy').onclick = () => {
+      $('recordfield').select();
+      try { document.execCommand('copy'); } catch (e) {}
+      $('recordcopy').textContent = 'Copied.';
+    };
+  } else if (mode === 'import') {
+    el.innerHTML = '<h2>PASTE AN EMPLOYEE RECORD</h2>' +
+      '<div class="recordnote">Paste a record exported from this or another session, then load it.</div>' +
+      '<textarea id="recordfield" rows="6" placeholder="Paste the code here"></textarea>' +
+      '<button class="choice" id="recordload" style="margin-top:10px;">Load record</button>' +
+      '<div id="recorderr" class="recordnote" style="color:var(--danger); margin-top:8px;"></div>';
+    $('recordload').onclick = () => {
+      const code = $('recordfield').value;
+      if (!code.trim()) return;
+      if (!loadSaveCode(code)) {
+        $('recorderr').textContent = 'That record is not recognized by this terminal. (Invalid or corrupted code.)';
+      }
+    };
+  } else if (mode === 'erase') {
+    el.innerHTML = '<h2>ERASE RECORD</h2>' +
+      '<div class="recordnote">Erase all progress? The building will not remember you. Neither will the save file.</div>' +
+      '<button class="choice" id="recorderaseconfirm" style="margin-top:14px; border-color: var(--danger); color: var(--danger);">Yes, erase it</button>';
+    $('recorderaseconfirm').onclick = () => {
+      try { localStorage.removeItem(META_KEY); } catch (e) {}
+      location.reload();
+    };
+  }
+  $('recordoverlay').style.display = 'block';
+}
+$('recordoverlay').onclick = (e) => { if (e.target.id === 'recordoverlay' || e.target.id === 'recordclose') $('recordoverlay').style.display = 'none'; };
 
 // ---------- boot ----------
 function buildBootLines() {
@@ -4201,15 +4299,10 @@ function boot(deferTyping) {
   }
   saveRow += '</div>';
   $('boot').insertAdjacentHTML('beforeend', saveRow);
-  $('exportbtn').onclick = exportSave;
-  $('importbtn').onclick = importSave;
+  $('exportbtn').onclick = () => openRecordModal('export');
+  $('importbtn').onclick = () => openRecordModal('import');
   if ($('wipebtn')) {
-    $('wipebtn').onclick = () => {
-      if (confirm('Erase all progress? The building will not remember you. Neither will the save file.')) {
-        try { localStorage.removeItem(META_KEY); } catch (e) {}
-        location.reload();
-      }
-    };
+    $('wipebtn').onclick = () => openRecordModal('erase');
   }
 }
 // ---------- the title card (v0.30) ----------
