@@ -515,6 +515,7 @@ function loadMeta() {
   const def = { week: 1, leverage: 0, ng: 0, onboarded: 0, bestWeekMs: 0, up: {}, life: { plant: 2, friend: 2, hobby: 2 }, ninaTrust: false, presidentSeen: false,
     fileCabinet: [], contractHistory: [], lastClaimLine: -1, lastClaimLineByBoss: {}, trainingPending: false,
     balloonVendorPending: false, balloonVendorWeek: 0, surveyFlagged: false, surveyFlaggedWeek: 0, totalPlayMs: 0,
+    bestEscapeMs: 0, cycleClockMs: 0,
     cleanStreak: 0, nextWeekExtraClaim: false, phoneRang: false, note: null,
     internCovered: false, internCoveredWeek: 0, badgeCurious: false,
     priyaPending: false, priyaWeek: 0, priyaSpokeUp: false, priyaEmail: false,
@@ -1029,7 +1030,8 @@ const S = {
   drains: [], repDrains: [], crunched: false, ptoUsed: false, contract: null, lifeDelta: 0,
   declines: 0, accepts: 0, rumorFestering: false, rumorSquashed: false,
   hrFlagged: false, millerPleased: false, millerAnnoyed: false, cabinetPinned: false, lastEvening: null,
-  decoyPicked: false, fridayBoss: null
+  decoyPicked: false, fridayBoss: null,
+  snuckOut: false, bossGoneToday: false, earlyExitOffered: false, sneakCaughtCount: 0
 };
 let CONTEXT = 'The morning';
 
@@ -2308,6 +2310,32 @@ const CARDS = {
         result: 'You say your desk is "already at capacity," which is a lie the plant helps you tell convincingly. Nobody follows up. The real plant gets real light for one more week, which is the whole and entire point of keeping it.' }
     ]
   }),
+  // ---------- the early exit (v0.29): never dealt, never unlocked. Offered by
+  // nextEncounter() in place of the day's FINAL card when the boss's light went
+  // off early (S.bossGoneToday, Mon-Wed only). Sneaking clears the remaining
+  // day (that card's Credit is the price), skips the lunch beat you already
+  // fictionally had, and routes tonight's evening to The 4:15. The caught roll
+  // happens NOW, silently; the answer arrives Friday, or never.
+  earlyExit: () => ({
+    title: 'The Early Exit', tag: 'AMBIENT · 3:47 PM · HIS LIGHT IS OFF', ptoAllowed: false,
+    flavor: BOSS + '\'s office light is off. His car is gone from the RESERVED sign the paper cups paid for. It is 3:47 on a day that has, without announcing it, become unsupervised. The 4:15 leaves in twenty-eight minutes. One thing is still sitting on your desk, and the only person who would notice it slide to tomorrow is currently doing forty-five on the parkway.',
+    choices: [
+      { label: 'Sneak out. The 4:15. Go.', delta: {},
+        result: 'You leave the monitor on, the chair angled toward the door, a document open mid-scroll: the diorama of a person who has just stepped away. The elevator takes forever. The lobby takes a year. The revolving door spits you into daylight, unbadged, unwitnessed, alive.',
+        after: (done) => {
+          S.snuckOut = true;
+          S.queue = [];
+          if (S.choicePool) S.choicePool = [];
+          S.lunchDone = true;
+          const caughtChance = 0.25 + (S.vendor ? 0.15 : 0) + (S.hrFlagged ? 0.1 : 0);
+          if (Math.random() < caughtChance) S.sneakCaughtCount = (S.sneakCaughtCount || 0) + 1;
+          log('Left at 3:47. The building did not notice. Probably.');
+          showResult('You leave the monitor on, the chair angled toward the door, a document open mid-scroll: the diorama of a person who has just stepped away. The elevator takes forever. The lobby takes a year. The revolving door spits you into daylight, unbadged, unwitnessed, alive.', done);
+        } },
+      { label: 'Stay till five. Like always.', delta: {},
+        result: 'You finish the day properly, which is a thing you will neither regret nor remember. At 4:59 the cleaning crew arrives and looks mildly surprised to find anyone still breathing on this floor.' }
+    ]
+  }),
   // ---------- chain payoffs (v0.28): none of these are dealt from the deck.
   // Each is injected by a flag an earlier card set, on the schedule its setup
   // promised: the intern two weeks later, the buried deadline that Thursday,
@@ -2440,7 +2468,19 @@ const EVENINGS = [
     choices: [ { label: 'Log on. Sprint.', voluntold: true, life: -1, delta: { sanity: 12, rep: 5, credit: 4, creditItem: 'Evening sprint output' }, result: 'By 9 PM you\'ve produced real work. It will be presented at a meeting you are not invited to.' },
       { label: 'Decline the hold', decline: true, life: 1, delta: { rep: META.up.boundary ? 0 : -5, heal: 8 }, result: 'You decline with no note. The empty reason field radiates power.' } ] },
   { title: 'Wellness Check-In', flavor: 'An automated survey: "How are you REALLY feeling?" The emoji options range from ecstatic to slightly less ecstatic. There is a free-text box. It has a character limit of 40.',
-    choices: [ { label: 'Select the approved emotion', delta: { heal: 7 }, result: 'Thank you for your honesty. Your wellness score has been updated. Your wellness score is not visible to you.' } ] }
+    choices: [ { label: 'Select the approved emotion', delta: { heal: 7 }, result: 'Thank you for your honesty. Your wellness score has been updated. Your wellness score is not visible to you.' } ] },
+  // the ordinary commute tier (v0.29). NOTE: the voluntold picker addresses
+  // EVENINGS[2] and EVENINGS[3] by index; commute cards append AFTER, never between.
+  { title: 'The Platform', flavor: BOSS + ' is on the platform. Your platform. Eleven feet away, holding his phone at reading distance, dressed like a man whose car is in the shop. There are two ways this ride can go, and both of them are thirty-one minutes long.',
+    choices: [ { label: 'Say hi. Share the ride.', delta: { sanity: 4, rep: 3 },
+        result: 'Thirty-one minutes of metrics, delivered to a captive audience of one. He gets off two stops before you and says "good talk." It was neither. But he will remember the audience.' },
+      { label: 'Develop a sudden fascination with the departures board', delta: { heal: 4 },
+        result: 'You study the board like scripture until the next train arrives, twenty minutes late, gloriously boss-free. Twenty minutes of your life, spent on purpose, to ride home alone. Worth every one. This line item will not be reported to anyone.' } ] },
+  { title: 'The Parking Garage', flavor: 'Level 2 is a diagram of the org chart: the RESERVED signs nearest the elevator, the visitor spots nobody visits, and your car, exactly where the unreserved universe begins. Tonight a delivery van is parked across your bumper, hazards on, driver absent, eleven plastic ferns visible through the back window.',
+    choices: [ { label: 'Find the driver. Be unfailingly polite about it.', delta: { sanity: 3, rep: 2 },
+        result: 'Fifteen minutes of "no worries" delivered through a jaw that has several worries. The van moves. The ferns continue toward whatever hallway is being improved this week. You drive home behind it for six blocks, at fern speed.' },
+      { label: 'Sit in the car and let it resolve on its own', delta: { heal: 3 },
+        result: 'You put the seat back and stare at the concrete ceiling of Level 2, which asks nothing of you. The van leaves eventually. Everything does. It is the closest thing to meditation the building has ever given you, and it was an accident.' } ] }
 ];
 
 // ---------- items / at-risk helpers ----------
@@ -2650,6 +2690,10 @@ function startDay() {
   S.ergoUsedToday = false;
   S.millerPleased = false; S.millerAnnoyed = false;
   S.lunchDone = false;
+  // the early exit (v0.29): some afternoons, the light in his office is off by
+  // 3:40. Mon-Wed only; Thursday's Appreciation is mandatory joy, Friday is the game.
+  S.snuckOut = false; S.earlyExitOffered = false;
+  S.bossGoneToday = S.day <= 2 && Math.random() < 0.3;
   const plan = dayPlan(S.day);
   // Tue/Thu: the three free slots become a real choice instead of a fixed
   // sequence. Build the actual card objects once, up front, since some cards
@@ -2778,6 +2822,15 @@ const ORIENT_NOTES = {
 
 function nextEncounter() {
   if (S.over) return;
+  // the early exit (v0.29): when his light went off early, the day's FINAL card
+  // becomes optional. Offered once, before that last card, Mon-Wed only. The
+  // injected chain payoffs always sit at the queue's front, so the card on the
+  // table here is an ordinary one; consequences don't slide to tomorrow.
+  if (S.day <= 2 && S.bossGoneToday && !S.earlyExitOffered && !S.snuckOut
+      && (S.queue.length + (S.choicePool ? S.choicePool.length : 0)) === 1) {
+    S.earlyExitOffered = true;
+    return showCard(CARDS.earlyExit(), nextEncounter);
+  }
   // fixed injections (elevator, training-compliance) always play out first
   if (S.queue.length > 0) {
     const key = S.queue.shift();
@@ -2850,6 +2903,34 @@ const APPRECIATION = {
   ]
 };
 
+// ---------- the commute (v0.29): the day's receipt ----------
+// Not a new beat: commute cards live in the evening slot, and WHICH one you
+// get is determined by how you left the building. Sneak out and tonight is
+// The 4:15, guaranteed, voluntold-proof (the 5:58 email finds an empty desk).
+// End the day in Crunch and tonight is The 7:40, no negotiation. Leave like a
+// normal person and the ordinary pool runs, which now includes two commute
+// cards alongside the evenings that were already there.
+const COMMUTE_GOLDEN = {
+  title: 'The 4:15', tag: 'COMMUTE · DAYLIGHT, OF ALL THINGS',
+  flavor: 'The train is nearly empty, because nobody with a badge is supposed to be on it. Sun comes through the windows at an angle you have never seen from this seat, because you have never been in this seat at this hour. The city is out there being a city, on a weekday, in daylight, and has apparently been doing this the whole time. Somewhere behind you, at 5:58, an email will arrive at a desk with nobody in it.',
+  choices: [
+    { label: 'Window seat. Watch the city be a city.', life: 1, delta: { heal: 9 },
+      result: 'Forty minutes of light. You arrive home while the day is still warm and stand in your kitchen at an hour you usually spend in a stairwell, unsure what people do with this much afternoon. You could get used to this. That is the danger. That is also the point.' },
+    { label: 'Get off a stop early. Walk the rest.', life: 2, delta: { heal: 6 },
+      result: 'The long way home, on purpose, through streets that do not know where you work. Your plant gets watered in actual daylight. It visibly does not know how to react.' }
+  ]
+};
+const COMMUTE_LATE = {
+  title: 'The 7:40', tag: 'COMMUTE · STANDING ROOM ONLY',
+  flavor: 'The building emptied hours ago, in the correct order, and you were not in it. The 7:40 is the train of the stayed-late: packed, silent, lit like a waiting room. Someone\'s laptop is open to a spreadsheet you recognize, which should not be possible, and is somehow the least surprising part of the day.',
+  choices: [
+    { label: 'Stand. Hold the rail. Arrive.', delta: { heal: 1 },
+      result: 'Home at 8:25. Dinner is whatever requires no verbs. The day technically ends, in the sense that it stops being billed.' },
+    { label: 'Let it go. Wait for the 8:05 and a seat.', life: -1, delta: { heal: 4 },
+      result: 'Twenty-five more minutes in the station, for the privilege of sitting down. It works. The evening it costs you was mostly gone anyway, which is either efficiency or the saddest math you have done all day.' }
+  ]
+};
+
 // pick a random entry from `pool`, excluding whatever ran last night if
 // there's another option available (never show the identical evening twice running)
 function pickEvening(pool) {
@@ -2866,8 +2947,14 @@ function eveningEvent() {
   // instead of a cliff, so the softening at week 1 isn't total.
   let ev;
   if (S.day === 3) ev = APPRECIATION;
+  // the commute is the day's receipt (v0.29): sneaking out buys the golden
+  // ride AND dodges tonight's voluntold roll; the 5:58 email finds an empty
+  // desk. Ending the day in Crunch means the late train, after any voluntold:
+  // leadership requisitions your evening no matter how wrecked you are.
+  else if (S.snuckOut) ev = COMMUTE_GOLDEN;
   else if (META.week >= 2 && Math.random() < 0.6) ev = pickEvening([EVENINGS[2], EVENINGS[3]]);
   else if (META.week === 1 && Math.random() < 0.2) ev = pickEvening([EVENINGS[2], EVENINGS[3]]);
+  else if (inCrunch()) ev = COMMUTE_LATE;
   else ev = pickEvening(EVENINGS);
   S.lastEvening = ev;
   showCard({ title: 'EVENING · ' + ev.title, tag: ev.tag || 'AFTER HOURS', flavor: ev.flavor, choices: ev.choices, ptoAllowed: false },
@@ -3054,6 +3141,7 @@ function runMeeting(boss) {
   if (S.hrFlagged) { preamble += '<div class="event">' + boss.name + ' mentions, apropos of nothing, that HR "flagged a great question" this week. ' + boss.Pronoun + ' is smiling. ' + boss.Pronoun + ' is always smiling.</div>'; }
   if (S.parsedAsk) { preamble += '<div class="event" style="border-left-color: var(--lock);">The deadline he forgot he set was met, quietly, by someone. ' + boss.name + ' presents this as foresight. ' + boss.Possessive + ' own, specifically.</div>'; }
   if (S.askBurned) { preamble += '<div class="event">"Ownership culture," ' + boss.name + ' says, to the room, looking at no one, which is a way of looking at everyone.</div>'; }
+  if (S.sneakCaughtCount) { preamble += '<div class="event">"We came by your desk ' + (S.sneakCaughtCount > 1 ? 'a few afternoons this week' : 'yesterday afternoon') + '," ' + boss.name + ' says, with no question mark anywhere in it, and advances to the next slide before an answer could exist. Somewhere, a note now lives about your four o\'clocks.</div>'; }
   if (S.declines >= 2) { preamble += '<div class="event">"Busy weekend?" ' + boss.name + ' asks, to the room, not to you specifically, which is worse.</div>'; }
   else if (S.accepts >= 2 && S.declines === 0) { preamble += '<div class="event" style="border-left-color: var(--lock);">"Reliable," ' + boss.name + ' says, of you, to the room. It is meant as the highest compliment the building has.</div>'; }
   if (S.escalationBonus === -2) {
@@ -3078,6 +3166,7 @@ function runMeeting(boss) {
   // screen isn't clobbered by the rest of the meeting still rendering (scan finding, v0.21).
   if (S.rumorSquashed && !apply({ rep: 2 })) return;
   if (S.rumorFestering && !apply({ rep: -3 })) return;
+  if (S.sneakCaughtCount && !apply({ rep: -4 * S.sneakCaughtCount })) return;
   if (S.declines >= 2) { if (!apply({ rep: -4 })) return; }
   else if (S.accepts >= 2 && S.declines === 0) { if (!apply({ rep: 3 })) return; }
 
@@ -3259,6 +3348,7 @@ function burnout() {
       'The tracker keeps running for a while after you leave. Nobody turns it off. It isn\'t clear anyone knows how.</div>' +
       scoreBlock() +
       drainRecap() +
+      '<div class="event">TIME CLOCKED, START TO FLOOR: <b>' + formatStopwatch((META.totalPlayMs || 0) + (Date.now() - (S.weekStartMs || Date.now()))) + '</b></div>' +
       '<div class="event">+' + earned + ' LEVERAGE. Every run teaches the system\'s shape. This one taught you where the floor is.</div>' +
       '<button class="choice" id="toStore" style="margin-top:10px;">Go home. It\'s the weekend, technically.</button>';
     $('toStore').onclick = storeScreen;
@@ -3279,6 +3369,7 @@ function firedForCause() {
       'Security walks you to the lobby. Nobody carries your box. You carry it yourself. It is very light.</div>' +
       scoreBlock() +
       repDrainRecap() +
+      '<div class="event">TIME CLOCKED, START TO LOBBY: <b>' + formatStopwatch((META.totalPlayMs || 0) + (Date.now() - (S.weekStartMs || Date.now()))) + '</b></div>' +
       '<div class="event">+' + earned + ' LEVERAGE. Small mercy. The building kept the raise; it doesn\'t get to keep the lesson.</div>' +
       '<button class="choice" id="toStore" style="margin-top:10px;">Go home. Nobody\'s waiting up.</button>';
     $('toStore').onclick = storeScreen;
@@ -3330,7 +3421,16 @@ function ending(kind) {
     if (S.contract && S.contract.check()) S.contractMet = true;
     // the actual speedrun stat: total real time clocked in across the whole save, this week included
     const finalMs = (META.totalPlayMs || 0) + (Date.now() - (S.weekStartMs || Date.now()));
-    META.totalPlayMs = finalMs; saveMeta();
+    META.totalPlayMs = finalMs;
+    // the escape record (v0.29): hire to door, THIS stint, failed weeks included.
+    // Across NG+ cycles the best one is the save's headline speedrun stat.
+    const escapeMs = finalMs - (META.cycleClockMs || 0);
+    let escapeRecord = false;
+    if (escapeMs > 0 && (!META.bestEscapeMs || escapeMs < META.bestEscapeMs)) {
+      META.bestEscapeMs = escapeMs;
+      escapeRecord = true;
+    }
+    saveMeta();
     // the door commendations can finally persist, now that quitting doesn't wipe the file (v0.26)
     checkCommendations('quit');
     el.innerHTML = '<div class="endingtitle">TWO WEEKS\' NOTICE</div>' +
@@ -3341,6 +3441,9 @@ function ending(kind) {
       scoreBlock(true) +
       '<div class="event" style="border-left-color: var(--lock);"><b>THE TRUE ENDING.</b> Built across ' + META.week + ' week' + (META.week > 1 ? 's' : '') + ': a portfolio, a network, a runway. None of it appeared on their tracker. That was the point.</div>' +
       '<div class="event">TIME CLOCKED, START TO DOOR: <b>' + formatStopwatch(finalMs) + '</b></div>' +
+      '<div class="event">THIS ESCAPE, HIRE TO DOOR: <b>' + formatStopwatch(escapeMs) + '</b>' +
+        (META.ng && !escapeRecord ? ' · FASTEST ESCAPE ON FILE: <b>' + formatStopwatch(META.bestEscapeMs) + '</b>' : '') +
+        (escapeRecord ? ' · <span class="secure">A PERSONAL RECORD. IT WILL NOT BE MENTIONED AGAIN.</span>' : '') + '</div>' +
       // NEW GAME+ (v0.26): the true ending now has a door on the other side of it.
       // The next job is also Everwell, because everything is. Upgrades, commendations,
       // and leftover Leverage carry; the Escape Plan was spent getting you here; the
@@ -3352,6 +3455,8 @@ function ending(kind) {
       META.ng = (META.ng || 0) + 1;
       META.week = 1;
       ['portfolio', 'network', 'savings'].forEach(k => { delete META.up[k]; });
+      // the next stint's escape timer starts at this hire (v0.29)
+      META.cycleClockMs = META.totalPlayMs || 0;
       saveMeta();
       location.reload();
     };
@@ -3437,7 +3542,7 @@ function storeScreen() {
   let html = '<h2>Saturday, 9:04 AM</h2><div class="tag">YOUR TIME · NO BADGE · NOT MONITORED (PROBABLY)' + (META.ng ? ' · CYCLE ' + (META.ng + 1) : '') + '</div>' +
     '<div class="flavor">The week paid you in the only currency the building can\'t claim. Spend it on the version of you that leaves.</div>' +
     '<div class="scoregrid">LEVERAGE: <b>' + META.leverage + '</b> · ESCAPE PLAN: <b>' + escapeCount + '/3</b>' + (escapeReady() ? ' · <span class="secure">READY. The letter is in your bag</span>' : '') + '</div>' +
-    '<div class="scoregrid" style="color:var(--ink-dim);">THIS WEEK: <b>' + formatStopwatch(weekMs) + '</b> · TOTAL CLOCKED: <b>' + formatStopwatch(totalMs) + '</b>' + (META.bestWeekMs ? ' · FASTEST WEEK ON FILE: <b>' + formatStopwatch(META.bestWeekMs) + '</b>' : '') + '</div>';
+    '<div class="scoregrid" style="color:var(--ink-dim);">THIS WEEK: <b>' + formatStopwatch(weekMs) + '</b> · TOTAL CLOCKED: <b>' + formatStopwatch(totalMs) + '</b>' + (META.bestWeekMs ? ' · FASTEST WEEK ON FILE: <b>' + formatStopwatch(META.bestWeekMs) + '</b>' : '') + (META.bestEscapeMs ? ' · FASTEST ESCAPE: <b>' + formatStopwatch(META.bestEscapeMs) + '</b>' : '') + '</div>';
   // termination: the run is over, the file is not
   if (S.terminated) {
     const LOST_LINES = {
@@ -3765,6 +3870,7 @@ function importSave() {
     META.life = m.life || { plant: 2, friend: 2, hobby: 2 };
     META.ninaTrust = !!m.ninaTrust; META.presidentSeen = !!m.presidentSeen;
     META.daveNetwork = !!m.daveNetwork; META.daveLanded = !!m.daveLanded; META.priyaEmail = !!m.priyaEmail; META.badgeCurious = !!m.badgeCurious;
+    META.totalPlayMs = m.totalPlayMs || 0; META.bestWeekMs = m.bestWeekMs || 0; META.bestEscapeMs = m.bestEscapeMs || 0; META.cycleClockMs = m.cycleClockMs || 0;
     META.fileCabinet = m.fileCabinet || []; META.contractHistory = m.contractHistory || []; META.lastClaimLine = typeof m.lastClaimLine === 'number' ? m.lastClaimLine : -1;
     META.lastClaimLineByBoss = m.lastClaimLineByBoss || {};
     saveMeta();
